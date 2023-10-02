@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Computing Together</title>
+
+   <!-- Bootstrap CSS and FontAwesome-->
+   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+   <!-- zero-md and Plotly libraries -->
+   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+   <!-- 3Dmol libraries -->
+   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+   <script src="https://3Dmol.org/build/3Dmol.ui-min.js"></script>
+
+  <!-- Include Libraries -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="code.js"></script>
+  <script src="render.js"></script>
+
+
+</head>
+
+<body>
+    <div class="control-div">
+        <div class="row justify-content-center">
+            <div class="col-auto btn-col">
+                <button class="button-base" id="full-screen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+            <div class="col-auto btn-col">
+                <button class="button-base" id="switch-view-btn">
+                    <i class="fa-solid fa-border-all"></i>
+                </button>
+            </div>
+            <div class="col-auto btn-col">
+                <button class="button-base" id="download">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <button class="button-arrow" id='aleft' style="position: absolute; left: 3%; bottom: 50%;">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <button class="button-arrow" id='aright' style="position: absolute; right: 3%; bottom: 50%;">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <!-- Mock Slides -->
+    <div id="outer-container">
+        <div id="slide-container" class="presentation">
+        </div>
+    </div>
+    
+  
+</body>
+
+</html>
