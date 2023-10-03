@@ -7,5 +7,8 @@ def init():
 
   filename =  sys.argv[1]
 
-  Presentation.read(filename).show()
+  with open(filename,'r') as f:
+       data = json.load(f)
+
+  Presentation.read(data).show()
 
