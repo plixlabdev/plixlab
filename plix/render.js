@@ -1,5 +1,6 @@
 window.addEventListener('load', async function() {
 
+//Reload
 const ws = new WebSocket('ws://localhost:8888/reload');
 
 ws.onmessage = function(event) {
@@ -22,6 +23,54 @@ function pollServerAndReload() {
         setTimeout(pollServerAndReload, 500);
     });
 }
+document.getElementById('share').addEventListener('click', function() {
+    fetch("/share")
+        .then(response => response.text())
+        .then(url => {
+            console.log(url);
+            showModal(url);
+        })
+        .catch(error => {
+            console.error("Error fetching share URL:", error);
+        });
+});
+
+// Initialize clipboard
+const clipboard = new ClipboardJS('#copyBtn');
+
+clipboard.on('success', function(e) {
+    const modalText = document.getElementById('modalText');
+    modalText.textContent = "Copied to clipboard!";
+    
+    setTimeout(() => {
+        closeModal(); // Close the modal after 1.5 seconds
+    }, 1500);
+    
+    e.clearSelection();
+});
+
+
+function showModal(text) {
+    const modal = document.getElementById('customModal');
+    const modalText = document.getElementById('modalText');
+    const copyBtn = document.getElementById('copyBtn');
+
+    modalText.textContent = text;
+    copyBtn.setAttribute('data-clipboard-text', text); // set the clipboard text for the button
+    modal.style.display = 'block';
+
+    // This will close the modal if you click outside of it
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById('customModal');
+    modal.style.display = 'none';
+}
 
 
 
@@ -39,40 +88,46 @@ async function fetchData() {
         }
     }
     
-jsonData = await fetchData();
- if (jsonData) {
+ data = await fetchData();
+ if (data) {
+        jsonData = data.data
+        //console.log(data.animation)
+         // Initialize dataStore if it doesn't exist yet
+        if (!window.dataStore) {
+         window.dataStore = {};
+        }
+
+        //window.dataStore.active_slide = 0;
+        window.dataStore.mode = 'presentation';
+        //window.dataStore.active_slide = 0;
+        window.dataStore.animation   = data.animation
+        
+        window.dataStore.index = 0
+        window.dataStore.active_slide = 0
+
         render();
-        //updateSlidesVisibility();
+        //updateVisibility();
 } 
   
-function updateSlidesVisibility() {
-    try {
-        var slides = document.querySelectorAll(".slide");
-        
-        slides.forEach(function(slide, index) {
-            if (!slide) {
-                console.error('Slide at index:', index, 'not found!');
-                return;
-            }
 
-            // Using the index directly for comparison with active_slide
-            if (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide) {
-                slide.hidden = true;
-            } else {
-                slide.hidden = false;
-            }
-        });
-    } catch (error) {
-        console.error('Error updating visibility for slides', error);
-    }
-}
+//function updateVisibility() {
 
-function add_common_properties(element,props) {
+//    arr =  window.dataStore.animation[ window.dataStore.index]
+   
+//    for (let key in arr) {
+ //       console.log(key)
+ //       document.getElementById(key).hidden = arr[key]
+
+  //  } 
+
+//}
+
+function add_common_properties(element,data) {
 
      //Style
-     if (props.style) {
-        for (let styleProp in props.style) {
-            let cssValue = props.style[styleProp];
+     if (data.props.style) {
+        for (let styleProp in data.props.style) {
+            let cssValue = data.props.style[styleProp];
             if (typeof cssValue === 'number' && ['fontSize', 'width', 'height', 'top', 'right', 'bottom', 'left'].includes(styleProp)) {
                 cssValue += 'px';
             }
@@ -81,13 +136,18 @@ function add_common_properties(element,props) {
     }
 
     //ClassName
-    if (props.className) {
-        element.className = props.className;
+    if (data.props.className) {
+        element.className = data.props.className;
     }
         
     //Hidden
-    if (props.hidden) {
-            element.hidden = Boolean(props.hidden);
+    if (data.props.hidden) {
+            element.hidden = Boolean(data.props.hidden);
+    }
+
+    //ClassName
+    if (data.id) {
+        element.id = data.id;
     }
 
 }
@@ -113,7 +173,7 @@ function renderComponent(data,outer_element) {
     switch (data.type) {
         case 'Slide':
             element = document.createElement('div');
-            add_common_properties(element,data.props)
+            add_common_properties(element,data)
           
             outer_element.appendChild(element)
             break;
@@ -134,20 +194,20 @@ function renderComponent(data,outer_element) {
             element.innerHTML = text
 
             
-            add_common_properties(element, data.props);
+            add_common_properties(element, data);
             outer_element.appendChild(element);
             
             break;
         case 'Img':
                 element = document.createElement('img');
                 element.src = data.props.src;
-                add_common_properties(element,data.props)
+                add_common_properties(element,data)
                 outer_element.appendChild(element)
                 break;
         case 'Iframe':
               //Perhaps the external DIV is not necessary here
               element = document.createElement('div')
-              add_common_properties(element,data.props)
+              add_common_properties(element,data)
               iframe = document.createElement('iframe');
               iframe.width = '100%'
               iframe.height = '100%'
@@ -163,7 +223,7 @@ function renderComponent(data,outer_element) {
                     responsive: true
                 };
                 element = document.createElement('div');
-                add_common_properties(element,data.props)
+                add_common_properties(element,data)
                 outer_element.appendChild(element)
 
                 Plotly.newPlot(element, data.props.figure.data, data.props.figure.layout, config);
@@ -173,7 +233,7 @@ function renderComponent(data,outer_element) {
 
             // Create a new div element
             element = document.createElement("div");
-            add_common_properties(element,data.props)
+            add_common_properties(element,data)
             element.id = "molContainer";  // setting an ID for the container
             outer_element.appendChild(element)
           
@@ -232,26 +292,27 @@ function render() {
     jsonData.forEach((data) => {
         renderComponent(data,container);
     });
+
+    document.getElementById('S' + String(window.dataStore.active_slide)).hidden=false;
  
     // Initialize dataStore if it doesn't exist yet
-   if (!window.dataStore) {
-    window.dataStore = {};
-   }
+   //if (!window.dataStore) {
+   // window.dataStore = {};
+  // }
 
     //window.dataStore.active_slide = 0;
-    window.dataStore.mode = 'presentation';
-    window.dataStore.active_slide = 0;
+   // window.dataStore.mode = 'presentation';
+  //  window.dataStore.active_slide = 0;
 
-    const slides = document.querySelectorAll(".slide");
-    slides.forEach((slide, index) => {
-        slide.setAttribute('data-index', index);
-        if (index !== 0) {
-            slide.hidden = true;}
-         else {
-            slide.hidden = false;
-            console.log('hidden',index)
-        }
-    });
+    //const slides = document.querySelectorAll(".slide");
+    //slides.forEach((slide, index) => {
+     //   if (index !== 0) {
+     //       slide.hidden = true;}
+     //    else {
+     //       slide.hidden = false;
+     //       console.log('hidden',index)
+     //   }
+    //});
     
 
 }

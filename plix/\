@@ -16,7 +16,7 @@ import json
 import webbrowser
 from tornado import autoreload
 from tornado import websocket
-import numpy as np
+
 
 
 # Get the directory of the current script
@@ -64,7 +64,7 @@ class DataHandler(tornado.web.RequestHandler):
     def get(self):
         # Set the response header to be JSON format
         self.set_header("Content-Type", 'application/json')
-      
+       
         # Write the data as JSON
         self.write(json.dumps(data_to_serve))
 
@@ -110,11 +110,13 @@ class Presentation():
 
          self.content = [slide.content for slide in slides]   
          
+         #Set animations
          self.animation = [slide.animation for slide in slides]
 
    @classmethod
    def read(cls,data):
        """Import presentation"""   
+
 
        #prepare content
        slides = [Slide(content=content) for i,content in enumerate(data)]
@@ -124,7 +126,7 @@ class Presentation():
    
    def slide(self,slide):  
          """Add a slide"""
-
+        
          self.content.append(slide.content) 
          self.animation.append(slide.animation) 
 
@@ -132,81 +134,13 @@ class Presentation():
 
 
 
-   def _render_animation_old(self):
-
-        #Add IDs to Slides
-        for s,slide in enumerate(self.content):
-           slide['id'] = f'S{s}'
-           slide['hidden'] = True
-           #Add IDs to Components
-           for c,component in enumerate(slide['props']['children']):
-               component['id'] = f'S{s}_C{c}'
-
-
-        #Add events
-        events = []
-        for s,animation in enumerate(self.animation):
-            animation = np.array(animation).T
-            if s > 0:
-                #Add trailer to previous animation (for backward pass)
-                events[-1].update({f'S{s-1}':False})
-                events[-1].update({f'S{s}'  :True})
-
-                
-                event = {f'S{s-1}':True}
-
-            else: event = {}    
-            event.update({f'S{s}':False})
-            for i,click in enumerate(animation):
-                if not i == 0: 
-                    event = {}
-
-                for c,status in enumerate(click):
-                    #If it is there, do not check
-                    C_id = f'S{s}_C{c}'; value = not(bool(status))
-                    event.update({C_id:value})
-                events.append(event)        
-
-        return events    
-
-   def _render_animation(self):
-
-        #Add IDs to Slides
-        for s,slide in enumerate(self.content):
-           slide['id'] = f'S{s}'
-           slide['hidden'] = True
-           #Add IDs to Components
-           for c,component in enumerate(slide['props']['children']):
-               component['id'] = f'S{s}_C{c}'
-
-
-        #Add events
-        events = {}
-        for s,animation in enumerate(self.animation):
-            animation = np.array(animation).T
-
-            slide_events = []
-            for i,click in enumerate(animation):
-                event = {}
-                for c,status in enumerate(click):
-                    C_id = f'S{s}_C{c}'; value = not(bool(status))
-                    event.update({C_id:value})
-                slide_events.append(event)        
-            events[f'S{s}'] = slide_events   
-
-        return events    
-
-
    def show(self):
         """Display the presentation"""
 
         #run(self.content)
 
-        animation = self._render_animation()
-
         global data_to_serve
-        data_to_serve = {'data':self.content,'animation':animation}
-
+        data_to_serve = {'data':self.content,'animation':self.animation}
 
         app = make_app()
         app.listen(8888)
@@ -277,7 +211,7 @@ class Slide():
     def __init__(self,background='#36454f',content = []):
         
          if len(content) == 0:
-             self.content = {'type':'Slide','props':{'children':[],'className':'slide presentation','hidden':True,'style':{'backgroundColor':background}}}
+          self.content = {'type':'Slide','props':{'children':[],'className':'slide presentation','style':{'backgroundColor':background}}}
          else:
           self.content = content  
 
@@ -287,7 +221,7 @@ class Slide():
     def _add_animation(self,**argv):
         """Add animation"""
 
-        self.animation.append(argv.setdefault('animation',[1]))
+        self.animation.append(argv.setdefault('animation',False))
 
     def text(self,text,**argv):   
        
@@ -297,9 +231,8 @@ class Slide():
         style.setdefault('color','#FFFFFF')
         style.update({'fontSize':argv.setdefault('fontsize',60)})
         #-----------------
-        nc = len(self.content['props']['children'])
-        #tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable','style':style},'id':f'C{nc}'}
-        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable component','style':style}}
+
+        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable','style':style}}
         self.content['props']['children'].append(tmp)
 
         self._add_animation(**argv)
@@ -314,9 +247,8 @@ class Slide():
                image =  base64.b64encode(image_file.read()).decode("utf8")
             url = 'data:image/png;base64,{}'.format(image)
         
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable component'}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable'}}
         self.content['props']['children'].append(tmp)
-        self._add_animation(**argv)
         return self
      
     def slide(self,slide,**argv):
@@ -330,7 +262,6 @@ class Slide():
         #-----------------------------
 
         self.content['props']['children'].append(tmp)
-        self._add_animation(**argv)
         return self
         
 
@@ -339,9 +270,8 @@ class Slide():
        style = get_style(**argv)
        image = shape(shapeID,**argv)
        url = 'data:image/png;base64,{}'.format(image) 
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable component'}}
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable'}}
        self.content['props']['children'].append(tmp)
-       self._add_animation(**argv)
        return self
        
     def youtube(self,videoID,**argv):
@@ -359,9 +289,8 @@ class Slide():
         #Add thumbnail--
         image = get_youtube_thumbnail(videoID)
         url = 'data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB component'}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB'}}
         self.content['props']['children'].append(tmp)
-        self._add_animation(**argv)
         return self
 
     def matplotlib(self,fig,**argv):
@@ -374,9 +303,8 @@ class Slide():
        image = base64.b64encode(buf.getvalue()).decode("utf8")
        buf.close()
        url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable component'}}
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable'}}
        self.content['props']['children'].append(tmp)
-       self._add_animation(**argv)
 
        return self
 
@@ -404,10 +332,9 @@ class Slide():
        #Add thumbnail
        image = fig_to_base64(fig)
        url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB component','hidden':True}}
-
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB','hidden':True}}
        self.content['props']['children'].append(tmp)
-       self._add_animation(**argv)
+
        return self 
 
     def molecule(self,structure,**argv):
@@ -415,10 +342,9 @@ class Slide():
 
        argv.setdefault('mode','full') 
        style  = get_style(**argv) 
-       tmp = {'type':'molecule','props':{'className':'interactable viewer_3Dmoljs component','style':style,'structure':structure,'backgroundColor':self.content['props']['style']['backgroundColor']}}
-
+       tmp = {'type':'molecule','props':{'className':'interactable viewer_3Dmoljs','style':style,'structure':structure,'backgroundColor':self.content['props']['style']['backgroundColor']}}
        self.content['props']['children'].append(tmp)
-       self._add_animation(**argv)
+    
        return self
 
     def REPL(self,kernel,**argv):
@@ -436,10 +362,9 @@ class Slide():
         image = load_icon('jupyter')
         image = encode_image_to_base64(image)
         url='data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB component','hidden':True}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB','hidden':True}}
         self.content['props']['children'].append(tmp)
 
-        self._add_animation(**argv)
         return self 
         
     def embed(self,url,**argv):
@@ -448,10 +373,9 @@ class Slide():
         style = get_style(**argv)
         #Add border
         style['border'] ='2px solid #000';
-        tmp = {'type':'Iframe','props':{'className':'interactable component','src':url,'style':style}}
-
+        tmp = {'type':'Iframe','props':{'className':'interactable','src':url,'style':style}}
         self.content['props']['children'].append(tmp)
-        self._add_animation(**argv)
+
         return self
 
 

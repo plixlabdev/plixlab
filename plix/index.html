@@ -23,6 +23,8 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+
 
   <link rel="stylesheet" href="styles.css">
   <script src="code.js"></script>
@@ -49,8 +51,23 @@
                     <i class="fas fa-download"></i>
                 </button>
             </div>
+            <div class="col-auto btn-col">
+                <button class="button-base" id="share">
+                    <i class="fa-solid fa-square-share-nodes"></i>
+                </button>
+            </div>
         </div>
     </div>
+
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <button id="copyBtn" data-clipboard-text=""><i class="fas fa-copy"></i></button>
+            <p id="modalText"></p>
+        </div>
+    </div>
+    
+    
+    
 
     <button class="button-arrow" id='aleft' style="position: absolute; left: 3%; bottom: 50%;">
         <i class="fa-solid fa-chevron-left"></i>

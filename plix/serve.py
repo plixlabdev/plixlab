@@ -5,8 +5,7 @@ import json
 import webbrowser
 from tornado import autoreload
 from tornado import websocket
-
-
+#from plix import Presentation
 
 # List to store active WebSocket connections
 active_sockets = []
@@ -49,14 +48,23 @@ class DataHandler(tornado.web.RequestHandler):
 
 class PingHandler(tornado.web.RequestHandler):
     def get(self):
+
         self.write("pong")
 
+class ShareHandler(tornado.web.RequestHandler):
+    def get(self):
+
+        #Share and get the URL-------
+        url = Presentation.read(data_to_serve).push(verbose=False)
+
+        #Send back the url to the client
+        self.write(url)
 
 def make_app():
     return tornado.web.Application([
-        #(r"/", MainHandler),
         (r"/",NoCacheHandler),
         (r"/ping", PingHandler),
+        (r"/share", ShareHandler),
         (r"/data", DataHandler),
         (r"/reload", ReloadWebSocketHandler),
         (r"/(render.js|styles.css|code.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
