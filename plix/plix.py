@@ -117,12 +117,15 @@ class ShareHandler(tornado.web.RequestHandler):
         #Send back the url to the client
         self.write(url)
 
+
+
 def make_app():
     return tornado.web.Application([
         (r"/",NoCacheHandler),
         (r"/ping", PingHandler),
         (r"/share", ShareHandler),
         (r"/data", DataHandler),
+        (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "static")}),
         (r"/reload", ReloadWebSocketHandler),
         (r"/(render.js|styles.css|code.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
     ])
@@ -253,7 +256,8 @@ class Slide():
     def __init__(self,background='#36454f',content = []):
         
          if len(content) == 0:
-             self.content = {'type':'Slide','props':{'children':[],'className':'slide presentation','hidden':True,'style':{'backgroundColor':background}}}
+             #self.content = {'type':'Slide','props':{'children':[],'className':'slide presentation','hidden':True,'style':{'backgroundColor':background}}}
+             self.content = {'type':'Slide','props':{'children':[],'className':'slide','hidden':False,'style':{'backgroundColor':background}}}
          else:
           self.content = content  
 
@@ -274,11 +278,13 @@ class Slide():
         argv.setdefault('mode','center')
         style = get_style(**argv)
         style.setdefault('color','#FFFFFF')
-        style.update({'fontSize':argv.setdefault('fontsize',60)})
+        #style.update({'fontSize':argv.setdefault('fontsize',60)})
+        #style.update({'fontSize':argv.setdefault('fontsize','5vw')})
+        #style.update({'fontSize':argv.setdefault('fontsize','300%')})
         #-----------------
         nc = len(self.content['props']['children'])
         #tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable','style':style},'id':f'C{nc}'}
-        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style}}
+        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style,'fontsize':argv.setdefault('fontsize',0.05)}}
         self.content['props']['children'].append(tmp)
 
         self._add_animation(**argv)
@@ -338,7 +344,7 @@ class Slide():
         #Add thumbnail--
         image = get_youtube_thumbnail(videoID)
         url = 'data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB componentB','hidden':True}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable','hidden':True}}
         self.content['props']['children'].append(tmp)
         self._add_animation(**argv)
         return self
@@ -383,7 +389,7 @@ class Slide():
        #Add thumbnail
        image = fig_to_base64(fig)
        url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB componentB','hidden':True}}
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable','hidden':True}}
 
        self.content['props']['children'].append(tmp)
        self._add_animation(**argv)
@@ -415,7 +421,7 @@ class Slide():
         image = load_icon('jupyter')
         image = encode_image_to_base64(image)
         url='data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB componentB','hidden':True}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB','hidden':True}}
         self.content['props']['children'].append(tmp)
 
         self._add_animation(**argv)

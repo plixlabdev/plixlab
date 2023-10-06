@@ -147,6 +147,8 @@ function add_common_properties(element,data) {
     if (data.props.className) {
         element.className = data.props.className;
     }
+
+   
         
     //Hidden
     if (data.props.hidden) {
@@ -160,7 +162,7 @@ function add_common_properties(element,data) {
 
 }
 
-
+   
 function renderComponent(data,outer_element) {
     let element;
     switch (data.type) {
@@ -186,6 +188,30 @@ function renderComponent(data,outer_element) {
             const text = markedInstance(data.props.children);
             element.innerHTML = text
             
+            // Render LaTeX equations using MathJax
+            if (window.MathJax) {
+             window.MathJax.typesetPromise([element]).catch((err) => console.log(err.message));
+            }
+            
+            console.log( data.fontsize)
+            //==================================================
+            function setDynamicFontSize() {
+                let fontSize = outer_element.offsetHeight * data.props.fontsize;
+                element.style.fontSize = fontSize + 'px';
+            }
+            
+            // Use ResizeObserver to observe size changes on outer_element
+            const ro = new ResizeObserver(() => {
+                setDynamicFontSize();
+            });
+            
+            ro.observe(outer_element);
+            
+            setDynamicFontSize(); // Initial call
+            //======================================= 
+            
+
+
             add_common_properties(element, data);
             outer_element.appendChild(element);
             
@@ -207,22 +233,45 @@ function renderComponent(data,outer_element) {
               iframe.src = data.props.src;            
               element.appendChild(iframe)
               
+              
               outer_element.appendChild(element)
               break;     
         case 'Graph':
-                const config = {
-                    responsive: true
-                };
-                element = document.createElement('div');
-                add_common_properties(element,data)
-                outer_element.appendChild(element)
-                
-                 
-                requestAnimationFrame(function() {
-                    Plotly.newPlot(element, data.props.figure.data, data.props.figure.layout, config);
-                });
-        
-                break; 
+            const config = {
+                responsive: true
+            };
+            element = document.createElement('div');
+            //element.id = 'test';
+            add_common_properties(element, data);
+            outer_element.appendChild(element);
+
+
+            //let currentElement = element;
+            //while (currentElement) {
+
+            //   console.log(currentElement.id,currentElement.tagName, 'Width:', currentElement.clientWidth, 'Height:', currentElement.clientHeight);
+
+              //if (currentElement.clientWidth === 0 || currentElement.clientHeight === 0) {
+               //  console.error('Found an element with zero width or height:', currentElement);
+             // }
+
+            // currentElement = currentElement.parentElement;
+           // }
+
+
+            //const observer = new MutationObserver(mutationsList => {
+             //   for(let mutation of mutationsList) {
+             //       if (mutation.type === 'attributes' && element.clientWidth > 0) {
+             Plotly.newPlot(element, data.props.figure.data, data.props.figure.layout, config);
+              //          observer.disconnect();  // stop observing once we've plotted
+              //      }
+              //  }
+            //});
+            
+            //observer.observe(element, { attributes: true, childList: true, subtree: true });
+            
+     
+            break; 
 
         case 'molecule':
 
@@ -268,7 +317,7 @@ function renderComponent(data,outer_element) {
     }
     }
    
-    
+    return element
     
 }
 
@@ -288,10 +337,29 @@ function render() {
         renderComponent(data,container);
     });
 
-    document.getElementById('S' + String(window.dataStore.active_slide)).hidden=false;
-    
+  //  document.querySelectorAll(".slide").forEach(slide => slide.hidden = (slide.id !== 'S' + String(window.dataStore.active_slide)));
 
+    //Make only the first slide visible
+    //const totalSlides = document.querySelectorAll(".slide").length;
+    document.getElementById('S' + String(window.dataStore.active_slide)).hidden=false;
+
+
+    const slides = document.querySelectorAll(".slide");
+    active_id = 'S' + String(window.dataStore.active_slide)
+
+    for (let i = 0; i < slides.length; i++) {
+    if (slides[i].id === active_id) {
+        slides[i].hidden = false;
+        console.log(i)
+    } else {
+        slides[i].hidden = true;
+    }
 }
+    
+}
+
+
+
 
 
 })

@@ -3,7 +3,6 @@ window.addEventListener('load', async function() {
 
 
 
-
 document.addEventListener('keydown', function(event) {
    
     if (window.dataStore.mode == 'presentation') {
@@ -25,13 +24,23 @@ document.addEventListener('keydown', function(event) {
   })
 
 
+document.getElementById('aleft').addEventListener('click', function(event) {
+    if (window.dataStore.mode == 'presentation') {
+        decrementSlide();
+    }
+});
+
+document.getElementById('aright').addEventListener('click', function(event) {
+    if (window.dataStore.mode == 'presentation') {
+        incrementSlide();
+    }
+}); 
+
+
+
+
 function incrementEvent() {    
 
-    //const totalEvents = window.dataStore.animation.length;
-    //if (window.dataStore.index < totalEvents - 1) {
-    //   window.dataStore.index += 1;
-    //   updateEventVisibility()
-   // }
 
    const totalSlides = document.querySelectorAll(".slide").length;
    const NSlideEvents = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length
@@ -52,10 +61,6 @@ function incrementEvent() {
 
 function decrementEvent() {    
 
-   //if (window.dataStore.index > 0) {
-   //     window.dataStore.index -= 1;
-   //     updateEventVisibility()
-   // }
 
    console.log(window.dataStore.index,window.dataStore.active_slide)
    if (window.dataStore.index > 0){
@@ -103,20 +108,6 @@ function decrementSlide() {
 
 
 
-    document.getElementById('aleft').addEventListener('click', function(event) {
-        if (window.dataStore.mode == 'presentation') {
-            decrementSlide();
-        }
-    });
-
-    document.getElementById('aright').addEventListener('click', function(event) {
-        if (window.dataStore.mode == 'presentation') {
-            incrementSlide();
-        }
-    }); 
-
-
-
 
 
 function updateEventVisibility() {
@@ -152,12 +143,12 @@ document.body.addEventListener('click', e => {
         document.getElementById('slide-container').className = window.dataStore.mode;
 
         // Scale text
-        const textElements = document.querySelectorAll('.markdownComponent');
-        textElements.forEach((textElement) => {
-        const fontSizePx = parseFloat(window.getComputedStyle(textElement).fontSize);
-        const newFontSize = (window.dataStore.mode === 'grid') ? fontSizePx * ratio : fontSizePx / ratio;
-        textElement.style.fontSize = `${newFontSize}px`;
-       });
+        //const textElements = document.querySelectorAll('.markdownComponent');
+        //textElements.forEach((textElement) => {
+        //const fontSizePx = parseFloat(window.getComputedStyle(textElement).fontSize);
+        //const newFontSize = (window.dataStore.mode === 'grid') ? fontSizePx * ratio : fontSizePx / ratio;
+        //textElement.style.fontSize = `${newFontSize}px`;
+       //});
 
        // Hide/Show slides
       const slides = document.querySelectorAll(".slide");
@@ -175,6 +166,13 @@ document.body.addEventListener('click', e => {
         interactables.forEach(el => {
             el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
         });
+
+         // Manage interactable elements
+         const interactables2 = document.querySelectorAll('.PartB');
+         //console.log(interactables.length)
+         interactables2.forEach(el => {
+             el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
+         });
 
          // Manage PartA and PartB components
          const componentsA = document.querySelectorAll('.PartA');
@@ -208,14 +206,12 @@ function switchMode() {
 
 
         // Scale text
-        const textElements = document.querySelectorAll('.markdownComponent');
-        textElements.forEach((textElement) => {
-            const fontSizePx = parseFloat(window.getComputedStyle(textElement).fontSize);
-            const newFontSize = (window.dataStore.mode === 'grid') ? fontSizePx * ratio : fontSizePx / ratio;
-            textElement.style.fontSize = `${newFontSize}px`;
-            //function updateSlidesVisibility() {
-            //component.hidden = (window.dataStore.mode === 'grid') ? false : true;}
-        });
+        //const textElements = document.querySelectorAll('.markdownComponent');
+        //textElements.forEach((textElement) => {
+        //    const fontSizePx = parseFloat(window.getComputedStyle(textElement).fontSize);
+        //    const newFontSize = (window.dataStore.mode === 'grid') ? fontSizePx * ratio : fontSizePx / ratio;
+        //    textElement.style.fontSize = `${newFontSize}px`;
+        //});
 
         // Hide/Show slides
         const slides = document.querySelectorAll(".slide");
@@ -260,6 +256,18 @@ function switchMode() {
         } else {
             fullscreen.style.visibility = 'visible'
         }
+        const aleft = document.getElementById('aleft');
+        if (window.dataStore.mode === 'grid'){
+            aleft.style.visibility = 'hidden'
+        } else {
+            aleft.style.visibility = 'visible'
+        }
+        const aright = document.getElementById('aright');
+        if (window.dataStore.mode === 'grid'){
+            aright.style.visibility = 'hidden'
+        } else {
+            aright.style.visibility = 'visible'
+        }
 
     }
 
@@ -271,46 +279,40 @@ document.getElementById('switch-view-btn').addEventListener('click', function() 
    
 function fullScreen() {
 
-    var outerContainer = document.getElementById('outer-container');
+    var outerContainer = document.getElementById('slide-container');
     //console.log(outerContainer.offoriginalOuterContainer.offsetWidthsetWidth,outerContainer.offsetHeight)
-    originalWidth = outerContainer.offsetWidth
-    // Store original font sizes as percentages of slideArea's width
-    const textElements = document.querySelectorAll('.markdownComponent');
-    const originalFontSizes = [];
-    textElements.forEach((textElement) => {
-    const fontSizePx = parseInt(window.getComputedStyle(textElement).fontSize);
-    const fontSizePercentage = fontSizePx / originalWidth;
-    originalFontSizes.push(fontSizePercentage);
-     });
+    //originalWidth = outerContainer.offsetWidth
+    //const textElements = document.querySelectorAll('.markdownComponent');
+    //const originalFontSizes = [];
+    //textElements.forEach((textElement) => {
+    //const fontSizePx = parseInt(window.getComputedStyle(textElement).fontSize);
+    //const fontSizePercentage = fontSizePx / originalWidth;
+   // originalFontSizes.push(fontSizePercentage);
+   //  });
     //-------------------------------------------------------------------
 
     function adjustFontSize() {
-            const slideAreaWidth = outerContainer.offsetWidth;
-            textElements.forEach((textElement, i) => {
-            const fontSize = slideAreaWidth * originalFontSizes[i];
-            textElement.style.fontSize = fontSize + 'px';})
+          //  const slideAreaWidth = outerContainer.offsetWidth;
+          //  textElements.forEach((textElement, i) => {
+          //  const fontSize = slideAreaWidth * originalFontSizes[i];
+           // textElement.style.fontSize = fontSize + 'px';})
             
-            //console.log('Forward Full before '  +  originalWidth + ' ' + originalFontSizes[i]*originalWidth + 'px, after ' +fontSize  + 'px');
             outerContainer.classList.add('fullscreen-mode');
             window.dataStore.mode = 'full';
-            //Go into Presenting mode (Full)
-            //Reset index (which belong to one slide)
-            //window.dataStore.index = 0
-            //updateEventVisibility()
+          
         }
 
       document.onfullscreenchange = function() {
            if (!document.fullscreenElement) {
-            console.log('sss')
 
                 outerContainer.classList.remove('fullscreen-mode');
 
-                textElements.forEach((textElement, i) => {
-                    const fontSize = outerContainer.offsetWidth * originalFontSizes[i];
-                    textElement.style.fontSize = fontSize + 'px';
-                    window.dataStore.mode = 'presentation';})
+                //textElements.forEach((textElement, i) => {
+                //    const fontSize = outerContainer.offsetWidth * originalFontSizes[i];
+                 //   textElement.style.fontSize = fontSize + 'px';
+                 //   })
                     //console.log(window.dataStore.mode)
-                    
+                    window.dataStore.mode = 'presentation';
 
                     // Show the active slide
                     const slides = document.querySelectorAll(".slide");
@@ -320,7 +322,7 @@ function fullScreen() {
 
                    
                     //show all components in presentation mode
-                     const components = document.querySelectorAll(".componentA");
+                    const components = document.querySelectorAll(".componentA");
                     components.forEach((component, index) => {
                     component.hidden = false;
                      });
