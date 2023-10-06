@@ -53,7 +53,43 @@ class NoCacheHandler(tornado.web.RequestHandler):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         index_path = os.path.join(script_dir, 'index.html')
         with open(index_path, 'r') as f:
-            self.write(f.read())
+          self.write(f.read())
+
+          
+def push_data(content,local=False,token=None,verbose=True):
+
+      #Get token
+      if not token: token = './computing_together.txt'
+      with open(token,'r') as f:
+           refresh_token = f.read()
+
+      if local:
+       url_prefix = 'http://127.0.0.1:5000/presentation'
+       url ='http://127.0.0.1:5001/computo-306914/us-central1/upload'
+      else: 
+       url_prefix = 'https://computo-306914.web.app/presentation'
+       url = 'https://upload-whn4gonsea-uc.a.run.app'
+
+
+      # Get SignedURL--------------------------
+      headers = {
+      'Authorization': f'Bearer {refresh_token}',
+      'Content-Type': 'application/json'
+      }
+      output = requests.post(url, json={"title": content['title']}, headers=headers).json()
+      signedURL = output['signedUrl']
+      #----------------------------------------
+    
+
+      #Upload data
+      response = requests.put(signedURL, headers={"Content-Type": "application/json"}, json=content)
+
+      url = url_prefix + '/' +  output['url']
+      #Print URL
+      if verbose:
+       print(url)
+
+      return url 
 
 def set_default_headers(self):
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
@@ -75,10 +111,8 @@ class PingHandler(tornado.web.RequestHandler):
 
 class ShareHandler(tornado.web.RequestHandler):
     def get(self):
-      
-        #Share and get the URL-------
-        url = Presentation.read(data_to_serve).push(verbose=False)
-        print(url)
+        
+        url = push_data(data_to_serve,verbose=False)
 
         #Send back the url to the client
         self.write(url)
@@ -112,14 +146,17 @@ class Presentation():
          
          self.animation = [slide.animation for slide in slides]
 
-   @classmethod
-   def read(cls,data):
-       """Import presentation"""   
+   #@classmethod
+   #def read(cls,data):
+   #    """Import presentation"""   
 
-       #prepare content
-       slides = [Slide(content=content) for i,content in enumerate(data)]
+   #    #prepare content
+       #slides = [Slide(content=content) for i,content in enumerate(data)]
 
-       return cls(slides)
+   #    a = cls(); 
+   #    a.content = data['data'] 
+   #    a.animation = data['animation'] 
+   #    return a
 
    
    def slide(self,slide):  
@@ -131,43 +168,6 @@ class Presentation():
          return slide
 
 
-
-   def _render_animation_old(self):
-
-        #Add IDs to Slides
-        for s,slide in enumerate(self.content):
-           slide['id'] = f'S{s}'
-           slide['hidden'] = True
-           #Add IDs to Components
-           for c,component in enumerate(slide['props']['children']):
-               component['id'] = f'S{s}_C{c}'
-
-
-        #Add events
-        events = []
-        for s,animation in enumerate(self.animation):
-            animation = np.array(animation).T
-            if s > 0:
-                #Add trailer to previous animation (for backward pass)
-                events[-1].update({f'S{s-1}':False})
-                events[-1].update({f'S{s}'  :True})
-
-                
-                event = {f'S{s-1}':True}
-
-            else: event = {}    
-            event.update({f'S{s}':False})
-            for i,click in enumerate(animation):
-                if not i == 0: 
-                    event = {}
-
-                for c,status in enumerate(click):
-                    #If it is there, do not check
-                    C_id = f'S{s}_C{c}'; value = not(bool(status))
-                    event.update({C_id:value})
-                events.append(event)        
-
-        return events    
 
    def _render_animation(self):
 
@@ -200,12 +200,11 @@ class Presentation():
    def show(self):
         """Display the presentation"""
 
-        #run(self.content)
 
         animation = self._render_animation()
 
         global data_to_serve
-        data_to_serve = {'data':self.content,'animation':animation}
+        data_to_serve = {'data':self.content,'animation':animation,'title':self.title}
 
 
         app = make_app()
@@ -227,48 +226,25 @@ class Presentation():
 
 
    def save(self,filename):
-      """Save presentation""" 
+        """Save presentation""" 
 
-      content = [slide.content for slide in self.slides]
-      with open(filename,'w') as f: 
+        animation = self._render_animation()
+
+        content = {'data':self.content,'animation':animation}
+
+        with open(filename,'w') as f: 
           json.dump(content,f)
 
 
 
-   def push(self,local=False,slide_index = 0,token=None,verbose=True):
-   
-      #Get token
-      if not token: token = './computing_together.txt'
-      with open(token,'r') as f:
-           refresh_token = f.read()
+   def push(self,**argv):
 
-      if local:
-       url_prefix = 'http://127.0.0.1:5000/presentation'
-       url ='http://127.0.0.1:5001/computo-306914/us-central1/uploadV2'
-      else: 
-       url_prefix = 'https://computo-306914.web.app/presentation'
-       url = 'https://uploadv2-whn4gonsea-uc.a.run.app'
+      #Prepare content
+      animation = self._render_animation()
+      content = {'data':self.content,'animation':animation,'title':self.title}
 
+      url = push_data(content,**argv)
 
-      # Get SignedURL--------------------------
-      headers = {
-      'Authorization': f'Bearer {refresh_token}',
-      'Content-Type': 'application/json'
-      }
-      output = requests.post(url, json={"title": self.title}, headers=headers).json()
-      signedURL = output['signedUrl']
-      #----------------------------------------
-    
-     
-      #Upload data
-      response = requests.put(signedURL, headers={"Content-Type": "application/json"}, json=self.content)
-
-      url = url_prefix + '/' +  output['url']
-      #Print URL
-      if verbose:
-       print(url)
-
-      return url 
 
 
 
@@ -289,6 +265,9 @@ class Slide():
 
         self.animation.append(argv.setdefault('animation',[1]))
 
+    #componentA: eveything to show in presentation
+    #componentA: eveything to show in grid
+
     def text(self,text,**argv):   
        
         #Adjust style---
@@ -299,7 +278,7 @@ class Slide():
         #-----------------
         nc = len(self.content['props']['children'])
         #tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable','style':style},'id':f'C{nc}'}
-        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable component','style':style}}
+        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style}}
         self.content['props']['children'].append(tmp)
 
         self._add_animation(**argv)
@@ -314,7 +293,7 @@ class Slide():
                image =  base64.b64encode(image_file.read()).decode("utf8")
             url = 'data:image/png;base64,{}'.format(image)
         
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable component'}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable componentA'}}
         self.content['props']['children'].append(tmp)
         self._add_animation(**argv)
         return self
@@ -326,7 +305,7 @@ class Slide():
         style = get_style(**argv)
         style['backgroundColor'] = slide.content['props']['style']['backgroundColor']
         style['border'] = '3px solid #FFFFFF'
-        tmp = {'type':'Slide','props':{'children':slide.content['props']['children'],'className':'embedded_slide interactable','style':style}}
+        tmp = {'type':'Slide','props':{'children':slide.content['props']['children'],'className':'embedded_slide interactable componentA','style':style}}
         #-----------------------------
 
         self.content['props']['children'].append(tmp)
@@ -339,7 +318,7 @@ class Slide():
        style = get_style(**argv)
        image = shape(shapeID,**argv)
        url = 'data:image/png;base64,{}'.format(image) 
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable component'}}
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable componentA'}}
        self.content['props']['children'].append(tmp)
        self._add_animation(**argv)
        return self
@@ -352,14 +331,14 @@ class Slide():
 
         #Add Video--
         url = f"https://www.youtube.com/embed/{videoID}?controls=0&rel=0"
-        tmp = {'type':'Iframe','props':{'className':'PartA','src':url,'style':style}}
+        tmp = {'type':'Iframe','props':{'className':'PartA componentA','src':url,'style':style}}
         self.content['props']['children'].append(tmp)
         #----------
 
         #Add thumbnail--
         image = get_youtube_thumbnail(videoID)
         url = 'data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB component'}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB componentB','hidden':True}}
         self.content['props']['children'].append(tmp)
         self._add_animation(**argv)
         return self
@@ -374,7 +353,7 @@ class Slide():
        image = base64.b64encode(buf.getvalue()).decode("utf8")
        buf.close()
        url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable component'}}
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable componentA'}}
        self.content['props']['children'].append(tmp)
        self._add_animation(**argv)
 
@@ -384,7 +363,7 @@ class Slide():
        """Add plotly graph"""
 
        style  = get_style(**argv)
-       style['position'] = 'flex'
+      # style['position'] = 'flex'
 
        if isinstance(graph,str):
          with open(f'{graph}.json','r') as f:
@@ -398,13 +377,13 @@ class Slide():
        fig = fig.to_plotly_json()
        #--------------------------
     
-       tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style,'className':'PartA'}}
+       tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style,'className':'PartA componentA'}}
        self.content['props']['children'].append(tmp)
 
        #Add thumbnail
        image = fig_to_base64(fig)
        url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB component','hidden':True}}
+       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB componentB','hidden':True}}
 
        self.content['props']['children'].append(tmp)
        self._add_animation(**argv)
@@ -415,7 +394,7 @@ class Slide():
 
        argv.setdefault('mode','full') 
        style  = get_style(**argv) 
-       tmp = {'type':'molecule','props':{'className':'interactable viewer_3Dmoljs component','style':style,'structure':structure,'backgroundColor':self.content['props']['style']['backgroundColor']}}
+       tmp = {'type':'molecule','props':{'className':'interactable viewer_3Dmoljs componentA','style':style,'structure':structure,'backgroundColor':self.content['props']['style']['backgroundColor']}}
 
        self.content['props']['children'].append(tmp)
        self._add_animation(**argv)
@@ -429,14 +408,14 @@ class Slide():
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
         #Add Iframe--
-        tmp = {'type':'Iframe','props':{'className':'PartA','src':url,'style':style,'hidden':False}}
+        tmp = {'type':'Iframe','props':{'className':'PartA componentA','src':url,'style':style,'hidden':False}}
         self.content['props']['children'].append(tmp)
 
         #Add Thumbnail
         image = load_icon('jupyter')
         image = encode_image_to_base64(image)
         url='data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB component','hidden':True}}
+        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB componentB','hidden':True}}
         self.content['props']['children'].append(tmp)
 
         self._add_animation(**argv)
@@ -448,7 +427,7 @@ class Slide():
         style = get_style(**argv)
         #Add border
         style['border'] ='2px solid #000';
-        tmp = {'type':'Iframe','props':{'className':'interactable component','src':url,'style':style}}
+        tmp = {'type':'Iframe','props':{'className':'interactable componentA','src':url,'style':style}}
 
         self.content['props']['children'].append(tmp)
         self._add_animation(**argv)
