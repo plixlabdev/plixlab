@@ -132,37 +132,18 @@ function updateEventVisibility() {
 }
 
 
-//function updateSlidesVisibility() {
- //   try {
- //       var slides = document.querySelectorAll(".slide");
-        
- //       slides.forEach(function(slide, index) {
-  //          if (!slide) {
-  //              console.error('Slide at index:', index, 'not found!');
-  //              return;
-  //          }
-          
-            // Using the index directly for comparison with active_slide
-  //          if (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide) {
-  //              slide.hidden = true;
-  //          } else {
-  //              slide.hidden = false;
-  //          }
-  //      });
-  //  } catch (error) {
-   //     console.error('Error updating visibility for slides', error);
-   // }
-//}
 
 document.body.addEventListener('click', e => {
+    
     const ratio = 0.24;
     if (e.target.classList.contains('slide')) {
-        const clickedSlideIndex = parseInt(e.target.getAttribute('data-index'));
+        const clickedSlideIndex = parseInt(e.target.id.substring(1));
+        console.log(clickedSlideIndex)
+
         if (!isNaN(clickedSlideIndex)) {
-            //window.dataStore.active_slide = clickedSlideIndex;
-            
+          
             window.dataStore.active_slide = clickedSlideIndex;
-            //console.log(window.dataStore.active_slide);
+            
         }
 
        if (window.dataStore.mode === 'grid')
@@ -210,6 +191,10 @@ document.body.addEventListener('click', e => {
          const fullscreen = document.getElementById('full-screen');
          fullscreen.style.visibility = 'visible'
          
+         // Adjust switch button styling
+        const switchBtn = document.getElementById('switch-view-btn');
+        switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
+
        }
         
     }
@@ -238,26 +223,8 @@ function switchMode() {
         slide.hidden = (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide);
         });
 
-        // Show all components when going to grid mode
-        //const components = document.querySelectorAll(".component");
-        //components.forEach((component, index) => {
-        //component.hidden = (window.dataStore.mode === 'presentation');
-        //});
-
-        //Update visibility
-        //if (window.dataStore.mode === 'grid') {
-        //    const components = document.querySelectorAll(".component");
-        //    components.forEach((component, index) => {
-        //    component.hidden = false})
-        //} else {
-        //     updateSlidesVisibility() 
-       // }
-        
-        //console.log( window.dataStore.active_slide)
-        // Adjust switch button styling
-        const switchBtn = document.getElementById('switch-view-btn');
-        switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
-
+       
+       
 
         // Manage interactable elements
         const interactables = document.querySelectorAll('.interactable');
@@ -265,6 +232,25 @@ function switchMode() {
         interactables.forEach(el => {
             el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
         });
+
+         // Manage PartA and PartB components
+         const componentsA = document.querySelectorAll('.PartA');
+         componentsA.forEach(component => {
+             component.hidden = (window.dataStore.mode === 'grid') ? true : false;
+         });
+ 
+         const componentsB = document.querySelectorAll('.PartB');
+         componentsB.forEach(component => {
+             component.hidden = (window.dataStore.mode === 'grid') ? false : true;
+         });
+
+        
+
+
+        //console.log( window.dataStore.active_slide)
+        // Adjust switch button styling
+        const switchBtn = document.getElementById('switch-view-btn');
+        switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
 
         //console.log(window.dataStore.mode)
         //Make the full-screen button disabled
@@ -302,45 +288,50 @@ function fullScreen() {
             const slideAreaWidth = outerContainer.offsetWidth;
             textElements.forEach((textElement, i) => {
             const fontSize = slideAreaWidth * originalFontSizes[i];
-            textElement.style.fontSize = fontSize + 'px';
+            textElement.style.fontSize = fontSize + 'px';})
+            
             //console.log('Forward Full before '  +  originalWidth + ' ' + originalFontSizes[i]*originalWidth + 'px, after ' +fontSize  + 'px');
             outerContainer.classList.add('fullscreen-mode');
             window.dataStore.mode = 'full';
             //Go into Presenting mode (Full)
             //Reset index (which belong to one slide)
-            window.dataStore.index = 0
-            updateEventVisibility()
-        });}
+            //window.dataStore.index = 0
+            //updateEventVisibility()
+        }
 
       document.onfullscreenchange = function() {
-            if (!document.fullscreenElement) {
+           if (!document.fullscreenElement) {
+            console.log('sss')
+
+                outerContainer.classList.remove('fullscreen-mode');
+
                 textElements.forEach((textElement, i) => {
                     const fontSize = outerContainer.offsetWidth * originalFontSizes[i];
                     textElement.style.fontSize = fontSize + 'px';
-                    window.dataStore.mode = 'presentation';
-                    console.log(window.dataStore.mode)
-                    outerContainer.classList.remove('fullscreen-mode');
+                    window.dataStore.mode = 'presentation';})
+                    //console.log(window.dataStore.mode)
+                    
 
                     // Show the active slide
                     const slides = document.querySelectorAll(".slide");
                     slides.forEach((slide, index) => {
-                    slide.hidden = (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide);
-                    });
+                    slide.hidden = (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide)});
+                    //});
 
-                    console.log('here') 
-                    //show all components
-                   const components = document.querySelectorAll(".component");
+                   
+                    //show all components in presentation mode
+                     const components = document.querySelectorAll(".componentA");
                     components.forEach((component, index) => {
                     component.hidden = false;
                      });
 
               //      console.log('Reverse Full before '  + outerContainer.offsetWidth + '  ' +  originalFontSizes[i]*originalWidth + 'px, after ' +fontSize  + 'px');
-                });
-            }
+                };
+            //}
         }
-        outerContainer.requestFullscreen().then(adjustFontSize)
 
-       
+        outerContainer.requestFullscreen().then(adjustFontSize)
+    
 
 }
 

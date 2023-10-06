@@ -1,5 +1,6 @@
 window.addEventListener('load', async function() {
 
+   
 //Reload
 const ws = new WebSocket('ws://localhost:8888/reload');
 
@@ -74,7 +75,24 @@ function closeModal() {
 
 
 
-async function fetchData() {
+
+function downloadJSONData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonData));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "presentation.plx");
+    document.body.appendChild(downloadAnchorNode); 
+    downloadAnchorNode.click(); 
+    downloadAnchorNode.remove();
+}
+
+document.getElementById('download').addEventListener('click', function() {
+    downloadJSONData();
+});
+
+   
+   
+    async function fetchData() {
         try {
             const response = await fetch('/data');
     
@@ -88,7 +106,9 @@ async function fetchData() {
         }
     }
     
+
  data = await fetchData();
+
  if (data) {
         jsonData = data.data
         //console.log(data.animation)
@@ -109,18 +129,6 @@ async function fetchData() {
         //updateVisibility();
 } 
   
-
-//function updateVisibility() {
-
-//    arr =  window.dataStore.animation[ window.dataStore.index]
-   
-//    for (let key in arr) {
- //       console.log(key)
- //       document.getElementById(key).hidden = arr[key]
-
-  //  } 
-
-//}
 
 function add_common_properties(element,data) {
 
@@ -153,21 +161,6 @@ function add_common_properties(element,data) {
 }
 
 
-function downloadJSONData() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonData));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "presentation.plx");
-    document.body.appendChild(downloadAnchorNode); 
-    downloadAnchorNode.click(); 
-    downloadAnchorNode.remove();
-}
-
-document.getElementById('download').addEventListener('click', function() {
-    downloadJSONData();
-});
-
-
 function renderComponent(data,outer_element) {
     let element;
     switch (data.type) {
@@ -192,7 +185,6 @@ function renderComponent(data,outer_element) {
             element = document.createElement('div')
             const text = markedInstance(data.props.children);
             element.innerHTML = text
-
             
             add_common_properties(element, data);
             outer_element.appendChild(element);
@@ -215,7 +207,6 @@ function renderComponent(data,outer_element) {
               iframe.src = data.props.src;            
               element.appendChild(iframe)
               
-              
               outer_element.appendChild(element)
               break;     
         case 'Graph':
@@ -225,8 +216,12 @@ function renderComponent(data,outer_element) {
                 element = document.createElement('div');
                 add_common_properties(element,data)
                 outer_element.appendChild(element)
-
-                Plotly.newPlot(element, data.props.figure.data, data.props.figure.layout, config);
+                
+                 
+                requestAnimationFrame(function() {
+                    Plotly.newPlot(element, data.props.figure.data, data.props.figure.layout, config);
+                });
+        
                 break; 
 
         case 'molecule':
@@ -294,25 +289,6 @@ function render() {
     });
 
     document.getElementById('S' + String(window.dataStore.active_slide)).hidden=false;
- 
-    // Initialize dataStore if it doesn't exist yet
-   //if (!window.dataStore) {
-   // window.dataStore = {};
-  // }
-
-    //window.dataStore.active_slide = 0;
-   // window.dataStore.mode = 'presentation';
-  //  window.dataStore.active_slide = 0;
-
-    //const slides = document.querySelectorAll(".slide");
-    //slides.forEach((slide, index) => {
-     //   if (index !== 0) {
-     //       slide.hidden = true;}
-     //    else {
-     //       slide.hidden = false;
-     //       console.log('hidden',index)
-     //   }
-    //});
     
 
 }
