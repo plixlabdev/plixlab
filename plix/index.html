@@ -9,28 +9,72 @@
 
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 
-   <!-- Bootstrap CSS and FontAwesome-->
-   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-   <!-- zero-md and Plotly libraries -->
-   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-   <!-- 3Dmol libraries -->
-   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
-   <script src="https://3Dmol.org/build/3Dmol.ui-min.js"></script>
+<!--
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.1/3Dmol.js"></script>-->
+  
+<!--
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js" charset="utf-8"></script>
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 
-  <!-- Include Libraries -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/dark.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
-  <script type="text/javascript"  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.1.1/es5/tex-mml-chtml.js"> </script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked-highlight/lib/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+
+
+<script type="text/javascript" async
+     src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.1.2/es5/tex-mml-chtml.js"> 
+     src="assets/js/tex-mml-chtml.js"
+</script>-->
+
+
+<link href="assets/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/css/all.min.css" rel="stylesheet">
+<script defer src="assets/js/plotly-2.26.0.min.js" charset="utf-8"></script>
+<script defer src="assets/js/3Dmol-min.js"></script>
+
+
+<link rel="stylesheet" href="/assets/css/dark.min.css">
+<script defer src="assets/js/marked.min.js"></script>
+<script defer src="assets/js/highlight.min.js"></script>
+<script defer src="assets/js/index.umd.js"></script>
+<script defer src="assets/js/clipboard.min.js"></script>
+
+
+<script type="text/javascript" async
+    defer src="assets/js/tex-mml-chtml.js">
+</script>
+
+
+  <script>
+    MathJax = {
+        loader: {
+            load: ['input/tex', 'output/chtml', 'ui/menu', '[tex]/ams']
+        },
+        tex: {
+            packages: {'[+]': ['ams']},
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true
+        }
+    };
+</script>
+
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({ TeX: { extensions: ["color.js"] }});
+</script>
 
 
   <link rel="stylesheet" href="styles.css">
-  <script src="code.js"></script>
+ <script src="code.js"></script>
   <script src="render.js"></script>
 
 
@@ -80,9 +124,9 @@
         <i class="fa-solid fa-chevron-right"></i>
     </button>
 
+    <div id="loader" class="loader">
     <div id="slide-container"></div>
-
-    
+   </div>
   
 </body>
 

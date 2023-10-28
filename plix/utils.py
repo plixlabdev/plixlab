@@ -14,8 +14,10 @@ def fig_to_base64(fig):
 
 
 def process_plotly(fig):
-             """Post processing plotly""" 
+             
 
+
+             """Post processing plotly""" 
              fig.update_layout(
              plot_bgcolor='rgba(0,0,0,0)',
              paper_bgcolor='rgba(0,0,0,0)',
@@ -40,7 +42,9 @@ def process_plotly(fig):
              tickfont=dict(
              color='white'
              )
-             ) )
+             ) ,dragmode=None)
+
+             print('here')
 
 
              return fig
@@ -95,6 +99,21 @@ def get_style(**style):
         """Format the style"""
 
         style.update({'position':'absolute'})
+
+        if ('x' in style.keys()) and ('y' in style.keys()):
+           """Infer manual mode""" 
+           style['mode'] = 'manual' 
+
+        if ('x' in style.keys()) and not ('y' in style.keys()):
+           """Infer manual mode""" 
+           style['mode'] = 'vCentered' 
+
+        if not ('x' in style.keys()) and ('y' in style.keys()):
+           """Infer manual mode""" 
+           style['mode'] = 'hCentered' 
+
+        
+
         mode = style.setdefault('mode','full')
         if mode == 'manual':
          style.update({'left'  :convert(style.setdefault('x',0))})
@@ -114,9 +133,10 @@ def get_style(**style):
             style['height'] = convert(1)
 
         elif mode == 'hCentered':
-
             style['bottom'] = convert(style['y'])
             style['textAlign'] = 'center'
+            if 'w' in style:
+              style['width']   = convert(style['w'])
             
 
         elif mode == 'vCentered':

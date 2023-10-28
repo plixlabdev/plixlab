@@ -10,18 +10,34 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    font-family: 'Times New Roman', Times, serif;
 }
 
 /* To hide scrollbars in Chrome, Safari, and newer versions of Opera */
 body::-webkit-scrollbar {
     display: none;
 }
-
 #slide-container {
     width: 80vw;
     height: 45vw;
     position: relative;
+    overflow: auto;
 }
+
+#slide-container::-webkit-scrollbar {
+    display: none;
+}
+
+#slide-container {
+    /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+
+    /* Hide scrollbar for IE and older versions of Edge */
+    -ms-overflow-style: none;
+}
+
+
+
 
 .embedded-slide {
     pointer-events: none;
@@ -49,6 +65,7 @@ body::-webkit-scrollbar,
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
 }
 
 
@@ -65,7 +82,7 @@ body::-webkit-scrollbar,
 .grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(100, 25%); /* Two rows each taking up 25% of the outer container's height */
+    grid-template-rows: repeat(12, 25%); /* Two rows each taking up 25% of the outer container's height */
     gap: 8px;
 }
 
@@ -75,9 +92,54 @@ body::-webkit-scrollbar,
     width: 100%; 
     height: 100%; 
     overflow: hidden; 
+
 }
 
 
+.markdownComponent {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+}
+
+.markdownComponent p {
+    margin: 0;
+    text-align: left;
+    line-height: 1;
+    height: 100%;
+}
+
+
+.markdownComponent mjx-container, .markdownComponent mjx-math, .markdownComponent mjx-mi, .markdownComponent mjx-c {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+.loader {
+    border: 16px solid #f3f3f3;
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+
+.hide-cursor {
+    cursor: none;
+}
 
 .button-base {
     background-color: transparent;

@@ -1,5 +1,35 @@
-//document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('load', async function() {
+
+let timeout;
+
+// Function to hide the cursor after a period of inactivity
+function handleMouseMove() {
+    if (window.dataStore.mode === 'full') {
+        // If the cursor was hidden, show it
+        document.body.classList.remove('hide-cursor');
+
+        // Clear any existing timeout
+        clearTimeout(timeout);
+
+        // Set a delay to hide the cursor again
+        timeout = setTimeout(() => {
+            document.body.classList.add('hide-cursor');
+        }, 2000);  // Adjust the time as needed, currently 2 seconds
+    }
+}
+
+// Function to hide the cursor when the mouse leaves the document
+function handleMouseOut() {
+    if (window.dataStore.mode === 'full') {
+        // Clear any existing timeout when the mouse leaves the document
+        clearTimeout(timeout);
+        document.body.classList.add('hide-cursor');
+    }
+}
+
+//document.addEventListener('mousemove', handleMouseMove);
+//document.addEventListener('mouseout', handleMouseOut);
+
 
 
 
@@ -44,17 +74,10 @@ function incrementEvent() {
 
    const totalSlides = document.querySelectorAll(".slide").length;
    const NSlideEvents = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length
-   //console.log(window.dataStore.index,NSlideEvents,window.dataStore.active_slide, totalSlides)
    if (window.dataStore.index < NSlideEvents - 1){
       window.dataStore.index += 1; 
-    } else {
-        if (window.dataStore.active_slide < totalSlides - 1){
-            document.getElementById('S' + String( window.dataStore.active_slide)).hidden=true
-            window.dataStore.index = 0
-            window.dataStore.active_slide +=1}
-            document.getElementById('S' + String( window.dataStore.active_slide)).hidden=false
-    }
-
+    } else { incrementSlide()}
+      
     updateEventVisibility()
 }
 
@@ -62,22 +85,63 @@ function incrementEvent() {
 function decrementEvent() {    
 
 
-   console.log(window.dataStore.index,window.dataStore.active_slide)
    if (window.dataStore.index > 0){
-      window.dataStore.index -= 1; 
-      
-    } else {
-   if (window.dataStore.active_slide >0){
-            
-            console.log(window.dataStore.index,window.dataStore.active_slide)
-            document.getElementById('S' + String( window.dataStore.active_slide)).hidden=true
-            window.dataStore.active_slide -=1
-            document.getElementById('S' + String( window.dataStore.active_slide)).hidden=false
-            window.dataStore.index = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length -1 
-   }
-  }
+      window.dataStore.index -= 1;    
+   } else { decrementSlide()}
 
     updateEventVisibility()
+
+}
+
+
+function change_plotly_static(slide,static){
+
+    const slideElement = document.getElementById(slide);
+
+   // console.log(slideElement)
+    const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
+
+    plotlyElements.forEach(element => {
+        console.log(slide + '' + static)
+        Plotly.react(element.id, element.data, element.layout, {staticPlot: static,responsive: true,scrollZoom: true} );   
+        //element.hidden=static
+        if (static){
+        element.style.visibility='hidden'
+        }
+        else {element.style.visibility='visible'
+           }
+        
+
+
+    });
+
+}
+
+
+
+function decrementSlide() {
+    if (window.dataStore.active_slide > 0) {
+        window.dataStore.active_slide -= 1;
+        window.dataStore.index = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length -1 
+
+        old_slide_id = 'S' + String(window.dataStore.active_slide+1)
+        new_slide_id = 'S' + String(window.dataStore.active_slide)
+        document.getElementById(old_slide_id).style.visibility = 'hidden'
+
+        slide =  document.getElementById(new_slide_id)
+        slide.style.visibility = 'visible'
+
+        if (!slide.hasAttribute('tabindex')) {
+            slide.setAttribute('tabindex', '-1');
+        }
+        slide.focus()
+
+        change_plotly_static(old_slide_id,true)
+        change_plotly_static(new_slide_id,false)
+
+        updateURL()
+      
+    }
 
 }
 
@@ -86,164 +150,173 @@ function decrementEvent() {
 function incrementSlide() {
     const totalSlides = document.querySelectorAll(".slide").length;
      if (window.dataStore.active_slide < totalSlides - 1) {
-        window.dataStore.active_slide += 1;
+        window.dataStore.active_slide += 1
+        window.dataStore.index = 0
+        old_slide_id = 'S' + String(window.dataStore.active_slide-1)
+        new_slide_id = 'S' + String(window.dataStore.active_slide)
 
-        //Change visibility
-        document.getElementById('S' + String(window.dataStore.active_slide-1)).hidden = true
-        document.getElementById('S' + String(window.dataStore.active_slide)).hidden = false
+        document.getElementById(old_slide_id).style.visibility = 'hidden'
+
+        slide = document.getElementById(new_slide_id)
+        slide.style.visibility = 'visible'
+
+
+        if (!slide.hasAttribute('tabindex')) {
+            slide.setAttribute('tabindex', '-1');
+        }
+        slide.focus()
+
+
+        change_plotly_static(old_slide_id,true)
+        change_plotly_static(new_slide_id,false)
+
+        updateURL()
+
     }
 }
    
 
-
-function decrementSlide() {
-    if (window.dataStore.active_slide > 0) {
-        window.dataStore.active_slide -= 1;
-         //Change visibility
-         document.getElementById('S' + String(window.dataStore.active_slide+1)).hidden = true
-         document.getElementById('S' + String(window.dataStore.active_slide)).hidden = false
+function updateURL() {
+    let currentUrl = window.location.href;
+    
+    // Use a regex to detect and remove the pattern #N followed by numbers
+    const hashPattern = /#\d+$/;
+    if (hashPattern.test(currentUrl)) {
+        currentUrl = currentUrl.replace(hashPattern, '');
     }
-
+    
+    // Append the new hash fragment.
+    currentUrl += "#" + String(window.dataStore.active_slide);
+    
+    window.history.replaceState(null, null, currentUrl);
 }
-
-
 
 
 
 function updateEventVisibility() {
-
-    arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index]
-
-    //arr =  window.dataStore.animation[ window.dataStore.index]
+    //SLIDEs use visible/hidden
+    //Elements use visible/inherit
+    arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index];
+    console.log(arr)
     for (let key in arr) {
-        //console.log(key)
-        document.getElementById(key).hidden = arr[key]
+        let element = document.getElementById(key);
+        if (arr[key]) {
+            element.style.visibility = 'hidden';
+            if (element.className === 'PLOTLY'){
+                 element.hidden=true
+            }
+        } else {
+            element.style.visibility = 'inherit';
+            if (element.className === 'PLOTLY'){
+                element.hidden=false
+           }
+        }
     } 
-
 }
 
 
 
+
+function updatePlotly(){
+
+    //TODO: We need to avoid rerendering this. 
+    const containers = document.querySelectorAll('.plotly');
+
+    // Loop through each container
+    containers.forEach(container => {
+    if (window.dataStore.mode === 'grid') {
+      container.hidden = true;
+   } else {
+     container.hidden = false;
+   }
+   });
+}
+
+
 document.body.addEventListener('click', e => {
     
-    const ratio = 0.24;
     if (e.target.classList.contains('slide')) {
-        const clickedSlideIndex = parseInt(e.target.id.substring(1));
-        console.log(clickedSlideIndex)
 
+        if (window.dataStore.mode === 'grid'){
+
+        const clickedSlideIndex = parseInt(e.target.id.substring(1));
+      
+
+        //Adapt plotly
+        old_active_slide = window.dataStore.active_slide
         if (!isNaN(clickedSlideIndex)) {
-          
+        
             window.dataStore.active_slide = clickedSlideIndex;
-            
+            updateURL()
         }
 
-       if (window.dataStore.mode === 'grid')
-       {
-        window.dataStore.mode = 'presentation'
-        document.getElementById('slide-container').className = window.dataStore.mode;
-
-        // Scale text
-        //const textElements = document.querySelectorAll('.markdownComponent');
-        //textElements.forEach((textElement) => {
-        //const fontSizePx = parseFloat(window.getComputedStyle(textElement).fontSize);
-        //const newFontSize = (window.dataStore.mode === 'grid') ? fontSizePx * ratio : fontSizePx / ratio;
-        //textElement.style.fontSize = `${newFontSize}px`;
-       //});
-
-       // Hide/Show slides
-      const slides = document.querySelectorAll(".slide");
      
-       slides.forEach((slide, index) => {
-      
-       slide.hidden = (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide);
-       });
-
-         
-
-        // Manage interactable elements
-        const interactables = document.querySelectorAll('.interactable');
-        //console.log(interactables.length)
-        interactables.forEach(el => {
-            el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
-        });
-
-         // Manage interactable elements
-         const interactables2 = document.querySelectorAll('.PartB');
-         //console.log(interactables.length)
-         interactables2.forEach(el => {
-             el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
-         });
-
-         // Manage PartA and PartB components
-         const componentsA = document.querySelectorAll('.PartA');
-         componentsA.forEach(component => {
-             component.hidden = (window.dataStore.mode === 'grid') ? true : false;
-         });
- 
-         const componentsB = document.querySelectorAll('.PartB');
-         componentsB.forEach(component => {
-             component.hidden = (window.dataStore.mode === 'grid') ? false : true;
-         });
-
-         //Make the full-screen button disabled
-         const fullscreen = document.getElementById('full-screen');
-         fullscreen.style.visibility = 'visible'
-         
-         // Adjust switch button styling
-        const switchBtn = document.getElementById('switch-view-btn');
-        switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
-
+       switchMode()
+       console.log(window.dataStore.active_slide,clickedSlideIndex)
+       if (old_active_slide != clickedSlideIndex) {
+         change_plotly_static('S' + String(old_active_slide),true)
+         change_plotly_static('S' + String(clickedSlideIndex),false)
        }
-        
+       
     }
+}
 });
 
+
+
 function switchMode() {
-        const ratio = 0.24;
         //change mode
         window.dataStore.mode = (window.dataStore.mode === 'grid') ? 'presentation' : 'grid';
         document.getElementById('slide-container').className = window.dataStore.mode;
 
 
-        // Scale text
-        //const textElements = document.querySelectorAll('.markdownComponent');
-        //textElements.forEach((textElement) => {
-        //    const fontSizePx = parseFloat(window.getComputedStyle(textElement).fontSize);
-        //    const newFontSize = (window.dataStore.mode === 'grid') ? fontSizePx * ratio : fontSizePx / ratio;
-        //    textElement.style.fontSize = `${newFontSize}px`;
-        //});
-
         // Hide/Show slides
         const slides = document.querySelectorAll(".slide");
         slides.forEach((slide, index) => {
-        slide.hidden = (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide);
+        if (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide){
+            slide.style.visibility = 'hidden'
+        } else {
+            slide.style.visibility = 'visible'
+        }
+
         });
 
-       
-       
+         updatePlotly()
+        //Change the number of rows in grid--------
+        function setGridRowsBasedOnN(N) {
+          const numberOfRows = Math.ceil(N / 4);
+           const gridElement = document.querySelector('.grid');
+           gridElement.style.gridTemplateRows = `repeat(${numberOfRows}, 25%)`;
+
+           }
+
+        if (window.dataStore.mode === 'grid'){  
+         const N = document.querySelectorAll(".slide").length
+         setGridRowsBasedOnN(N);}
+        //----------------------------------------
 
         // Manage interactable elements
         const interactables = document.querySelectorAll('.interactable');
-        //console.log(interactables.length)
         interactables.forEach(el => {
+            //console.log(el)
             el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
         });
 
          // Manage PartA and PartB components
          const componentsA = document.querySelectorAll('.PartA');
          componentsA.forEach(component => {
-             component.hidden = (window.dataStore.mode === 'grid') ? true : false;
+           // component.hidden = (window.dataStore.mode === 'grid') ? true : false;
+            component.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'inherit';
          });
  
          const componentsB = document.querySelectorAll('.PartB');
          componentsB.forEach(component => {
-             component.hidden = (window.dataStore.mode === 'grid') ? false : true;
+            // component.hidden = (window.dataStore.mode === 'grid') ? false : true;
+             component.style.visibility = (window.dataStore.mode === 'grid') ? 'inherit' : 'hidden';
          });
 
         
 
-
-        //console.log( window.dataStore.active_slide)
         // Adjust switch button styling
         const switchBtn = document.getElementById('switch-view-btn');
         switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
@@ -256,10 +329,13 @@ function switchMode() {
         } else {
             fullscreen.style.visibility = 'visible'
         }
+        
+
         const aleft = document.getElementById('aleft');
         if (window.dataStore.mode === 'grid'){
             aleft.style.visibility = 'hidden'
         } else {
+
             aleft.style.visibility = 'visible'
         }
         const aright = document.getElementById('aright');
@@ -269,7 +345,7 @@ function switchMode() {
             aright.style.visibility = 'visible'
         }
 
-    }
+}
 
 
 document.getElementById('switch-view-btn').addEventListener('click', function() {
@@ -280,59 +356,53 @@ document.getElementById('switch-view-btn').addEventListener('click', function() 
 function fullScreen() {
 
     var outerContainer = document.getElementById('slide-container');
-    //console.log(outerContainer.offoriginalOuterContainer.offsetWidthsetWidth,outerContainer.offsetHeight)
-    //originalWidth = outerContainer.offsetWidth
-    //const textElements = document.querySelectorAll('.markdownComponent');
-    //const originalFontSizes = [];
-    //textElements.forEach((textElement) => {
-    //const fontSizePx = parseInt(window.getComputedStyle(textElement).fontSize);
-    //const fontSizePercentage = fontSizePx / originalWidth;
-   // originalFontSizes.push(fontSizePercentage);
-   //  });
-    //-------------------------------------------------------------------
 
     function adjustFontSize() {
-          //  const slideAreaWidth = outerContainer.offsetWidth;
-          //  textElements.forEach((textElement, i) => {
-          //  const fontSize = slideAreaWidth * originalFontSizes[i];
-           // textElement.style.fontSize = fontSize + 'px';})
-            
-            outerContainer.classList.add('fullscreen-mode');
-            window.dataStore.mode = 'full';
-          
-        }
+        outerContainer.classList.add('fullscreen-mode');
+        window.dataStore.mode = 'full';
+        window.dataStore.index = 0;
+        //const componentsB = document.querySelectorAll('.PartB');
+        // componentsB.forEach(component => {
+        // component.style.visibility = 'hidden';
+        // });
+
+        updateEventVisibility()
+      
+    }
+    
+    outerContainer.requestFullscreen().then(adjustFontSize);
+    
 
       document.onfullscreenchange = function() {
            if (!document.fullscreenElement) {
 
                 outerContainer.classList.remove('fullscreen-mode');
-
-                //textElements.forEach((textElement, i) => {
-                //    const fontSize = outerContainer.offsetWidth * originalFontSizes[i];
-                 //   textElement.style.fontSize = fontSize + 'px';
-                 //   })
-                    //console.log(window.dataStore.mode)
+              
                     window.dataStore.mode = 'presentation';
 
                     // Show the active slide
                     const slides = document.querySelectorAll(".slide");
                     slides.forEach((slide, index) => {
-                    slide.hidden = (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide)});
-                    //});
+
+                    if (index == window.dataStore.active_slide){
+
+                        slide.style.visibility = 'visible'
+                    } else {
+                        slide.style.visibility = 'hidden'}                
+                    })
 
                    
                     //show all components in presentation mode
                     const components = document.querySelectorAll(".componentA");
                     components.forEach((component, index) => {
-                    component.hidden = false;
+                    component.style.visibility = 'inherit'
+                    //component.hidden = false;
                      });
-
-              //      console.log('Reverse Full before '  + outerContainer.offsetWidth + '  ' +  originalFontSizes[i]*originalWidth + 'px, after ' +fontSize  + 'px');
+    
                 };
-            //}
+        
         }
 
-        outerContainer.requestFullscreen().then(adjustFontSize)
     
 
 }
