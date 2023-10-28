@@ -17,14 +17,13 @@ import webbrowser
 from tornado import autoreload
 from tornado import websocket
 import numpy as np
-
+from . import Bibliography
 
 # Get the directory of the current script
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Construct the full path to the style file
 style_path = os.path.join(script_dir, 'assets', 'mpl_style')
-
 # Use the style
 plt.style.use(style_path)
 
@@ -102,6 +101,7 @@ class DataHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", 'application/json')
       
         # Write the data as JSON
+        print(len(data_to_serve['data']))
         self.write(json.dumps(data_to_serve))
 
 class PingHandler(tornado.web.RequestHandler):
@@ -126,6 +126,7 @@ def make_app():
         (r"/share", ShareHandler),
         (r"/data", DataHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "static")}),
+        (r"/assets/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "assets")}),
         (r"/reload", ReloadWebSocketHandler),
         (r"/(render.js|styles.css|code.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
     ])
@@ -177,15 +178,39 @@ class Presentation():
         #Add IDs to Slides
         for s,slide in enumerate(self.content):
            slide['id'] = f'S{s}'
-           slide['hidden'] = True
+           #slide['hidden'] = True
            #Add IDs to Components
            for c,component in enumerate(slide['props']['children']):
                component['id'] = f'S{s}_C{c}'
 
+        #Convert from number to lists
+        animation_l = []
+        for slide in self.animation:
+            tmp = []
+            for x in slide:
+             if not isinstance(x,list):
+                #This is a number
+                a = []
+                for i in range(x):
+                    a.append(0)
+                a.append(1)
+                tmp.append(a)
+             else:    
+               tmp.append(x)   
+            animation_l.append(tmp)   
+        #------------------------------        
 
+        #Epans animations
+        for x in animation_l:
+            n_events = max([len(i) for i in x])
+            for k,i in enumerate(x):
+                #if len(i) < n_events:
+                for i in  range(n_events - len(i)): 
+                   x[k].append(1)
+        #------------------------------- 
         #Add events
         events = {}
-        for s,animation in enumerate(self.animation):
+        for s,animation in enumerate(animation_l):
             animation = np.array(animation).T
 
             slide_events = []
@@ -196,6 +221,7 @@ class Presentation():
                     event.update({C_id:value})
                 slide_events.append(event)        
             events[f'S{s}'] = slide_events   
+
 
         return events    
 
@@ -256,8 +282,7 @@ class Slide():
     def __init__(self,background='#36454f',content = []):
         
          if len(content) == 0:
-             #self.content = {'type':'Slide','props':{'children':[],'className':'slide presentation','hidden':True,'style':{'backgroundColor':background}}}
-             self.content = {'type':'Slide','props':{'children':[],'className':'slide','hidden':False,'style':{'backgroundColor':background}}}
+             self.content = {'type':'Slide','props':{'children':[],'className':'slide','style':{'backgroundColor':background}}}
          else:
           self.content = content  
 
@@ -267,10 +292,28 @@ class Slide():
     def _add_animation(self,**argv):
         """Add animation"""
 
-        self.animation.append(argv.setdefault('animation',[1]))
+        animation = argv.setdefault('animation',[1])
+        self.animation.append(animation)
 
     #componentA: eveything to show in presentation
     #componentA: eveything to show in grid
+
+    def cite(self,key,**style):
+        """Add a set of citation"""
+        if not isinstance(key,list):
+            keys = [key]
+        else: keys = key    
+
+        for i,key in enumerate(keys):
+         text = Bibliography.format(key)
+         style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
+         style.setdefault('color','#FFFFFF')
+         tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style.copy(),'fontsize':0.03}}
+         self.content['props']['children'].append(tmp)
+         self._add_animation(**style)
+
+        return self
+        
 
     def text(self,text,**argv):   
        
@@ -278,21 +321,19 @@ class Slide():
         argv.setdefault('mode','center')
         style = get_style(**argv)
         style.setdefault('color','#FFFFFF')
-        #style.update({'fontSize':argv.setdefault('fontsize',60)})
-        #style.update({'fontSize':argv.setdefault('fontsize','5vw')})
-        #style.update({'fontSize':argv.setdefault('fontsize','300%')})
         #-----------------
         nc = len(self.content['props']['children'])
         #tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable','style':style},'id':f'C{nc}'}
-        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style,'fontsize':argv.setdefault('fontsize',0.05)}}
+        tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style,'fontsize':argv.setdefault('fontsize',0.04)}}
         self.content['props']['children'].append(tmp)
-
         self._add_animation(**argv)
         return self
     
     def img(self,url,**argv):
         """Both local and URLs"""
         style = get_style(**argv)
+        if argv.setdefault('frame',False):
+            style['border'] = '2px solid red'
 
         if url[:4] != 'http':
             with open(url, "rb") as image_file:
@@ -337,15 +378,18 @@ class Slide():
 
         #Add Video--
         url = f"https://www.youtube.com/embed/{videoID}?controls=0&rel=0"
-        tmp = {'type':'Iframe','props':{'className':'PartA componentA','src':url,'style':style}}
+        #tmp = {'type':'Iframe','props':{'className':'PartA componentA','src':url,'style':style.copy()}}
+        tmp = {'type':'Iframe','props':{'className':'interactable','src':url,'style':style.copy()}}
         self.content['props']['children'].append(tmp)
         #----------
 
         #Add thumbnail--
-        image = get_youtube_thumbnail(videoID)
-        url = 'data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable','hidden':True}}
-        self.content['props']['children'].append(tmp)
+        #image = get_youtube_thumbnail(videoID)
+        #url = 'data:image/png;base64,{}'.format(image)
+        #style['visibility'] = 'hidden'
+        #tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable'}}
+        #self.content['props']['children'].append(tmp)
+        
         self._add_animation(**argv)
         return self
 
@@ -372,26 +416,33 @@ class Slide():
       # style['position'] = 'flex'
 
        if isinstance(graph,str):
-         with open(f'{graph}.json','r') as f:
-          fig = f.read()
+         namefile = f'{graph}.json'
+         
+         fig = pio.read_json(namefile).to_plotly_json()
+         #with open(namefile,'r') as f:
+         # fig = f.read()
        else:  
           fig = graph.to_json()  
       
        #This clearly needs to be optimized
-       fig  = json_to_plotly(fig)
-       fig = process_plotly(fig)
-       fig = fig.to_plotly_json()
+       #fig  = json_to_plotly(fig)
+       #fig = process_plotly(fig)
+       #fig = fig.to_plotly_json()
        #--------------------------
-    
-       tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style,'className':'PartA componentA'}}
+       
+       #tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'PartA componentA interactable PLOTLY'}}
+       tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'componentA interactable PLOTLY'}}
        self.content['props']['children'].append(tmp)
 
        #Add thumbnail
-       image = fig_to_base64(fig)
-       url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable','hidden':True}}
+       #image = fig_to_base64(fig)
+       #url = 'data:image/png;base64,{}'.format(image)
+       #tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable','hidden':True}}
+       #style['visibility'] = 'hidden'
+       #tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable'}}
+       #self.content['props']['children'].append(tmp)
+       
 
-       self.content['props']['children'].append(tmp)
        self._add_animation(**argv)
        return self 
 

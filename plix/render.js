@@ -1,6 +1,6 @@
 window.addEventListener('load', async function() {
 
-   
+
 //Reload
 const ws = new WebSocket('ws://localhost:8888/reload');
 
@@ -28,7 +28,6 @@ document.getElementById('share').addEventListener('click', function() {
     fetch("/share")
         .then(response => response.text())
         .then(url => {
-            console.log(url);
             showModal(url);
         })
         .catch(error => {
@@ -111,26 +110,40 @@ document.getElementById('download').addEventListener('click', function() {
 
  if (data) {
         jsonData = data.data
-        //console.log(data.animation)
          // Initialize dataStore if it doesn't exist yet
         if (!window.dataStore) {
          window.dataStore = {};
         }
 
-        //window.dataStore.active_slide = 0;
+        
         window.dataStore.mode = 'presentation';
-        //window.dataStore.active_slide = 0;
         window.dataStore.animation   = data.animation
         
         window.dataStore.index = 0
         window.dataStore.active_slide = 0
 
         render();
-        //updateVisibility();
+        
 } 
   
 
-function add_common_properties(element,data) {
+
+function change_plotly_static(slide,static){
+
+    const slideElement = document.getElementById(slide);
+    
+
+   // console.log(slideElement)
+    const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
+
+    plotlyElements.forEach(element => {
+        Plotly.react(element.id, element.data, element.layout, {staticPlot: static,responsive: true,scrollZoom: true} );   
+
+    });
+
+}
+
+function add_common_properties(element,data,add_id) {
 
      //Style
      if (data.props.style) {
@@ -144,21 +157,16 @@ function add_common_properties(element,data) {
     }
 
     //ClassName
+    if (add_id){
     if (data.props.className) {
         element.className = data.props.className;
     }
-
-   
-        
-    //Hidden
-    if (data.props.hidden) {
-            element.hidden = Boolean(data.props.hidden);
-    }
-
+  
     //ClassName
+   
     if (data.id) {
         element.id = data.id;
-    }
+    }}
 
 }
 
@@ -168,7 +176,7 @@ function renderComponent(data,outer_element) {
     switch (data.type) {
         case 'Slide':
             element = document.createElement('div');
-            add_common_properties(element,data)
+            add_common_properties(element,data,true)
           
             outer_element.appendChild(element)
             break;
@@ -183,17 +191,34 @@ function renderComponent(data,outer_element) {
           }
           });
        
-         
             element = document.createElement('div')
+    
             const text = markedInstance(data.props.children);
             element.innerHTML = text
+          
             
-            // Render LaTeX equations using MathJax
-            if (window.MathJax) {
-             window.MathJax.typesetPromise([element]).catch((err) => console.log(err.message));
+            add_common_properties(element, data,true);
+
+            if (data.props.style.mode === 'hCentered') {
+               
+                element.style.alignItems = 'center';  // Horizontal centering
+                element.style.justifyContent = 'center';  // Vertical centering
+            
+                // Center-align text for all paragraphs inside the container
+                let paragraphs = element.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    p.style.textAlign = 'center';
+                    p.style.lineHeight = 1.5;
+                });
             }
             
-            console.log( data.fontsize)
+
+
+            outer_element.appendChild(element);
+        
+            
+  
+            //console.log( data.fontsize)
             //==================================================
             function setDynamicFontSize() {
                 let fontSize = outer_element.offsetHeight * data.props.fontsize;
@@ -205,21 +230,22 @@ function renderComponent(data,outer_element) {
                 setDynamicFontSize();
             });
             
+
+            let initialBottomPercentage;
+
+
             ro.observe(outer_element);
             
             setDynamicFontSize(); // Initial call
             //======================================= 
-            
+        
 
 
-            add_common_properties(element, data);
-            outer_element.appendChild(element);
-            
             break;
         case 'Img':
                 element = document.createElement('img');
                 element.src = data.props.src;
-                add_common_properties(element,data)
+                add_common_properties(element,data,true)
                 outer_element.appendChild(element)
                 break;
         case 'Iframe':
@@ -229,8 +255,18 @@ function renderComponent(data,outer_element) {
               iframe = document.createElement('iframe');
               iframe.width = '100%'
               iframe.height = '100%'
+              iframe.src = data.props.src;
 
-              iframe.src = data.props.src;            
+              //manage focus (at the beginning there is no focus on iFrame)
+              iframe.tabindex=-1
+              iframe.addEventListener('click', function() {
+                this.focus();
+              });
+             
+              //
+            
+
+              
               element.appendChild(iframe)
               
               
@@ -238,46 +274,51 @@ function renderComponent(data,outer_element) {
               break;     
         case 'Graph':
             const config = {
-                responsive: true
+                responsive: true,
+                scrollZoom: true,
+                staticPlot: false
+                //modeBarButtonsToAdd: ["drawline","eraseshape"]
+               /// displayModeBar: false
             };
             element = document.createElement('div');
-            //element.id = 'test';
-            add_common_properties(element, data);
+            add_common_properties(element, data,true);
+            element.className = 'PartA interactable PLOTLY'
             outer_element.appendChild(element);
 
-
-            //let currentElement = element;
-            //while (currentElement) {
-
-            //   console.log(currentElement.id,currentElement.tagName, 'Width:', currentElement.clientWidth, 'Height:', currentElement.clientHeight);
-
-              //if (currentElement.clientWidth === 0 || currentElement.clientHeight === 0) {
-               //  console.error('Found an element with zero width or height:', currentElement);
-             // }
-
-            // currentElement = currentElement.parentElement;
-           // }
-
-
-            //const observer = new MutationObserver(mutationsList => {
-             //   for(let mutation of mutationsList) {
-             //       if (mutation.type === 'attributes' && element.clientWidth > 0) {
-             Plotly.newPlot(element, data.props.figure.data, data.props.figure.layout, config);
-              //          observer.disconnect();  // stop observing once we've plotted
-              //      }
-              //  }
-            //});
+            //Thumbnail
+            thumbnail = document.createElement('img');
+            add_common_properties(thumbnail, data,false);
+            outer_element.appendChild(thumbnail);
+            thumbnail.className = 'PartB interactable'
+            thumbnail.id = data.id + 'THUMB'
+            thumbnail.style.visibility = 'hidden'
             
-            //observer.observe(element, { attributes: true, childList: true, subtree: true });
+            async function generateThumbnail(data, element, thumbnail) {
+                try {
+                    const gd = await Plotly.react(element, data.props.figure.data, data.props.figure.layout, config);
+                    const url = await Plotly.toImage(gd);
             
-     
+                    //console.log("Thumbnail URL for", data.id, ":", url);
+                    thumbnail.src = url;
+            
+                } catch (error) {
+                    console.error("Error while processing the graph:", error);
+                }
+            }
+            
+            // Call the function
+            generateThumbnail(data, element, thumbnail);
+            
+            
+
+           
             break; 
 
         case 'molecule':
 
-            // Create a new div element
+            // Create a new div elementelement
             element = document.createElement("div");
-            add_common_properties(element,data)
+            add_common_properties(element,data,true)
             element.id = "molContainer";  // setting an ID for the container
             outer_element.appendChild(element)
           
@@ -290,7 +331,7 @@ function renderComponent(data,outer_element) {
             
             // Fetch the molecule and visualize it
             $3Dmol.download("pdb:" + data.props.structure, viewer, function() {
-            viewer.setStyle({}, {stick: {}});
+            viewer.setStyle({stick: {}});
             viewer.zoomTo();
             viewer.render();
            });
@@ -332,34 +373,57 @@ function render() {
     // Reference to the slide-container
     let container = document.getElementById('slide-container');
 
-    // Render the components based on JSON data
-    jsonData.forEach((data) => {
-        renderComponent(data,container);
+ 
+    jsonData.forEach((data, index) => {
+       // console.log("Index:", index);  // This will print the current index
+        renderComponent(data, container);
     });
 
-  //  document.querySelectorAll(".slide").forEach(slide => slide.hidden = (slide.id !== 'S' + String(window.dataStore.active_slide)));
+    document.getElementById('loader').classList.remove('loader');
 
-    //Make only the first slide visible
-    //const totalSlides = document.querySelectorAll(".slide").length;
-    document.getElementById('S' + String(window.dataStore.active_slide)).hidden=false;
+   
+
+    //Run MathJax
+    if (window.MathJax) {
+        MathJax.typesetPromise();
+    }
+
+   
+    //Update bar (it works up to 1000 slides)
+    currentUrl = window.location.href
+    if (currentUrl.charAt(currentUrl.length - 2) !== '#' &&
+    currentUrl.charAt(currentUrl.length - 3) !== '#' &&
+    currentUrl.charAt(currentUrl.length - 4) !== '#')  {
+     window.location.href += "#" + String(window.dataStore.active_slide);
+    } else {
+        let parts = currentUrl.split('#');
+        let number = parseInt(parts[1], 10);
+        window.dataStore.active_slide =number;}
 
 
-    const slides = document.querySelectorAll(".slide");
     active_id = 'S' + String(window.dataStore.active_slide)
 
+    //Update visibility
+    const slides = document.querySelectorAll(".slide");
     for (let i = 0; i < slides.length; i++) {
     if (slides[i].id === active_id) {
-        slides[i].hidden = false;
-        console.log(i)
+        
+        change_plotly_static(slides[i].id,false)
+
+        slides[i].style.visibility = 'visible';
+
+        
     } else {
-        slides[i].hidden = true;
+        
+        change_plotly_static(slides[i].id,true)
+        slides[i].style.visibility = 'hidden';
     }
+   
+   }
+
+
 }
-    
-}
-
-
-
+ 
 
 
 })
