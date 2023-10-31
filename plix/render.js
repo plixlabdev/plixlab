@@ -1,3 +1,108 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+
+ 
+ // Convert base64 data URL to blob URL
+ function dataURItoBlob(dataURI) {
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+    const buffer = new ArrayBuffer(byteString.length);
+    const dataView = new Uint8Array(buffer);
+    for (let i = 0; i < byteString.length; i++) {
+        dataView[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([buffer], { type: mimeString });
+    const blobURL = URL.createObjectURL(blob);
+    return blobURL;
+ }
+
+
+
+function import3DModel(modelDataURL,w){
+
+
+ //Scene
+const scene = new THREE.Scene();
+// Increase the intensity of the ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 1); // set intensity to 1
+scene.add(ambientLight);
+
+// Increase the intensity of the directional light
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2); // set intensity to 2 for stronger light
+directionalLight.position.set(1, 2, 4);
+scene.add(directionalLight);
+
+// Optionally, add another light source if you want more illumination in your scene
+const pointLight = new THREE.PointLight(0xffffff, 1.5, 100); // intensity is 1.5 and distance is 100
+pointLight.position.set(-2, 3, -5); // adjust the position as per your needs
+scene.add(pointLight);
+
+ //Camera
+ const camera = new THREE.PerspectiveCamera(75, 16/9*w, 0.1, 1000);
+ camera.position.z = 5;
+
+ //Renderer
+ const renderer = new THREE.WebGLRenderer({ alpha: true });
+ renderer.setClearColor(0x000000, 0);  // 
+ renderer.setSize(window.innerWidth, window.innerHeight);
+
+
+ const controls = new OrbitControls(camera, renderer.domElement);
+
+ const blobURL = dataURItoBlob(modelDataURL);
+
+ // Now you can use the three.js loader with the blob URL
+ const loader = new GLTFLoader();
+
+ 
+ loader.load(blobURL, function(obj) {
+ scene.add( obj.scene );
+    
+ var box = new THREE.Box3().setFromObject( obj.scene );
+ const center = box.getCenter(new THREE.Vector3());
+
+ controls.target.copy(center);
+ controls.update(); 
+ camera.lookAt(center);
+
+  
+ })
+
+
+ function animate() {
+	requestAnimationFrame(animate);
+	controls.update();
+	renderer.render(scene, camera);
+ }
+
+ animate();
+
+ //window.addEventListener('resize', function () {
+  //  const newWidth = window.innerWidth;
+  //  const newHeight = window.innerHeight;
+
+   // camera.aspect = newWidth / newHeight;
+   // camera.updateProjectionMatrix();
+
+    //renderer.setSize(newWidth, newHeight);
+
+    // Make sure the camera still looks at the center of the scene/model
+   // camera.lookAt(scene.position);
+
+   // if (controls) {
+   //     controls.update();
+   // }
+//});
+
+
+return renderer.domElement
+
+}
+
+
+
 window.addEventListener('load', async function() {
 
 
@@ -74,9 +179,8 @@ function closeModal() {
 
 
 
-
 function downloadJSONData() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jsonData));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data.data));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "presentation.plx");
@@ -106,10 +210,10 @@ document.getElementById('download').addEventListener('click', function() {
     }
     
 
- data = await fetchData();
+ const data = await fetchData();
 
  if (data) {
-        jsonData = data.data
+       const jsonData = data.data
          // Initialize dataStore if it doesn't exist yet
         if (!window.dataStore) {
          window.dataStore = {};
@@ -122,13 +226,13 @@ document.getElementById('download').addEventListener('click', function() {
         window.dataStore.index = 0
         window.dataStore.active_slide = 0
 
-        render();
+        render(jsonData);
         
 } 
   
 
 
-function change_plotly_static(slide,static){
+function change_plotly_static(slide,staticc){
 
     const slideElement = document.getElementById(slide);
     
@@ -137,7 +241,7 @@ function change_plotly_static(slide,static){
     const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
 
     plotlyElements.forEach(element => {
-        Plotly.react(element.id, element.data, element.layout, {staticPlot: static,responsive: true,scrollZoom: true} );   
+        Plotly.react(element.id, element.data, element.layout, {staticPlot: staticc,responsive: true,scrollZoom: true} );   
 
     });
 
@@ -242,6 +346,18 @@ function renderComponent(data,outer_element) {
 
 
             break;
+           
+
+        case 'model3D':
+                //element = document.createElement('div');
+                //const data = data.props.src;
+                const elem = import3DModel(data.props.src,data.props.style.w)
+                //element.appendChild(model)
+
+                add_common_properties(elem,data,true)
+                outer_element.appendChild(elem)
+                break;
+
         case 'Img':
                 element = document.createElement('img');
                 element.src = data.props.src;
@@ -251,11 +367,27 @@ function renderComponent(data,outer_element) {
         case 'Iframe':
               //Perhaps the external DIV is not necessary here
               element = document.createElement('div')
-              add_common_properties(element,data)
-              iframe = document.createElement('iframe');
+              add_common_properties(element,data,true)
+              const iframe = document.createElement('iframe');
               iframe.width = '100%'
               iframe.height = '100%'
+              // Set the frameborder to 0
+              iframe.setAttribute('frameborder', '0');
+
+              // Enable full screen for various browsers
+              //iframe.setAttribute('allowfullscreen', '');
+              //iframe.setAttribute('mozallowfullscreen', 'true');
+              //iframe.setAttribute('webkitallowfullscreen', 'true');
+
+              // Set other properties
+              //iframe.setAttribute('allow', 'autoplay; fullscreen; xr-spatial-tracking');
+              //iframe.setAttribute('xr-spatial-tracking', '');
+              //iframe.setAttribute('execution-while-out-of-viewport', '');
+              //iframe.setAttribute('execution-while-not-rendered', '');
+              //iframe.setAttribute('web-share', '');
+
               iframe.src = data.props.src;
+
 
               //manage focus (at the beginning there is no focus on iFrame)
               iframe.tabindex=-1
@@ -263,16 +395,30 @@ function renderComponent(data,outer_element) {
                 this.focus();
               });
              
-              //
-            
-
               
               element.appendChild(iframe)
-              
-              
               outer_element.appendChild(element)
               break;     
-        case 'Graph':
+
+
+        case 'Bokeh':
+
+               element = document.createElement('div')
+               async function loadBokehFromJson() {
+                try {
+                    Bokeh.embed.embed_item(data.graph,element);
+                } catch (error) {
+                    console.error("Error loading Bokeh plot:", error);
+                }
+              }
+    
+              loadBokehFromJson();
+              add_common_properties(element,data,true)
+              outer_element.appendChild(element)
+              break; 
+
+
+        case 'Plotly':
             const config = {
                 responsive: true,
                 scrollZoom: true,
@@ -282,11 +428,12 @@ function renderComponent(data,outer_element) {
             };
             element = document.createElement('div');
             add_common_properties(element, data,true);
+            //TODO: check if this is needed
             element.className = 'PartA interactable PLOTLY'
             outer_element.appendChild(element);
 
             //Thumbnail
-            thumbnail = document.createElement('img');
+            const thumbnail = document.createElement('img');
             add_common_properties(thumbnail, data,false);
             outer_element.appendChild(thumbnail);
             thumbnail.className = 'PartB interactable'
@@ -363,7 +510,7 @@ function renderComponent(data,outer_element) {
 }
 
 // Adjusted rendering function
-function render() {
+function render(jsonData) {
 
     // Check if jsonData is available
     if (!jsonData) {
@@ -390,7 +537,7 @@ function render() {
 
    
     //Update bar (it works up to 1000 slides)
-    currentUrl = window.location.href
+    const currentUrl = window.location.href
     if (currentUrl.charAt(currentUrl.length - 2) !== '#' &&
     currentUrl.charAt(currentUrl.length - 3) !== '#' &&
     currentUrl.charAt(currentUrl.length - 4) !== '#')  {
@@ -401,7 +548,7 @@ function render() {
         window.dataStore.active_slide =number;}
 
 
-    active_id = 'S' + String(window.dataStore.active_slide)
+    const active_id = 'S' + String(window.dataStore.active_slide)
 
     //Update visibility
     const slides = document.querySelectorAll(".slide");
