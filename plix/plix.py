@@ -279,7 +279,7 @@ class Presentation():
 
 class Slide():
     """A simple example class"""
-    def __init__(self,background='#36454f',content = []):
+    def __init__(self,background='#303030',content = []):
         
          if len(content) == 0:
              self.content = {'type':'Slide','props':{'children':[],'className':'slide','style':{'backgroundColor':background}}}
@@ -328,7 +328,29 @@ class Slide():
         self.content['props']['children'].append(tmp)
         self._add_animation(**argv)
         return self
-    
+
+    def model3D(self,filename,**argv):
+        """Draw 3D model"""
+        style = get_style(**argv)
+
+        #Embedding
+        #url = f"https://sketchfab.com/models/{filename}/embed?autostart=1&camera=0&ui_hint=0&dnt=1&transparent" 
+        #tmp = {'type':'Iframe','props':{'className':'interactable componentA','src':url,'style':style}}
+        
+        #Local
+        with open(filename, "rb") as f:
+           model_data = base64.b64encode(f.read()).decode("utf8")
+           url = 'data:model/gltf-binary;base64,{}'.format(model_data)
+
+
+        tmp = {'type':'model3D','props':{'className':'interactable componentA','src':url,'style':style}}
+
+        self.content['props']['children'].append(tmp)
+        self._add_animation(**argv)
+        return self
+
+
+
     def img(self,url,**argv):
         """Both local and URLs"""
         style = get_style(**argv)
@@ -409,18 +431,28 @@ class Slide():
 
        return self
 
+
+    def bokeh(self,graph,**argv):
+
+       if isinstance(graph,str):
+        with open(graph, 'r') as f:
+          data = json.load(f)
+
+      
+       style  = get_style(**argv)
+       tmp = {'type':"Bokeh",'graph':data,'props':{'style':style,'className':'componentA interactable'}}
+       self.content['props']['children'].append(tmp)
+       self._add_animation(**argv)
+       return self 
+
+
     def plotly(self,graph,**argv):
        """Add plotly graph"""
 
        style  = get_style(**argv)
-      # style['position'] = 'flex'
-
        if isinstance(graph,str):
          namefile = f'{graph}.json'
-         
          fig = pio.read_json(namefile).to_plotly_json()
-         #with open(namefile,'r') as f:
-         # fig = f.read()
        else:  
           fig = graph.to_json()  
       
@@ -431,18 +463,8 @@ class Slide():
        #--------------------------
        
        #tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'PartA componentA interactable PLOTLY'}}
-       tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'componentA interactable PLOTLY'}}
+       tmp = {'type':"Plotly",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'componentA interactable PLOTLY'}}
        self.content['props']['children'].append(tmp)
-
-       #Add thumbnail
-       #image = fig_to_base64(fig)
-       #url = 'data:image/png;base64,{}'.format(image)
-       #tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable','hidden':True}}
-       #style['visibility'] = 'hidden'
-       #tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB interactable'}}
-       #self.content['props']['children'].append(tmp)
-       
-
        self._add_animation(**argv)
        return self 
 
@@ -483,7 +505,7 @@ class Slide():
         #Add Iframe--
         style = get_style(**argv)
         #Add border
-        style['border'] ='2px solid #000';
+        #style['border'] ='2px solid #000';
         tmp = {'type':'Iframe','props':{'className':'interactable componentA','src':url,'style':style}}
 
         self.content['props']['children'].append(tmp)

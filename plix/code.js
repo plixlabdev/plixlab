@@ -31,6 +31,25 @@ function handleMouseOut() {
 //document.addEventListener('mouseout', handleMouseOut);
 
 
+//For Mobile
+var hammertime = new Hammer(document.body);
+
+hammertime.on('swiperight', function() {
+    if (window.dataStore.mode == 'presentation') {
+        incrementSlide();
+    } else if (window.dataStore.mode == 'full') {
+        incrementEvent();
+    }
+});
+
+hammertime.on('swipeleft', function() {
+    if (window.dataStore.mode == 'presentation') {
+        decrementSlide();
+    } else if (window.dataStore.mode == 'full') {
+        decrementEvent();
+    }
+});
+
 
 
 document.addEventListener('keydown', function(event) {
@@ -94,7 +113,7 @@ function decrementEvent() {
 }
 
 
-function change_plotly_static(slide,static){
+function change_plotly_static(slide,staticc){
 
     const slideElement = document.getElementById(slide);
 
@@ -102,10 +121,10 @@ function change_plotly_static(slide,static){
     const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
 
     plotlyElements.forEach(element => {
-        console.log(slide + '' + static)
-        Plotly.react(element.id, element.data, element.layout, {staticPlot: static,responsive: true,scrollZoom: true} );   
+        console.log(slide + '' + staticc)
+        Plotly.react(element.id, element.data, element.layout, {staticPlot: staticc,responsive: true,scrollZoom: true} );   
         //element.hidden=static
-        if (static){
+        if (staticc){
         element.style.visibility='hidden'
         }
         else {element.style.visibility='visible'
@@ -152,12 +171,12 @@ function incrementSlide() {
      if (window.dataStore.active_slide < totalSlides - 1) {
         window.dataStore.active_slide += 1
         window.dataStore.index = 0
-        old_slide_id = 'S' + String(window.dataStore.active_slide-1)
-        new_slide_id = 'S' + String(window.dataStore.active_slide)
+        const old_slide_id = 'S' + String(window.dataStore.active_slide-1)
+        const new_slide_id = 'S' + String(window.dataStore.active_slide)
 
         document.getElementById(old_slide_id).style.visibility = 'hidden'
 
-        slide = document.getElementById(new_slide_id)
+        const slide = document.getElementById(new_slide_id)
         slide.style.visibility = 'visible'
 
 
@@ -196,8 +215,8 @@ function updateURL() {
 function updateEventVisibility() {
     //SLIDEs use visible/hidden
     //Elements use visible/inherit
-    arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index];
-    console.log(arr)
+    const arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index];
+    
     for (let key in arr) {
         let element = document.getElementById(key);
         if (arr[key]) {
@@ -243,7 +262,7 @@ document.body.addEventListener('click', e => {
       
 
         //Adapt plotly
-        old_active_slide = window.dataStore.active_slide
+        const old_active_slide = window.dataStore.active_slide
         if (!isNaN(clickedSlideIndex)) {
         
             window.dataStore.active_slide = clickedSlideIndex;
