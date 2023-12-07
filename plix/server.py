@@ -9,9 +9,7 @@ import json,jsonpatch
 def make_app(data_provider):
     return tornado.web.Application([
         (r"/",NoCacheHandler),
-      #  (r"/ping", PingHandler),
         (r"/share", ShareHandler),
-       # (r"/data", DataHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "static")}),
         (r"/assets/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "assets")}),
         (r"/data", ReloadWebSocketHandler,{"data_provider": data_provider}),
@@ -69,8 +67,8 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
 
          old_data = {}        
          
-         if os.path.isfile('tmp') and not(self.first_connection):
-            with open('tmp','r') as f:
+         if os.path.isfile('./.cache') and not(self.first_connection):
+            with open('./.cache','r') as f:
                 old_data = json.load(f)
 
          data_to_serve = self.data_provider._combine_data()
@@ -83,7 +81,7 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
 
             self.write_message(json.dumps({'patch':patch}))
 
-            with open('tmp','w') as f:
+            with open('./.cache','w') as f:
                json.dump(data_to_serve,f)
 
 def run(data_provider):
