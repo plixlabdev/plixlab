@@ -1,2 +1,2 @@
-from .serve import run
+from .server import run
 from .plix  import Slide,Presentation

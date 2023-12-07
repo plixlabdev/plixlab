@@ -1,54 +1,54 @@
 window.addEventListener('load', async function() {
 
-let timeout;
+//let timeout;
 
 // Function to hide the cursor after a period of inactivity
-function handleMouseMove() {
-    if (window.dataStore.mode === 'full') {
+//function handleMouseMove() {
+ //   if (window.dataStore.mode === 'full') {
         // If the cursor was hidden, show it
-        document.body.classList.remove('hide-cursor');
+   //     document.body.classList.remove('hide-cursor');
 
         // Clear any existing timeout
-        clearTimeout(timeout);
+     //   clearTimeout(timeout);
 
         // Set a delay to hide the cursor again
-        timeout = setTimeout(() => {
-            document.body.classList.add('hide-cursor');
-        }, 2000);  // Adjust the time as needed, currently 2 seconds
-    }
-}
+    //    timeout = setTimeout(() => {
+    //        document.body.classList.add('hide-cursor');
+    //    }, 2000);  // Adjust the time as needed, currently 2 seconds
+   // }
+//}
 
 // Function to hide the cursor when the mouse leaves the document
-function handleMouseOut() {
-    if (window.dataStore.mode === 'full') {
+//function handleMouseOut() {
+//    if (window.dataStore.mode === 'full') {
         // Clear any existing timeout when the mouse leaves the document
-        clearTimeout(timeout);
-        document.body.classList.add('hide-cursor');
-    }
-}
+  //      clearTimeout(timeout);
+   //     document.body.classList.add('hide-cursor');
+    //}
+//}
 
 //document.addEventListener('mousemove', handleMouseMove);
 //document.addEventListener('mouseout', handleMouseOut);
 
 
 //For Mobile
-var hammertime = new Hammer(document.body);
+//var hammertime = new Hammer(document.body);
 
-hammertime.on('swiperight', function() {
-    if (window.dataStore.mode == 'presentation') {
-        incrementSlide();
-    } else if (window.dataStore.mode == 'full') {
-        incrementEvent();
-    }
-});
+//hammertime.on('swiperight', function() {
+//    if (window.dataStore.mode == 'presentation') {
+//        incrementSlide();
+//    } else if (window.dataStore.mode == 'full') {
+//        incrementEvent();
+//    }
+//});
 
-hammertime.on('swipeleft', function() {
-    if (window.dataStore.mode == 'presentation') {
-        decrementSlide();
-    } else if (window.dataStore.mode == 'full') {
-        decrementEvent();
-    }
-});
+//hammertime.on('swipeleft', function() {
+ //   if (window.dataStore.mode == 'presentation') {
+ //       decrementSlide();
+ //   } else if (window.dataStore.mode == 'full') {
+ //       decrementEvent();
+  //  }
+//});
 
 
 
@@ -92,7 +92,10 @@ function incrementEvent() {
 
 
    const totalSlides = document.querySelectorAll(".slide").length;
-   const NSlideEvents = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length
+   //const NSlideEvents = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length
+
+   const NSlideEvents = window.dataStore.presentation['S' + String(window.dataStore.active_slide)].animation.length
+
    if (window.dataStore.index < NSlideEvents - 1){
       window.dataStore.index += 1; 
     } else { incrementSlide()}
@@ -141,13 +144,15 @@ function change_plotly_static(slide,staticc){
 function decrementSlide() {
     if (window.dataStore.active_slide > 0) {
         window.dataStore.active_slide -= 1;
-        window.dataStore.index = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length -1 
+        //window.dataStore.index = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length -1 
+        window.dataStore.index = window.dataStore.presentation['S' + String(window.dataStore.active_slide)].animation.length -1 
 
-        old_slide_id = 'S' + String(window.dataStore.active_slide+1)
-        new_slide_id = 'S' + String(window.dataStore.active_slide)
+
+        const old_slide_id = 'S' + String(window.dataStore.active_slide+1)
+        const new_slide_id = 'S' + String(window.dataStore.active_slide)
         document.getElementById(old_slide_id).style.visibility = 'hidden'
 
-        slide =  document.getElementById(new_slide_id)
+        const slide =  document.getElementById(new_slide_id)
         slide.style.visibility = 'visible'
 
         if (!slide.hasAttribute('tabindex')) {
@@ -215,12 +220,15 @@ function updateURL() {
 function updateEventVisibility() {
     //SLIDEs use visible/hidden
     //Elements use visible/inherit
-    const arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index];
-    
+    //const arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index];
+    const arr = window.dataStore.presentation.slides['S' + String(window.dataStore.active_slide)].animation[window.dataStore.index];
     for (let key in arr) {
         let element = document.getElementById(key);
+        console.log(key)
+
         if (arr[key]) {
             element.style.visibility = 'hidden';
+            
             if (element.className === 'PLOTLY'){
                  element.hidden=true
             }

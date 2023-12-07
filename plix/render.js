@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-
+import { GLTFLoader } from './assets/js/GLTFLoader.js'
+import { OrbitControls } from './assets/js/OrbitControls.js'
+//import * as jsonpatch from './assets/js/fast-json-patch/index.mjs';
 
  
  // Convert base64 data URL to blob URL
@@ -24,6 +24,7 @@ function import3DModel(modelDataURL,w){
 
 
  //Scene
+//const scene = new Scene();
 const scene = new THREE.Scene();
 // Increase the intensity of the ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff, 1); // set intensity to 1
@@ -55,6 +56,8 @@ scene.add(pointLight);
 
  // Now you can use the three.js loader with the blob URL
  const loader = new GLTFLoader();
+ //const loader = new THREE.GLTFLoader();
+
 
  
  loader.load(blobURL, function(obj) {
@@ -79,22 +82,6 @@ scene.add(pointLight);
 
  animate();
 
- //window.addEventListener('resize', function () {
-  //  const newWidth = window.innerWidth;
-  //  const newHeight = window.innerHeight;
-
-   // camera.aspect = newWidth / newHeight;
-   // camera.updateProjectionMatrix();
-
-    //renderer.setSize(newWidth, newHeight);
-
-    // Make sure the camera still looks at the center of the scene/model
-   // camera.lookAt(scene.position);
-
-   // if (controls) {
-   //     controls.update();
-   // }
-//});
 
 
 return renderer.domElement
@@ -102,33 +89,46 @@ return renderer.domElement
 }
 
 
-
 window.addEventListener('load', async function() {
 
-
-//Reload
-const ws = new WebSocket('ws://localhost:8888/reload');
-
-ws.onmessage = function(event) {
-    if(event.data === "reload") {
-        pollServerAndReload();
-    }
-};
-
-function pollServerAndReload() {
-    fetch("/ping")
-    .then(response => {
-        if(response.ok) {
-            location.reload();
-        } else {
-            setTimeout(pollServerAndReload, 100);  // Wait 500ms and then try again
+    let isFirstConnection = true;
+  
+    
+    function connectWebSocket() {
+     
+    
+        try {
+            const ws = new WebSocket(`ws://localhost:8888/data?isFirstConnection=${isFirstConnection}`);
+    
+            ws.onopen = function(event) {
+                console.log("Connected to WebSocket.");
+                isFirstConnection = false; // Reset the flag after establishing the connection
+               
+            };
+    
+            ws.onmessage = function(event) {
+                console.log("Message received.");
+                render_presentation(JSON.parse(event.data));
+            };
+    
+            ws.onerror = function(event) {
+                console.error("WebSocket error observed. Attempting to reconnect...");
+                // Do not initiate reconnect here, let onclose handle it
+            };
+    
+            ws.onclose = function(event) {
+                console.log("WebSocket connection closed. Attempting to reconnect...");
+              
+                setTimeout(connectWebSocket, 1000); // Exponential backoff
+            };
+        } catch (error) {
+            setTimeout(connectWebSocket, 1000); // Exponential backoff
         }
-    })
-    .catch(() => {
-        // If there was an error (like the server being down), wait a bit and then try again
-        setTimeout(pollServerAndReload, 500);
-    });
-}
+    }
+    
+    connectWebSocket();
+    
+
 document.getElementById('share').addEventListener('click', function() {
     fetch("/share")
         .then(response => response.text())
@@ -194,42 +194,55 @@ document.getElementById('download').addEventListener('click', function() {
 });
 
    
+    
+async function render_presentation(data) {
    
-    async function fetchData() {
-        try {
-            const response = await fetch('/data');
+    if (data) {
+        const jsonData = data.patch;
+        console.log(jsonData)
+        
+        if (jsonData.length > 0){
     
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+           // Initialize dataStore if it doesn't exist yet
+           if (!window.dataStore) {
+            window.dataStore = {
+                animation: {},
+                index: 0,
+                active_slide: 0,
+                mode: 'presentation',
+                presentation: {}
+            };
+           } 
+
+            // Apply patch
+            console.log('Applying patch', jsonData, ' to ' ,window.dataStore.presentation );
+            try {
+                const patchResult = jsonpatch.applyPatch(window.dataStore.presentation, jsonData);
+                window.dataStore.presentation = patchResult.newDocument;
+                console.log('Patch applied successfully. New document: ', patchResult.newDocument);
+            } catch (error) {
+                console.error('Error applying JSON patch:', error);
             }
-    
-            return await response.json();
-        } catch (error) {
-            console.error('There was a problem with the fetch operation:', error);
+        
+
+        // Render the presentation
+        render_patch(jsonData);
         }
+    } else {
+        console.log('No data received to render the presentation.');
     }
-    
+}
 
- const data = await fetchData();
 
- if (data) {
-       const jsonData = data.data
-         // Initialize dataStore if it doesn't exist yet
-        if (!window.dataStore) {
-         window.dataStore = {};
-        }
-
-        
-        window.dataStore.mode = 'presentation';
-        window.dataStore.animation   = data.animation
-        
-        window.dataStore.index = 0
-        window.dataStore.active_slide = 0
-
-        render(jsonData);
-        
-} 
-  
+// Since render_presentation is async, it returns a Promise.
+// You can use .then() and .catch() to handle the resolved value or any errors.
+render_presentation(false)
+    .then(() => {
+        console.log('Presentation rendered successfully.');
+    })
+    .catch(error => {
+        console.error('Error in rendering presentation:', error);
+    }); 
 
 
 function change_plotly_static(slide,staticc){
@@ -262,89 +275,121 @@ function add_common_properties(element,data,add_id) {
 
     //ClassName
     if (add_id){
-    if (data.props.className) {
+     if (data.props.className) {
         element.className = data.props.className;
-    }
+     }
   
-    //ClassName
+     //ClassName
    
-    if (data.id) {
-        element.id = data.id;
-    }}
+     if (data.id) {
+         element.id = data.id;
+     }}
 
 }
 
+function apply_style(element,style) {
+
+    //Style
+    for (let styleProp in style) {
+           let cssValue = style[styleProp];
+           if (typeof cssValue === 'number' && ['fontSize', 'width', 'height', 'top', 'right', 'bottom', 'left'].includes(styleProp)) {
+               cssValue += 'px';
+           }
+           element.style[styleProp] = cssValue;
+    }
    
+}
+
+
+   
+
+function update_markdown(element,field,value){
+    //Update Markdown
+   // console.log(field)
+     //Build markdown formatter--
+    const markedInstance = marked.setOptions({
+    langPrefix: 'hljs language-',
+    highlight: function(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+      return hljs.highlight(code, { language }).value;
+    }
+    });
+
+    if (field === 'text'){element.innerHTML =  markedInstance(value);}
+
+    if (field === 'style'){
+        apply_style(element, value);
+    
+        if (value.alignItems === 'center' & value.justifyContent === 'center') {
+
+         // Center-align text for all paragraphs inside the container
+         let paragraphs = element.querySelectorAll('p');
+         paragraphs.forEach(p => {
+            p.style.textAlign = 'center';
+            p.style.lineHeight = 1.5;
+         });
+      }
+    }
+
+    if (field === 'fontsize'){
+
+     function set_fontsize(element,newFontsize){
+
+     let outer_element = element.parentElement
+
+     //==================================================
+     function setDynamicFontSize() {
+         let fontSize = outer_element.offsetHeight * newFontsize;
+         element.style.fontSize = fontSize + 'px';
+     }
+    
+     // Use ResizeObserver to observe size changes on outer_element
+     const ro = new ResizeObserver(() => {
+        setDynamicFontSize();
+     });
+    
+
+        // Disconnect the existing observer if it exists
+      if (element.ResizeObserver) {
+        element.ResizeObserver.disconnect();
+      }
+
+     ro.observe(outer_element);   
+    
+     element.ResizeObserver = ro;
+         
+     setDynamicFontSize(); // Initial call
+     //======================================= 
+     }
+
+     set_fontsize(element,value)
+    }
+
+}
+
+
+function add_markdown(id,outer_element){
+
+    const element = document.createElement('div')
+    element.className = 'markdownComponent interactable componentA'
+    element.id = id
+    
+    return element
+}
+
 function renderComponent(data,outer_element) {
     let element;
     switch (data.type) {
-        case 'Slide':
-            element = document.createElement('div');
-            add_common_properties(element,data,true)
-          
-            outer_element.appendChild(element)
-            break;
+       
         case 'Markdown':
 
-            //Build markdown formatter--
-         const markedInstance = marked.setOptions({
-          langPrefix: 'hljs language-',
-          highlight: function(code, lang) {
-            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-            return hljs.highlight(code, { language }).value;
-          }
-          });
-       
-            element = document.createElement('div')
-    
-            const text = markedInstance(data.props.children);
-            element.innerHTML = text
-          
+            //Text
+            element = add_markdown(data.id)
+            outer_element.appendChild(element)
+            update_markdown(element,'text',data.text)
+            update_markdown(element,'style',data.style)
+            update_markdown(element,'fontsize',data.fontsize)
             
-            add_common_properties(element, data,true);
-
-            if (data.props.style.mode === 'hCentered') {
-               
-                element.style.alignItems = 'center';  // Horizontal centering
-                element.style.justifyContent = 'center';  // Vertical centering
-            
-                // Center-align text for all paragraphs inside the container
-                let paragraphs = element.querySelectorAll('p');
-                paragraphs.forEach(p => {
-                    p.style.textAlign = 'center';
-                    p.style.lineHeight = 1.5;
-                });
-            }
-            
-
-
-            outer_element.appendChild(element);
-        
-            
-  
-            //console.log( data.fontsize)
-            //==================================================
-            function setDynamicFontSize() {
-                let fontSize = outer_element.offsetHeight * data.props.fontsize;
-                element.style.fontSize = fontSize + 'px';
-            }
-            
-            // Use ResizeObserver to observe size changes on outer_element
-            const ro = new ResizeObserver(() => {
-                setDynamicFontSize();
-            });
-            
-
-            let initialBottomPercentage;
-
-
-            ro.observe(outer_element);
-            
-            setDynamicFontSize(); // Initial call
-            //======================================= 
-        
-
-
             break;
            
 
@@ -374,17 +419,7 @@ function renderComponent(data,outer_element) {
               // Set the frameborder to 0
               iframe.setAttribute('frameborder', '0');
 
-              // Enable full screen for various browsers
-              //iframe.setAttribute('allowfullscreen', '');
-              //iframe.setAttribute('mozallowfullscreen', 'true');
-              //iframe.setAttribute('webkitallowfullscreen', 'true');
-
-              // Set other properties
-              //iframe.setAttribute('allow', 'autoplay; fullscreen; xr-spatial-tracking');
-              //iframe.setAttribute('xr-spatial-tracking', '');
-              //iframe.setAttribute('execution-while-out-of-viewport', '');
-              //iframe.setAttribute('execution-while-not-rendered', '');
-              //iframe.setAttribute('web-share', '');
+        
 
               iframe.src = data.props.src;
 
@@ -466,7 +501,7 @@ function renderComponent(data,outer_element) {
             // Create a new div elementelement
             element = document.createElement("div");
             add_common_properties(element,data,true)
-            element.id = "molContainer";  // setting an ID for the container
+            //element.id = "molContainer";  // setting an ID for the container
             outer_element.appendChild(element)
           
             // Initialize the viewer with a background color
@@ -490,24 +525,166 @@ function renderComponent(data,outer_element) {
             return;   
         }
     
-    
-     // Assign properties from the JSON to the created element
-    for (let prop in data.props) {
-
-       if (prop === 'children' && Array.isArray(data.props[prop])) {
-        data.props[prop].forEach(childData => {
-
-            let childElement = renderComponent(childData,element);
-             if (childElement) {
-               element.appendChild(childElement);
-              }
-        });
-    }
-    }
    
-    return element
+      return element
     
 }
+
+
+function render_slides(slides,container){
+
+    for (const slide in slides) {
+
+
+        //create slide
+        let element = document.createElement('div');
+        element.className = 'slide';
+        element.id = slide
+        element.style.backgroundColor = slides[slide].style.backgroundColor
+        container.appendChild(element)
+        //------
+        
+        //render elements--
+        for (const key in slides[slide]['children']){
+
+            let component = renderComponent(slides[slide]['children'][key],element)
+            component.id = key
+            
+        }
+
+        //update animation
+        window.dataStore.animation[slide] = slides[slide]['animation'] 
+
+    }
+}
+
+
+function update_component(component_ID,field,value)
+{
+
+    const element = document.getElementById(component_ID)
+    const className = element.className
+
+    if (className.includes('markdownComponent')){
+        update_markdown(element,field,value)
+    }
+
+}
+
+function add_component(id,data,outer_element){
+   
+    if (data.type === 'Markdown'){
+     
+        const element = add_markdown(id)
+        outer_element.appendChild(element)
+        update_markdown(element,'text',data.text)
+        update_markdown(element,'style',data.style)
+        update_markdown(element,'fontsize',data.fontsize)
+
+    }
+
+}
+
+
+// Adjusted rendering function
+function render_patch(jsonData) {
+   
+    // Reference to the slide-container
+    let container = document.getElementById('slide-container');
+
+    //const jsonData = window.dataStore.presentation.slides
+    //console.log(jsonData)
+    for (const key in jsonData) {
+
+       const patch = jsonData[key]
+       if (!patch.path.split('/').includes('animation')) {
+        
+         //Render the whole presentation--
+         if (patch.op === 'add'){
+           if (patch.path === '/slides'){
+           //Add slides 
+           render_slides(patch.value,container)
+           }
+
+          if (patch.path.split('/')[3] === 'children'){
+          //Add component  
+           const component_ID = patch.path.split('/')[4]
+           const value = patch.value  
+           add_component(component_ID,value,container)
+          }
+        }
+
+    
+        if (patch.op === 'remove'){
+            
+            if (patch.path.split('/')[3] === 'children'){
+                const component_ID = patch.path.split('/')[4]
+                document.getElementById(component_ID).remove();
+            } 
+            //console.log(component_ID)
+            
+
+           // console.log('op ' + patch.op + ' path ' + patch.path + ' value ' + patch.value)
+        }
+
+       if (patch.op === 'replace'){
+        //[{'op': 'replace', 'path': '/slides/S0/children/S0_C0/children', 'value': 'fkk '}]
+        
+        const component_ID = patch.path.split('/')[4]
+        const field = patch.path.split('/')[5]
+        const value = patch.value
+        
+        update_component(component_ID,field,value)
+
+       }
+
+    }  
+    }
+
+
+   
+
+    //Run MathJax
+    if (window.MathJax) {
+        MathJax.typesetPromise();
+    }
+
+   
+    //Update bar (it works up to 1000 slides)
+    const currentUrl = window.location.href
+    if (currentUrl.charAt(currentUrl.length - 2) !== '#' &&
+    currentUrl.charAt(currentUrl.length - 3) !== '#' &&
+    currentUrl.charAt(currentUrl.length - 4) !== '#')  {
+     window.location.href += "#" + String(window.dataStore.active_slide);
+    } else {
+        let parts = currentUrl.split('#');
+        let number = parseInt(parts[1], 10);
+        window.dataStore.active_slide =number;}
+
+
+    const active_id = 'S' + String(window.dataStore.active_slide)
+
+    //Update visibility
+    const slides = document.querySelectorAll(".slide");
+    for (let i = 0; i < slides.length; i++) {
+    if (slides[i].id === active_id) {
+        
+        change_plotly_static(slides[i].id,false)
+
+        slides[i].style.visibility = 'visible';
+
+        
+    } else {
+        
+        change_plotly_static(slides[i].id,true)
+        slides[i].style.visibility = 'hidden';
+    }
+   
+   }
+
+
+}
+
 
 // Adjusted rendering function
 function render(jsonData) {
@@ -520,12 +697,31 @@ function render(jsonData) {
     // Reference to the slide-container
     let container = document.getElementById('slide-container');
 
- 
-    jsonData.forEach((data, index) => {
-       // console.log("Index:", index);  // This will print the current index
-        renderComponent(data, container);
-    });
+    //const title   = jsonData['title']
 
+
+
+    for (const slide in jsonData) {
+
+        //create slide
+        let element = document.createElement('div');
+        element.className = 'slide';
+        element.id = slide
+        element.style.backgroundColor = jsonData[slide].style.backgroundColor
+        container.appendChild(element)
+        
+        //render elements--
+        for (const key in jsonData[slide]['children']){
+
+            let component = renderComponent(jsonData[slide]['children'][key],element)
+            component.id = key
+            
+        }
+
+
+    }
+ 
+  
     document.getElementById('loader').classList.remove('loader');
 
    
