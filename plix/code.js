@@ -93,8 +93,12 @@ function incrementEvent() {
 
    const totalSlides = document.querySelectorAll(".slide").length;
    //const NSlideEvents = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length
+   //const NSlideEvents = window.dataStore.presentation.slides['S' + String(window.dataStore.active_slide)].animation.length
 
-   const NSlideEvents = window.dataStore.presentation['S' + String(window.dataStore.active_slide)].animation.length
+
+   const slide_ids = Object.keys(window.dataStore.presentation.slides)
+   const NSlideEvents = window.dataStore.presentation.slides[slide_ids[window.dataStore.active_slide]].animation.length
+
 
    if (window.dataStore.index < NSlideEvents - 1){
       window.dataStore.index += 1; 
@@ -118,20 +122,21 @@ function decrementEvent() {
 
 function change_plotly_static(slide,staticc){
 
+    //console.log('here'+slide)
     const slideElement = document.getElementById(slide);
 
    // console.log(slideElement)
     const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
 
     plotlyElements.forEach(element => {
-        console.log(slide + '' + staticc)
+        //console.log(slide + '' + staticc)
         Plotly.react(element.id, element.data, element.layout, {staticPlot: staticc,responsive: true,scrollZoom: true} );   
         //element.hidden=static
-        if (staticc){
-        element.style.visibility='hidden'
-        }
-        else {element.style.visibility='visible'
-           }
+        //if (staticc){
+        //element.style.visibility='hidden'
+       // }
+       // else {element.style.visibility='visible'
+       // }
         
 
 
@@ -140,25 +145,30 @@ function change_plotly_static(slide,staticc){
 }
 
 
-
 function decrementSlide() {
     if (window.dataStore.active_slide > 0) {
         window.dataStore.active_slide -= 1;
-        //window.dataStore.index = window.dataStore.animation['S' + String(window.dataStore.active_slide)].length -1 
-        window.dataStore.index = window.dataStore.presentation['S' + String(window.dataStore.active_slide)].animation.length -1 
+
+        //window.dataStore.index = window.dataStore.presentation.slides['S' + String(window.dataStore.active_slide)].animation.length -1 
+        //const old_slide_id = 'S' + String(window.dataStore.active_slide+1)
+        //const new_slide_id = 'S' + String(window.dataStore.active_slide)
 
 
-        const old_slide_id = 'S' + String(window.dataStore.active_slide+1)
-        const new_slide_id = 'S' + String(window.dataStore.active_slide)
+        const slide_ids = Object.keys(window.dataStore.presentation.slides)
+        window.dataStore.index = window.dataStore.presentation.slides[slide_ids[window.dataStore.active_slide]].animation.length -1
+        const old_slide_id = slide_ids[window.dataStore.active_slide+1]
+        const new_slide_id = slide_ids[window.dataStore.active_slide]
+
+
         document.getElementById(old_slide_id).style.visibility = 'hidden'
 
         const slide =  document.getElementById(new_slide_id)
         slide.style.visibility = 'visible'
 
-        if (!slide.hasAttribute('tabindex')) {
-            slide.setAttribute('tabindex', '-1');
-        }
-        slide.focus()
+        //if (!slide.hasAttribute('tabindex')) {
+        //    slide.setAttribute('tabindex', '-1');
+       // }
+       // slide.focus()
 
         change_plotly_static(old_slide_id,true)
         change_plotly_static(new_slide_id,false)
@@ -176,8 +186,17 @@ function incrementSlide() {
      if (window.dataStore.active_slide < totalSlides - 1) {
         window.dataStore.active_slide += 1
         window.dataStore.index = 0
-        const old_slide_id = 'S' + String(window.dataStore.active_slide-1)
-        const new_slide_id = 'S' + String(window.dataStore.active_slide)
+
+
+        //const old_slide_id = 'S' + String(window.dataStore.active_slide-1)
+        //const new_slide_id = 'S' + String(window.dataStore.active_slide)
+
+        const slide_ids = Object.keys(window.dataStore.presentation.slides)
+        
+        const old_slide_id = slide_ids[window.dataStore.active_slide-1]
+        const new_slide_id = slide_ids[window.dataStore.active_slide]
+
+
 
         document.getElementById(old_slide_id).style.visibility = 'hidden'
 
@@ -185,10 +204,10 @@ function incrementSlide() {
         slide.style.visibility = 'visible'
 
 
-        if (!slide.hasAttribute('tabindex')) {
-            slide.setAttribute('tabindex', '-1');
-        }
-        slide.focus()
+        //if (!slide.hasAttribute('tabindex')) {
+        //    slide.setAttribute('tabindex', '-1');
+       // }
+       // slide.focus()
 
 
         change_plotly_static(old_slide_id,true)
@@ -220,11 +239,14 @@ function updateURL() {
 function updateEventVisibility() {
     //SLIDEs use visible/hidden
     //Elements use visible/inherit
-    //const arr = window.dataStore.animation['S' + String(window.dataStore.active_slide)][window.dataStore.index];
-    const arr = window.dataStore.presentation.slides['S' + String(window.dataStore.active_slide)].animation[window.dataStore.index];
+   
+
+    const slide_id = Object.keys(window.dataStore.presentation.slides)[window.dataStore.active_slide]
+    const arr = window.dataStore.presentation.slides[slide_id].animation[window.dataStore.index];
+
     for (let key in arr) {
-        let element = document.getElementById(key);
-        console.log(key)
+        let element = document.getElementById(slide_id + '_' + key);
+        
 
         if (arr[key]) {
             element.style.visibility = 'hidden';
@@ -266,24 +288,27 @@ document.body.addEventListener('click', e => {
 
         if (window.dataStore.mode === 'grid'){
 
-        const clickedSlideIndex = parseInt(e.target.id.substring(1));
-      
-
-        //Adapt plotly
-        const old_active_slide = window.dataStore.active_slide
-        if (!isNaN(clickedSlideIndex)) {
+        const clickedSlideIndex = e.target.id;
+        const slides_ids = Object.keys(window.dataStore.presentation.slides)
         
-            window.dataStore.active_slide = clickedSlideIndex;
-            updateURL()
-        }
+      
+        const old_active_slide = window.dataStore.active_slide
+        
+        window.dataStore.active_slide = slides_ids.indexOf(clickedSlideIndex); 
 
+        console.log(slides_ids[old_active_slide],clickedSlideIndex)
+        updateURL()
+
+
+        switchMode()
      
-       switchMode()
-       console.log(window.dataStore.active_slide,clickedSlideIndex)
-       if (old_active_slide != clickedSlideIndex) {
-         change_plotly_static('S' + String(old_active_slide),true)
-         change_plotly_static('S' + String(clickedSlideIndex),false)
-       }
+    
+        change_plotly_static(slides_ids[old_active_slide],true) //old
+        change_plotly_static(clickedSlideIndex,false) //new
+        
+        
+
+       
        
     }
 }
@@ -299,15 +324,20 @@ function switchMode() {
 
         // Hide/Show slides
         const slides = document.querySelectorAll(".slide");
+
+       
         slides.forEach((slide, index) => {
         if (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide){
+           
             slide.style.visibility = 'hidden'
         } else {
+          
             slide.style.visibility = 'visible'
         }
 
         });
-
+       
+         //Make the interactive plot disappear
          updatePlotly()
         //Change the number of rows in grid--------
         function setGridRowsBasedOnN(N) {
@@ -325,20 +355,17 @@ function switchMode() {
         // Manage interactable elements
         const interactables = document.querySelectorAll('.interactable');
         interactables.forEach(el => {
-            //console.log(el)
             el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
         });
 
          // Manage PartA and PartB components
          const componentsA = document.querySelectorAll('.PartA');
          componentsA.forEach(component => {
-           // component.hidden = (window.dataStore.mode === 'grid') ? true : false;
             component.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'inherit';
          });
  
          const componentsB = document.querySelectorAll('.PartB');
          componentsB.forEach(component => {
-            // component.hidden = (window.dataStore.mode === 'grid') ? false : true;
              component.style.visibility = (window.dataStore.mode === 'grid') ? 'inherit' : 'hidden';
          });
 

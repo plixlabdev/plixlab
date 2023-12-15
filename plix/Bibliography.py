@@ -1,4 +1,5 @@
 from pybtex.database.input import bibtex
+import os
 
 
 def get_authors(authors):
@@ -45,7 +46,20 @@ def render_book(bib_data):
 
 def format(entry_key):
 
-    bib_data = bibtex.Parser().parse_file('biblio.bib').entries[entry_key]
+
+    #local
+    if os.path.isfile('biblio.bib') :
+       name = 'biblio.bib'
+    else:   
+       home_dir = os.path.expanduser("~")
+       #User-wide
+       if not os.path.isfile(home_dir + '/.plix/biblio.bib') :
+           print('No biblio file found')
+           quit()
+       else:    
+         name = home_dir + '/.plix/biblio.bib'
+
+    bib_data = bibtex.Parser().parse_file(name).entries[entry_key]
 
     
     if bib_data.type == 'software':
