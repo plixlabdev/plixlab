@@ -71,18 +71,14 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
             with open('./.cache','r') as f:
                 old_data = json.load(f)
 
-         data_to_serve = self.data_provider._combine_data()
+         data_to_serve = self.data_provider
     
          patch = list(jsonpatch.JsonPatch.from_diff(old_data,data_to_serve))
-
          if len(patch) > 0:
-
-            print('patch ',patch)
-
             self.write_message(json.dumps({'patch':patch}))
 
-            with open('./.cache','w') as f:
-               json.dump(data_to_serve,f)
+            #with open('./.cache','w') as f:
+            #   json.dump(data_to_serve,f)
 
 def run(data_provider):
 

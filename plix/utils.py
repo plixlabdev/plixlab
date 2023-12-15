@@ -95,35 +95,38 @@ def get_youtube_thumbnail(videoID):
 def convert(value):
     return str(value*100) + '%'
 
-def get_style(**style):
+def get_style(**options):
         """Format the style"""
 
-        style.update({'position':'absolute'})
+        style = {'position':'absolute'}
 
-        if ('x' in style.keys()) and ('y' in style.keys()):
+        if 'color' in options.keys(): style['color'] = options['color']
+        #style.update({'position':'absolute'})
+
+        if ('x' in options.keys()) and ('y' in options.keys()):
            """Infer manual mode""" 
-           style['mode'] = 'manual' 
+           options['mode'] = 'manual' 
 
-        if ('x' in style.keys()) and not ('y' in style.keys()):
+        if ('x' in options.keys()) and not ('y' in options.keys()):
            """Infer manual mode""" 
-           style['mode'] = 'vCentered' 
+           options['mode'] = 'vCentered' 
 
-        if not ('x' in style.keys()) and ('y' in style.keys()):
+        if not ('x' in options.keys()) and ('y' in options.keys()):
            """Infer manual mode""" 
-           style['mode'] = 'hCentered' 
+           options['mode'] = 'hCentered' 
 
-        
+       
 
-        mode = style.setdefault('mode','full')
+        mode = options.setdefault('mode','full')
         if mode == 'manual':
-         style.update({'left'  :convert(style.setdefault('x',0))})
-         style.update({'bottom':convert(style.setdefault('y',0))})
+         style.update({'left'  :convert(options.setdefault('x',0))})
+         style.update({'bottom':convert(options.setdefault('y',0))})
 
-         if 'w' in style.keys():
-             style.update({'width':convert(style['w'])})
+         if 'w' in options.keys():
+             style.update({'width':convert(options['w'])})
             
-         if 'h' in style.keys():
-             style.update({'height':convert(style['h'])})
+         if 'h' in options.keys():
+             style.update({'height':convert(options['h'])})
      
         elif mode == 'full':
 
@@ -133,10 +136,13 @@ def get_style(**style):
             style['height'] = convert(1)
 
         elif mode == 'hCentered':
-            style['bottom'] = convert(style['y'])
+            style['bottom'] = convert(options['y'])
             style['textAlign'] = 'center'
-            if 'w' in style:
-              style['width']   = convert(style['w'])
+            style['alignItems']     = 'center'
+            #This needs to be texted with other objects than text
+            style['justifyContent'] = 'center'
+            if 'w' in options.keys():
+              style['width']   = convert(options['w'])
             
 
         elif mode == 'vCentered':
@@ -145,10 +151,10 @@ def get_style(**style):
             style['display']         = 'flex'
             style['alignItems']     = 'center'
             style['justifyContent'] = 'center'
-            style['height']          = convert(style.setdefault('h',1))
-            style['left']   = convert(style.setdefault('x',0))
-            if 'w' in style:
-              style['width']   = convert(style['w'])
+            style['height']          = convert(options.setdefault('h',1))
+            style['left']   = convert(options.setdefault('x',0))
+            if 'w' in options.keys():
+              style['width']   = convert(options['w'])
 
         return style
 

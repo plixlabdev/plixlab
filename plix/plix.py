@@ -5,7 +5,6 @@ import json
 import base64
 import io
 import matplotlib.pyplot as plt
-import json
 import plotly.io as pio
 from .utils import get_style,get_youtube_thumbnail,process_plotly,fig_to_base64,load_icon,encode_image_to_base64
 from plotly.io import from_json as json_to_plotly
@@ -19,6 +18,9 @@ from . import Bibliography
 from urllib.parse import quote
 import jsonpatch
 from .server import run
+import random
+import string
+from dict_hash import sha256
 
 
 
@@ -76,168 +78,173 @@ plt.style.use(style_path)
 #new = {}
 
          
-def get_access_token():
+#def get_access_token(local=False):
 
-      #Get token
-      token = './computing_together.txt'
 
       #1. Look for a token in current directory
-      try : 
-       with open(token,'r') as f:
-           refresh_token = f.read()
-      except FileNotFoundError:
+#      try : 
+#       token = './plix_credentials.json'
+#       with open(token,'r') as f:
+#           cred = json.load(f)
+#      except FileNotFoundError:
           #2. Look for a token from env
-          token = os.getenv('COMPUTING_TOGETHER_TOKEN',None)
-          try : 
-           with open(token,'r') as f:
-             refresh_token = f.read()
-          except FileNotFoundError:
+#          filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
+#          try : 
+#           with open(filename,'r') as f:
+#            cred = json.load(f)
+#          except FileNotFoundError:
              #3 subscribe
-             webbrowser.open_new_tab(url_subscribe)
-             quit()
+#             webbrowser.open_new_tab(url_subscribe)
+#             quit()
 
 
-      #Get access token
-      url = 'http://127.0.0.1:5001/computo-306914/us-central1/accessToken'
-      headers = {
-      'Authorization': f'Bearer {refresh_token}',
-      'Content-Type': 'application/json'
-      }
-
-      return requests.post(url, headers=headers).json()['accessToken']
-
-
-
-
-def push_data_new(content,local=False,token=None,verbose=True):
-
-      #if local:
-      # url_prefix = 'http://127.0.0.1:5000/presentation'
-      # url ='http://127.0.0.1:5001/computo-306914/us-central1/upload'
-      # url_subscribe = 'http://127.0.0.1:5000'
-      #else: 
-      # url_prefix = 'https://computo-306914.web.app/presentation'
-      # url = 'https://upload-whn4gonsea-uc.a.run.app'
-
-      #accessToken = get_access_token()
-
-      update_values_for_key(content)
-
-
-      # Convert the dictionary to a JSON string
-
-      #json_data = json.dumps(content)
-
-
-      #content = {"name": "Alice", "age": 30, "is_member": True}
-      #print(f"Size of original content: {sys.getsizeof(content)} bytes")
-
-      #json_data = json.dumps(content)
-      #print(f"Size of JSON data: {sys.getsizeof(json_data)} bytes")
-      #quit()
-      #with open('data.json','w') as f:
-      # json.dump(content,f)
-
-
-
-      uid = output['uid']
-     
-      json_data = json.dumps(content)
-      #key = hash(frozenset(content))
-      key = hash(json_data)
-
+#      return requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+#                             {'grant_type':'refresh_token',\
+#                             'refresh_token':cred['refreshToken']},\
+#                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
       
-      encoded_path = quote(f"{uid}/{key}", safe='')
-      #Only live (use POST)
-      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name={encoded_path}"
-      #Production
-      #url= "https://computo-306914.firebaseio.com/test.json"
-      #Real time
-      #url = "http://127.0.0.1:9000/test.json?ns=computo-306914"
 
 
-      # The file to upload
-      headers = {
-        "Authorization": output['accessToken'],
-        "Content-Type": "application/json"
-      }
-
-      #url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/TEST"
-      response = requests.put(url, headers=headers,data = json.dumps(content))
-      #print(response)
-      quit()
-
-      print(response.json)
 
 
 def push_data(content,local=False,token=None,verbose=True):
 
+      #Load credentials
+      try : 
+       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
+            cred = json.load(f)
+      except FileNotFoundError:
+             webbrowser.open_new_tab(url_subscribe)
+             quit()
+   
+      name = sha256({'title':content['title']})
+      #get access token
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+                             {'grant_type':'refresh_token',\
+                             'refresh_token':cred['refreshToken']},\
+                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
 
-      if local:
-       url_prefix = 'http://127.0.0.1:5000/presentation'
-       url ='http://127.0.0.1:5001/computo-306914/us-central1/upload'
-       url_subscribe = 'http://127.0.0.1:5000'
-      else: 
-       url_prefix = 'https://computo-306914.web.app/presentation'
-       url = 'https://upload-whn4gonsea-uc.a.run.app'
+      accessToken = response['access_token']
+      uid         = response['user_id']
+
+       
+      #Upload data
+      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/tt55"
+      response = requests.post(f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{name}",\
+                                headers= {
+                                        'Authorization': f'Bearer {accessToken}',
+                                        "Content-Type": "application/json"
+                                           },\
+                                json = content).json()
+
+
+      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/users%2F{uid}/{name}"
+
+      url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
+
+
+      print(url)
+
+  
+
+
+      #Realtime Database, this will be fixed in the future---
+      #url = f"http://localhost:9001/user/{uid}/test.json?ns=computo-306914"
+      #response = requests.patch(url, headers=headers,json=content).json()
+      #----
+
+      #json_data = json.dumps(content)
+      #key = hash(frozenset(content))
+      #key = hash(json_data)
+      #encoded_path = quote(f"{uid}/{key}", safe='')
+      #Only live (use POST)
+      #url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/users?name={uid}"
+
+      #Production
+
+
+
+#def push_data(content,local=False,token=None,verbose=True):
+
+
+#      if local:
+#       url_prefix = 'http://127.0.0.1:5000/presentation'
+#       url ='http://127.0.0.1:5001/computo-306914/us-central1/upload'
+#       url_subscribe = 'http://127.0.0.1:5000'
+#      else: 
+#       url_prefix = 'https://computo-306914.web.app/presentation'
+#       url = 'https://upload-whn4gonsea-uc.a.run.app'
 
 
       #Get token
-      if not token: token = './computing_together.txt'
+#      if not token: token = './computing_together.txt'
 
       #1. Look for a token in current directory
-      try : 
-       with open(token,'r') as f:
-           refresh_token = f.read()
-      except FileNotFoundError:
+#      try : 
+#       with open(token,'r') as f:
+#           refresh_token = f.read()
+#      except FileNotFoundError:
           #2. Look for a token from env
-          token = os.getenv('COMPUTING_TOGETHER_TOKEN',None)
-          try : 
-           with open(token,'r') as f:
-             refresh_token = f.read()
-          except FileNotFoundError:
+#          token = os.getenv('COMPUTING_TOGETHER_TOKEN',None)
+#          try : 
+#           with open(token,'r') as f:
+#             refresh_token = f.read()
+#          except FileNotFoundError:
              #3 subscribe
-             webbrowser.open_new_tab(url_subscribe)
-             quit()
+#             webbrowser.open_new_tab(url_subscribe)
+#             quit()
 
 
 
       # Get SignedURL--------------------------
-      headers = {
-      'Authorization': f'Bearer {refresh_token}',
-      'Content-Type': 'application/json'
-      }
-      output = requests.post(url, json={"title": content['title']}, headers=headers).json()
-      signedURL = output['signedUrl']
+#      headers = {
+#      'Authorization': f'Bearer {refresh_token}',
+#      'Content-Type': 'application/json'
+#      }
+#      output = requests.post(url, json={"title": content['title']}, headers=headers).json()
+#      signedURL = output['signedUrl']
       #----------------------------------------
     
 
       #Upload data
 
-      response = requests.put(signedURL, headers={"Content-Type": "application/json"}, json=content)
+#      response = requests.put(signedURL, headers={"Content-Type": "application/json"}, json=content)
 
-      url = url_prefix + '/' +  output['url']
+#      url = url_prefix + '/' +  output['url']
       #Print URL
-      if verbose:
-       print(url)
+#      if verbose:
+#       print(url)
 
-      return url 
+#      return url 
 
 
 
+
+def generate_random_string(length):
+    """Generate a random alphanumeric string of a given length."""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
 
         
 class Presentation():
    """Class for presentations"""
 
-   def __init__(self,slides=[],title='untitled'):
+   def __init__(self,slides,title='default'):
 
+            #assign a random title
+            #title = 'title_' + generate_random_string(10) 
 
          self.title = title
+         data = {}
+         for slide in slides:
+           data.update(slide.get())
 
-         self.content = [slide.content for slide in slides]   
-         
-         self.animation = [slide.animation for slide in slides]
+         self.slides = data
+
+         #self.animation = [slide.animation for slide in slides]
+
+   
+
 
    #@classmethod
    #def read(cls,data):
@@ -262,67 +269,8 @@ class Presentation():
 
 
 
-   def _combine_data(self):
 
-        data = {}
-        #Add IDs to Slides
-        for s,slide in enumerate(self.content):
 
-           slide_id = f'S{s}'   
-           children = {}
-           
-           #Add IDs to Components
-           for c,component in enumerate(slide['children']):
-               component_id = f'S{s}_C{c}'
-               children[component_id] = component
-
-           data[slide_id] = {'children':children,'style':slide['style']}
-
-                      
-        #Convert from number to lists
-        animation_l = []
-        for slide in self.animation:
-            tmp = []
-            for x in slide:
-             if not isinstance(x,list):
-                #This is a number
-                a = []
-                for i in range(x):
-                    a.append(0)
-                a.append(1)
-                tmp.append(a)
-             else:    
-               tmp.append(x)   
-            animation_l.append(tmp)   
-        #------------------------------        
-
-        #Expands animations
-        for x in animation_l:
-            tmp = [len(i) for i in x]
-            if len(tmp) > 0:
-             n_events = max(tmp)
-             for k,i in enumerate(x):
-                #if len(i) < n_events:
-                for i in  range(n_events - len(i)): 
-                   x[k].append(1)
-        #------------------------------- 
-        #Add events
-        events = {}
-        for s,animation in enumerate(animation_l):
-            animation = np.array(animation).T
-
-            slide_events = []
-            for i,click in enumerate(animation):
-                event = {}
-                for c,status in enumerate(click):
-                    C_id = f'S{s}_C{c}'; value = not(bool(status))
-                    event.update({C_id:value})
-                slide_events.append(event)        
-
-            data[f'S{s}']['animation'] = slide_events
-
-            #print(data[f'S{s}']['animation'])
-        return {'title':self.title,'slides':data} 
 
 
    def _render_animation(self):
@@ -381,49 +329,156 @@ class Presentation():
    def show(self):
         """Display the presentation"""
 
-        run(self)
+        run({'title':self.title,'slides':self.slides})
 
-   def save(self,filename):
+   
+
+   def save(self,filename='output.json',library=True):
         """Save presentation""" 
 
-        animation = self._combine_data()
+        if library:
+         filename = os.path.expanduser("~") + '/.plix/library.json'
+      
+         #Create if it does not exist
+         if not os.path.isfile(filename):
+          with open(filename,'w') as f: 
+              json.dump({'presentations':{},'slides':{}},f)
 
-        content = {'data':self.content,'animation':animation}
+         with open(filename,'r') as f: 
+            data = json.load(f)
+            if len(self.slides) > 1:
+             data['presentations'][self.title] = list(self.slides.keys())
+            data['slides'].update(self.slides)
 
-        with open(filename,'w') as f: 
-          json.dump(content,f)
+         with open(filename,'w') as f: 
+              json.dump(data,f)
+            
+        else:
+
+         with open(filename,'w') as f: 
+           json.dump(content,f)
 
 
 
    def push(self,**argv):
 
       #Prepare content
-      animation = self._combine_data()
-      content = {'data':self.content,'animation':animation,'title':self.title}
+      content = {'title':self.title,'slides':self.slides}
 
       url = push_data(content,**argv)
+
+
+class Collection:
+    def __init__(self, slides):
+        self.slides = slides
+
+    def get(self):
+        return self.slides
+
+
+def Loader(name):
+
+   filename = os.path.expanduser("~") + '/.plix/library.json'
+   with open(filename,'r') as f: 
+          data = json.load(f)
+
+   #Check if the name is in presentations first
+   if name in data['presentations'].keys():
+      slides = {title:data['slides'][title] for title in data['presentations'][name]}
+   elif name in data['slides'].keys():
+       slides = {name:data['slides'][name]}
+   else:
+       print(f'No presentation or slide named {name}')
+       quit()
+
+
+   return Collection(slides)
 
 
 
 
 class Slide():
     """A simple example class"""
-    def __init__(self,background='#303030',content = []):
+    def __init__(self,title=None,background='#303030'):
         
-         if len(content) == 0:
-             #self.content = {'type':'Slide','props':{'children':[],'className':'slide','style':{'backgroundColor':background}}}
-             self.content = {'children':[],'style':{'backgroundColor':background}}
-         else:
-          self.content = content  
+         #if len(content) == 0:
+         #self.content = {'children':{},'style':{'backgroundColor':background}}
+         self.content = []
+         self.style = {'backgroundColor':background}
+         #else:
+         #    self.content = content  
+
+
 
          #Init animation
          self.animation = []
-   
+
+         self.title = title
+  
+
+    def get(self):
+
+        animation = self.process_animations()
+
+        #Process title
+        if not(self.title):
+            self.title = sha256({'content':self.content,'style':self.style,'animation':animation})
+
+        #Process children
+        children = { self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
+
+        data = {'children':children,'style':self.style,'animation':animation} 
+            
+        return {self.title:data}
+
+
+
     def _add_animation(self,**argv):
         """Add animation"""
 
         animation = argv.setdefault('animation',[1])
         self.animation.append(animation)
+
+    def process_animations(self):
+
+        #Convert from number to lists
+        tmp = []
+        for x in self.animation:
+             if not isinstance(x,list):
+                #This is a number
+                a = []
+                for i in range(x):
+                    a.append(0)
+                a.append(1)
+                tmp.append(a)
+             else:    
+               tmp.append(x)   
+        #------------------------------        
+
+        #Expands animations
+        tmp2 = [len(i) for i in tmp]
+        if len(tmp2) > 0:
+             n_events = max(tmp2)
+             for k,i in enumerate(tmp):
+                #if len(i) < n_events:
+                for i in  range(n_events - len(i)): 
+                   tmp[k].append(1)
+        #------------------------------- 
+        #Add events
+        animation = np.array(tmp).T
+
+        slide_events = []
+        for i,click in enumerate(animation):
+                event = {}
+                for c,status in enumerate(click):
+                    C_id = f'{c}'; value = not(bool(status))
+                    event.update({C_id:value})
+                slide_events.append(event)        
+
+        return slide_events
+
+
+
 
     #componentA: eveything to show in presentation
     #componentA: eveything to show in grid
@@ -438,8 +493,9 @@ class Slide():
          text = Bibliography.format(key)
          style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
          style.setdefault('color','#FFFFFF')
-         tmp = {'type':"Markdown",'props':{'children':text,'className':'markdownComponent interactable componentA','style':style.copy(),'fontsize':0.03}}
-         self.content['children'].append(tmp)
+         tmp = {'type':"Markdown",'text':text,'style':style.copy(),'fontsize':0.03}
+         #self.children[f"{self.title}_{len(self.children)}"] = tmp
+         self.content.append(tmp)
          self._add_animation(**style)
 
         return self
@@ -451,16 +507,12 @@ class Slide():
         argv.setdefault('mode','center')
         style = get_style(**argv)
         style.setdefault('color','#FFFFFF')
-        if 'animation' in style.keys():
-            del style['animation']
-        if style['mode'] == 'hCentered':
-            style['alignItems'] = 'center'
-            style['justifyContent'] = 'center'
 
         #-----------------
-        #tmp = {'type':"Markdown",'text':text,'props':{'className':'markdownComponent interactable componentA','style':style,'fontsize':argv.setdefault('fontsize',0.04)}}
-        tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.04),'style':style}#,props':{'style':style,'fontsize':argv.setdefault('fontsize',0.04)}}
-        self.content['children'].append(tmp)
+        tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.04),'style':style}
+        #self.content['children'].append(tmp)
+        #self.children[f"{self.title}_{len(self.children)}"] = tmp
+        self.content.append(tmp)
         self._add_animation(**argv)
         return self
 
@@ -478,9 +530,10 @@ class Slide():
            url = 'data:model/gltf-binary;base64,{}'.format(model_data)
 
 
-        tmp = {'type':'model3D','props':{'className':'interactable componentA','src':url,'style':style}}
+        tmp = {'type':'model3D','className':'interactable componentA','src':url,'style':style}
 
-        self.content['children'].append(tmp)
+        self.content.append(tmp)
+
         self._add_animation(**argv)
         return self
 
@@ -500,24 +553,27 @@ class Slide():
 
 
 
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable componentA'}}
-        self.content['children'].append(tmp)
+        tmp = {'type':"Img",'src':url,'style':style}
+        #self.content['children'].append(tmp)
+        #self.content['children'][f"{self.title}_{len(self.content['children'])}"] = tmp
+        #self.children[f"{self.title}_{len(self.children)}"] = tmp
+        self.content.append(tmp)
         self._add_animation(**argv)
         return self
      
-    def slide(self,slide,**argv):
-        """Nested slides"""
+    #def slide(self,slide,**argv):
+    #    """Nested slides"""
 
         #Adjust Slide
-        style = get_style(**argv)
-        style['backgroundColor'] = slide.content['props']['style']['backgroundColor']
-        style['border'] = '3px solid #FFFFFF'
-        tmp = {'type':'Slide','props':{'children':slide.content['props']['children'],'className':'embedded_slide interactable componentA','style':style}}
+    #    style = get_style(**argv)
+    #    style['backgroundColor'] = slide.content['props']['style']['backgroundColor']
+    #    style['border'] = '3px solid #FFFFFF'
+    #    tmp = {'type':'Slide','props':{'children':slide.content['props']['children'],'className':'embedded_slide interactable componentA','style':style}}
         #-----------------------------
 
-        self.content['children'].append(tmp)
-        self._add_animation(**argv)
-        return self
+   #     self.content['children'].append(tmp)
+   #     self._add_animation(**argv)
+   #     return self
         
 
     def shape(self,shapeID,**argv):
@@ -525,8 +581,9 @@ class Slide():
        style = get_style(**argv)
        image = shape(shapeID,**argv)
        url = 'data:image/png;base64,{}'.format(image) 
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable componentA'}}
-       self.content['children'].append(tmp)
+       tmp = {'type':"Img",'src':url,'style':style}
+       #self.children[f"{self.title}_{len(self.children)}"] = tmp
+       self.content.append(tmp)
        self._add_animation(**argv)
        return self
        
@@ -539,8 +596,9 @@ class Slide():
         #Add Video--
         url = f"https://www.youtube.com/embed/{videoID}?controls=0&rel=0"
         #tmp = {'type':'Iframe','props':{'className':'PartA componentA','src':url,'style':style.copy()}}
-        tmp = {'type':'Iframe','props':{'className':'interactable','src':url,'style':style.copy()}}
-        self.content['children'].append(tmp)
+        tmp = {'type':'Iframe','className':'interactable','src':url,'style':style.copy()}
+        #self.children[f"{self.title}_{len(self.children)}"] = tmp
+        self.content.append(tmp)
         #----------
 
         #Add thumbnail--
@@ -563,8 +621,8 @@ class Slide():
        image = base64.b64encode(buf.getvalue()).decode("utf8")
        buf.close()
        url = 'data:image/png;base64,{}'.format(image)
-       tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'interactable componentA'}}
-       self.content['children'].append(tmp)
+       tmp = {'type':"Img",'src':url,'style':style}
+       self.children[f"{self.title}_{len(self.children)}"] = tmp
        self._add_animation(**argv)
 
        return self
@@ -578,8 +636,10 @@ class Slide():
 
       
        style  = get_style(**argv)
-       tmp = {'type':"Bokeh",'graph':data,'props':{'style':style,'className':'componentA interactable'}}
+       tmp = {'type':"Bokeh",'graph':data,'style':style,'className':'componentA interactable'}
        self.content['children'].append(tmp)
+       #self.children[f"{self.title}_{len(self.children)}"] = tmp
+       self.content.append(tmp)
        self._add_animation(**argv)
        return self 
 
@@ -600,9 +660,9 @@ class Slide():
        #fig = fig.to_plotly_json()
        #--------------------------
        
-       #tmp = {'type':"Graph",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'PartA componentA interactable PLOTLY'}}
-       tmp = {'type':"Plotly",'props':{'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy(),'className':'componentA interactable PLOTLY'}}
-       self.content['children'].append(tmp)
+       tmp = {'type':"Plotly",'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy()}
+       #self.children[f"{self.title}_{len(self.children)}"] = tmp
+       self.content.append(tmp)
        self._add_animation(**argv)
        return self 
 
@@ -625,15 +685,16 @@ class Slide():
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
         #Add Iframe--
-        tmp = {'type':'Iframe','props':{'className':'PartA componentA','src':url,'style':style,'hidden':False}}
+        tmp = {'type':'Iframe','className':'PartA componentA','src':url,'style':style,'hidden':False}
         self.content['children'].append(tmp)
 
         #Add Thumbnail
         image = load_icon('jupyter')
         image = encode_image_to_base64(image)
         url='data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'props':{'src':url,'style':style,'className':'PartB','hidden':True}}
-        self.content['children'].append(tmp)
+        tmp = {'type':"Img",'src':url,'style':style,'className':'PartB','hidden':True}
+        self.content.append(tmp)
+        #self.children[f"{self.title}_{len(self.children)}"] = tmp
 
         self._add_animation(**argv)
         return self 
@@ -644,9 +705,10 @@ class Slide():
         style = get_style(**argv)
         #Add border
         #style['border'] ='2px solid #000';
-        tmp = {'type':'Iframe','props':{'className':'interactable componentA','src':url,'style':style}}
+        tmp = {'type':'Iframe','src':url,'style':style}
+        #self.children[f"{self.title}_{len(self.children)}"] = tmp
+        self.content.append(tmp)
 
-        self.content['children'].append(tmp)
         self._add_animation(**argv)
         return self
 
@@ -655,6 +717,11 @@ class Slide():
         """Show the slide as a single-slide presentation"""
         
         Presentation([self]).show()
+
+    def save(self):
+        """Save the slide"""
+        
+        Presentation([self]).save()
 
 
     def push(self,title='untitled'):

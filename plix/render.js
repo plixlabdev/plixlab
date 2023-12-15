@@ -18,10 +18,14 @@ import { OrbitControls } from './assets/js/OrbitControls.js'
     return blobURL;
  }
 
+ function extractAndDivide(str) {
+    var numericPart = parseFloat(str.replace('%', '')); // Remove '%' and convert to float
+    return numericPart / 100; // Divide by 100
+}
 
+function import3DModel(modelDataURL,width){
 
-function import3DModel(modelDataURL,w){
-
+const w = extractAndDivide(width)
 
  //Scene
 //const scene = new Scene();
@@ -56,7 +60,9 @@ scene.add(pointLight);
 
  // Now you can use the three.js loader with the blob URL
  const loader = new GLTFLoader();
- //const loader = new THREE.GLTFLoader();
+
+
+
 
 
  
@@ -199,7 +205,7 @@ async function render_presentation(data) {
    
     if (data) {
         const jsonData = data.patch;
-        console.log(jsonData)
+        //console.log(jsonData)
         
         if (jsonData.length > 0){
     
@@ -215,11 +221,11 @@ async function render_presentation(data) {
            } 
 
             // Apply patch
-            console.log('Applying patch', jsonData, ' to ' ,window.dataStore.presentation );
+            //console.log('Applying patch', jsonData, ' to ' ,window.dataStore.presentation );
             try {
                 const patchResult = jsonpatch.applyPatch(window.dataStore.presentation, jsonData);
                 window.dataStore.presentation = patchResult.newDocument;
-                console.log('Patch applied successfully. New document: ', patchResult.newDocument);
+              //  console.log('Patch applied successfully. New document: ', patchResult.newDocument);
             } catch (error) {
                 console.error('Error applying JSON patch:', error);
             }
@@ -260,32 +266,32 @@ function change_plotly_static(slide,staticc){
 
 }
 
-function add_common_properties(element,data,add_id) {
+//function add_common_properties(element,data,add_id) {
 
      //Style
-     if (data.props.style) {
-        for (let styleProp in data.props.style) {
-            let cssValue = data.props.style[styleProp];
-            if (typeof cssValue === 'number' && ['fontSize', 'width', 'height', 'top', 'right', 'bottom', 'left'].includes(styleProp)) {
-                cssValue += 'px';
-            }
-            element.style[styleProp] = cssValue;
-        }
-    }
+  //   if (data.props.style) {
+   //     for (let styleProp in data.props.style) {
+   //         let cssValue = data.props.style[styleProp];
+   //         if (typeof cssValue === 'number' && ['fontSize', 'width', 'height', 'top', 'right', 'bottom', 'left'].includes(styleProp)) {
+   //             cssValue += 'px';
+   //         }
+   //         element.style[styleProp] = cssValue;
+    //    }
+   // }
 
     //ClassName
-    if (add_id){
-     if (data.props.className) {
-        element.className = data.props.className;
-     }
+   // if (add_id){
+   //  if (data.props.className) {
+   //     element.className = data.props.className;
+   //  }
   
      //ClassName
    
-     if (data.id) {
-         element.id = data.id;
-     }}
+   //  if (data.id) {
+   //      element.id = data.id;
+   //  }}
 
-}
+//}
 
 function apply_style(element,style) {
 
@@ -295,6 +301,7 @@ function apply_style(element,style) {
            if (typeof cssValue === 'number' && ['fontSize', 'width', 'height', 'top', 'right', 'bottom', 'left'].includes(styleProp)) {
                cssValue += 'px';
            }
+           //console.log(styleProp,cssValue)
            element.style[styleProp] = cssValue;
     }
    
@@ -319,9 +326,10 @@ function update_markdown(element,field,value){
 
     if (field === 'style'){
         apply_style(element, value);
+        
     
         if (value.alignItems === 'center' & value.justifyContent === 'center') {
-
+        
          // Center-align text for all paragraphs inside the container
          let paragraphs = element.querySelectorAll('p');
          paragraphs.forEach(p => {
@@ -383,7 +391,7 @@ function renderComponent(data,outer_element) {
        
         case 'Markdown':
 
-            //Text
+            //Text1
             element = add_markdown(data.id)
             outer_element.appendChild(element)
             update_markdown(element,'text',data.text)
@@ -394,11 +402,8 @@ function renderComponent(data,outer_element) {
            
 
         case 'model3D':
-                //element = document.createElement('div');
-                //const data = data.props.src;
+               
                 const elem = import3DModel(data.props.src,data.props.style.w)
-                //element.appendChild(model)
-
                 add_common_properties(elem,data,true)
                 outer_element.appendChild(elem)
                 break;
@@ -420,15 +425,14 @@ function renderComponent(data,outer_element) {
               iframe.setAttribute('frameborder', '0');
 
         
-
               iframe.src = data.props.src;
 
 
               //manage focus (at the beginning there is no focus on iFrame)
-              iframe.tabindex=-1
-              iframe.addEventListener('click', function() {
-                this.focus();
-              });
+             // iframe.tabindex=-1
+             // iframe.addEventListener('click', function() {
+             //   this.focus();
+             // });
              
               
               element.appendChild(iframe)
@@ -466,6 +470,8 @@ function renderComponent(data,outer_element) {
             //TODO: check if this is needed
             element.className = 'PartA interactable PLOTLY'
             outer_element.appendChild(element);
+
+           
 
             //Thumbnail
             const thumbnail = document.createElement('img');
@@ -547,8 +553,12 @@ function render_slides(slides,container){
         //render elements--
         for (const key in slides[slide]['children']){
 
-            let component = renderComponent(slides[slide]['children'][key],element)
-            component.id = key
+            //let component = renderComponent(slides[slide]['children'][key],element)
+            //component.id = key
+
+            add_component(key,slides[slide]['children'][key],element)
+
+
             
         }
 
@@ -565,6 +575,7 @@ function update_component(component_ID,field,value)
     const element = document.getElementById(component_ID)
     const className = element.className
 
+    //Markdown
     if (className.includes('markdownComponent')){
         update_markdown(element,field,value)
     }
@@ -575,13 +586,107 @@ function add_component(id,data,outer_element){
    
     if (data.type === 'Markdown'){
      
-        const element = add_markdown(id)
+        const element = document.createElement('div')
+        element.className = 'markdownComponent interactable componentA'
+        element.id = id
         outer_element.appendChild(element)
         update_markdown(element,'text',data.text)
         update_markdown(element,'style',data.style)
         update_markdown(element,'fontsize',data.fontsize)
 
     }
+
+    if (data.type === 'Img'){
+
+        const element = document.createElement('img');
+        if (data.className) {
+            element.className = 'interactable componentA';
+        } else {
+            element.className = data.className;
+        }
+
+        if (data.hidden){
+            element.hidden=true
+        }
+        
+        element.className ='interactable componentA'
+        element.id = id
+        outer_element.appendChild(element)
+        element.src = data.src;
+        apply_style(element,data.style);
+
+    }
+
+    if (data.type === 'model3D'){
+      const element = import3DModel(data.src,data.style.width)
+      element.id = id
+      outer_element.appendChild(element)
+      element.className ='interactable componentA'
+      apply_style(element,data.style)
+    } 
+
+    if (data.type ==='Iframe'){
+
+        //Perhaps the external DIV is not necessary here
+        const element = document.createElement('div')
+       
+        const iframe = document.createElement('iframe');
+        iframe.width = '100%'
+        iframe.height = '100%'
+        iframe.setAttribute('frameborder', '0');
+        iframe.src = data.src;
+        element.appendChild(iframe)
+        element.id = id 
+        element.className ='interactable componentA'
+        apply_style(element,data.style)
+        outer_element.appendChild(element)
+    }
+  
+    if (data.type ==='Plotly'){
+        console.log(data,'tttt')
+        const config = {
+            responsive: true,
+            scrollZoom: true,
+            staticPlot: false
+            //modeBarButtonsToAdd: ["drawline","eraseshape"]
+           /// displayModeBar: false
+        };
+        const element = document.createElement('div');
+        element.id = id
+        console.log(element.id)
+        apply_style(element,data.style)
+        //add_common_properties(element, data,true);
+        //TODO: check if this is needed
+        element.className = 'PartA interactable PLOTLY'
+        outer_element.appendChild(element);
+
+        //Thumbnail
+        const thumbnail = document.createElement('img');
+        apply_style(thumbnail,data.style)
+        outer_element.appendChild(thumbnail);
+        thumbnail.className = 'PartB interactable'
+        thumbnail.id = id + 'THUMB'
+        thumbnail.style.visibility = 'hidden'
+        
+        async function generateThumbnail(data, element, thumbnail) {
+            try {
+                const gd = await Plotly.react(element, data.figure.data, data.figure.layout, config);
+                const url = await Plotly.toImage(gd);
+        
+                //console.log("Thumbnail URL for", data.id, ":", url);
+                thumbnail.src = url;
+        
+            } catch (error) {
+                console.error("Error while processing the graph:", error);
+            }
+        }
+        
+        // Call the function
+        generateThumbnail(data, element, thumbnail);
+        
+
+    }
+
 
 }
 
@@ -592,39 +697,32 @@ function render_patch(jsonData) {
     // Reference to the slide-container
     let container = document.getElementById('slide-container');
 
-    //const jsonData = window.dataStore.presentation.slides
-    //console.log(jsonData)
+  
     for (const key in jsonData) {
 
        const patch = jsonData[key]
        if (!patch.path.split('/').includes('animation')) {
         
-         //Render the whole presentation--
+         
          if (patch.op === 'add'){
-           if (patch.path === '/slides'){
-           //Add slides 
-           render_slides(patch.value,container)
-           }
+           //Add whole presentation 
+          if (patch.path === '/slides'){render_slides(patch.value,container)}
 
           if (patch.path.split('/')[3] === 'children'){
-          //Add component  
+           //Add component  
            const component_ID = patch.path.split('/')[4]
            const value = patch.value  
            add_component(component_ID,value,container)
-          }
+           }
         }
 
     
         if (patch.op === 'remove'){
-            
+            //remove component
             if (patch.path.split('/')[3] === 'children'){
                 const component_ID = patch.path.split('/')[4]
                 document.getElementById(component_ID).remove();
             } 
-            //console.log(component_ID)
-            
-
-           // console.log('op ' + patch.op + ' path ' + patch.path + ' value ' + patch.value)
         }
 
        if (patch.op === 'replace'){
@@ -632,7 +730,15 @@ function render_patch(jsonData) {
         
         const component_ID = patch.path.split('/')[4]
         const field = patch.path.split('/')[5]
-        const value = patch.value
+        const placeholder = patch.value;
+        let value = null
+
+        if (field === 'style') {
+            
+            value = { [patch.path.split('/')[6]]: placeholder };
+            
+        }else {value = placeholder}
+
         
         update_component(component_ID,field,value)
 
@@ -642,7 +748,6 @@ function render_patch(jsonData) {
     }
 
 
-   
 
     //Run MathJax
     if (window.MathJax) {
@@ -661,8 +766,12 @@ function render_patch(jsonData) {
         let number = parseInt(parts[1], 10);
         window.dataStore.active_slide =number;}
 
+        
+    //const active_id = 'S' + String(window.dataStore.active_slide)
 
-    const active_id = 'S' + String(window.dataStore.active_slide)
+    const active_id = Object.keys(window.dataStore.presentation.slides)[window.dataStore.active_slide]
+    
+    //console.log(active_id)
 
     //Update visibility
     const slides = document.querySelectorAll(".slide");
@@ -687,85 +796,84 @@ function render_patch(jsonData) {
 
 
 // Adjusted rendering function
-function render(jsonData) {
+//function render(jsonData) {
 
     // Check if jsonData is available
-    if (!jsonData) {
-        console.error("Data has not been loaded yet!");
-        return;
-    }
+//    if (!jsonData) {
+   //     console.error("Data has not been loaded yet!");
+  //      return;
+  //  }
     // Reference to the slide-container
-    let container = document.getElementById('slide-container');
-
-    //const title   = jsonData['title']
+  //  let container = document.getElementById('slide-container');
 
 
 
-    for (const slide in jsonData) {
+
+//    for (const slide in jsonData) {
 
         //create slide
-        let element = document.createElement('div');
-        element.className = 'slide';
-        element.id = slide
-        element.style.backgroundColor = jsonData[slide].style.backgroundColor
-        container.appendChild(element)
+  //      let element = document.createElement('div');
+  //      element.className = 'slide';
+  //      element.id = slide
+  //      element.style.backgroundColor = jsonData[slide].style.backgroundColor
+  //      container.appendChild(element)
         
         //render elements--
-        for (const key in jsonData[slide]['children']){
+   //     for (const key in jsonData[slide]['children']){
 
-            let component = renderComponent(jsonData[slide]['children'][key],element)
-            component.id = key
+    //        let component = renderComponent(jsonData[slide]['children'][key],element)
+    //        component.id = key
             
-        }
+     //   }
 
 
-    }
+    //}
  
   
-    document.getElementById('loader').classList.remove('loader');
+    //document.getElementById('loader').classList.remove('loader');
 
    
 
     //Run MathJax
-    if (window.MathJax) {
-        MathJax.typesetPromise();
-    }
+    //if (window.MathJax) {
+    //    MathJax.typesetPromise();
+   // }
 
    
     //Update bar (it works up to 1000 slides)
-    const currentUrl = window.location.href
-    if (currentUrl.charAt(currentUrl.length - 2) !== '#' &&
-    currentUrl.charAt(currentUrl.length - 3) !== '#' &&
-    currentUrl.charAt(currentUrl.length - 4) !== '#')  {
-     window.location.href += "#" + String(window.dataStore.active_slide);
-    } else {
-        let parts = currentUrl.split('#');
-        let number = parseInt(parts[1], 10);
-        window.dataStore.active_slide =number;}
+    //const currentUrl = window.location.href
+    //if (currentUrl.charAt(currentUrl.length - 2) !== '#' &&
+    //currentUrl.charAt(currentUrl.length - 3) !== '#' &&
+    //currentUrl.charAt(currentUrl.length - 4) !== '#')  {
+    // window.location.href += "#" + String(window.dataStore.active_slide);
+    //} else {
+    //    let parts = currentUrl.split('#');
+    //    let number = parseInt(parts[1], 10);
+     //   window.dataStore.active_slide =number;}
 
 
-    const active_id = 'S' + String(window.dataStore.active_slide)
+    //const active_id = 'S' + String(window.dataStore.active_slide)
 
     //Update visibility
-    const slides = document.querySelectorAll(".slide");
-    for (let i = 0; i < slides.length; i++) {
-    if (slides[i].id === active_id) {
+    //const slides = document.querySelectorAll(".slide");
+    //for (let i = 0; i < slides.length; i++) {
+    //if (slides[i].id === active_id) {
         
-        change_plotly_static(slides[i].id,false)
+     //   change_plotly_static(slides[i].id,false)
 
-        slides[i].style.visibility = 'visible';
+     //   slides[i].style.visibility = 'visible';
 
         
-    } else {
+    //} else {
         
-        change_plotly_static(slides[i].id,true)
-        slides[i].style.visibility = 'hidden';
-    }
+     //   change_plotly_static(slides[i].id,true)
+     //   slides[i].style.visibility = 'hidden';
+   // }
    
-   }
+  // }
 
 
-}
+//}
  
 
 
