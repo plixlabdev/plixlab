@@ -1,22 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from './assets/js/GLTFLoader.js'
 import { OrbitControls } from './assets/js/OrbitControls.js'
-//import * as jsonpatch from './assets/js/fast-json-patch/index.mjs';
 
- 
- // Convert base64 data URL to blob URL
- function dataURItoBlob(dataURI) {
-    const byteString = atob(dataURI.split(',')[1]);
-    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
-    const buffer = new ArrayBuffer(byteString.length);
-    const dataView = new Uint8Array(buffer);
-    for (let i = 0; i < byteString.length; i++) {
-        dataView[i] = byteString.charCodeAt(i);
-    }
-    const blob = new Blob([buffer], { type: mimeString });
-    const blobURL = URL.createObjectURL(blob);
-    return blobURL;
- }
 
  function extractAndDivide(str) {
     var numericPart = parseFloat(str.replace('%', '')); // Remove '%' and convert to float
@@ -25,74 +10,75 @@ import { OrbitControls } from './assets/js/OrbitControls.js'
 
 function import3DModel(modelDataURL,width){
 
-const w = extractAndDivide(width)
-
- //Scene
-//const scene = new Scene();
-const scene = new THREE.Scene();
-// Increase the intensity of the ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 1); // set intensity to 1
-scene.add(ambientLight);
-
-// Increase the intensity of the directional light
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2); // set intensity to 2 for stronger light
-directionalLight.position.set(1, 2, 4);
-scene.add(directionalLight);
-
-// Optionally, add another light source if you want more illumination in your scene
-const pointLight = new THREE.PointLight(0xffffff, 1.5, 100); // intensity is 1.5 and distance is 100
-pointLight.position.set(-2, 3, -5); // adjust the position as per your needs
-scene.add(pointLight);
-
- //Camera
- const camera = new THREE.PerspectiveCamera(75, 16/9*w, 0.1, 1000);
- camera.position.z = 5;
-
- //Renderer
- const renderer = new THREE.WebGLRenderer({ alpha: true });
- renderer.setClearColor(0x000000, 0);  // 
- renderer.setSize(window.innerWidth, window.innerHeight);
-
-
- const controls = new OrbitControls(camera, renderer.domElement);
-
- const blobURL = dataURItoBlob(modelDataURL);
-
- // Now you can use the three.js loader with the blob URL
- const loader = new GLTFLoader();
-
-
-
-
-
- 
- loader.load(blobURL, function(obj) {
- scene.add( obj.scene );
+    const w = extractAndDivide(width)
     
- var box = new THREE.Box3().setFromObject( obj.scene );
- const center = box.getCenter(new THREE.Vector3());
+     //Scene
+    //const scene = new Scene();
+    const scene = new THREE.Scene();
+    // Increase the intensity of the ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1); // set intensity to 1
+    scene.add(ambientLight);
+    
+    // Increase the intensity of the directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2); // set intensity to 2 for stronger light
+    directionalLight.position.set(1, 2, 4);
+    scene.add(directionalLight);
+    
+    // Optionally, add another light source if you want more illumination in your scene
+    const pointLight = new THREE.PointLight(0xffffff, 1.5, 100); // intensity is 1.5 and distance is 100
+    pointLight.position.set(-2, 3, -5); // adjust the position as per your needs
+    scene.add(pointLight);
+    
+     //Camera
+     const camera = new THREE.PerspectiveCamera(75, 16/9*w, 0.1, 1000);
+     camera.position.z = 5;
+    
+     //Renderer
+     const renderer = new THREE.WebGLRenderer({ alpha: true });
+     renderer.setClearColor(0x000000, 0);  // 
+     renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    
+     const controls = new OrbitControls(camera, renderer.domElement);
+    
+     //const blobURL = dataURItoBlob(modelDataURL);
 
- controls.target.copy(center);
- controls.update(); 
- camera.lookAt(center);
-
-  
- })
-
-
- function animate() {
-	requestAnimationFrame(animate);
-	controls.update();
-	renderer.render(scene, camera);
- }
-
- animate();
-
-
-
-return renderer.domElement
-
-}
+     const blob = new Blob([modelDataURL], { type: 'model/gltf-binary' });
+     const blobURL = URL.createObjectURL(blob);
+    
+     // Now you can use the three.js loader with the blob URL
+     const loader = new GLTFLoader();
+    
+    
+     
+     loader.load(blobURL, function(obj) {
+     scene.add( obj.scene );
+        
+     var box = new THREE.Box3().setFromObject( obj.scene );
+     const center = box.getCenter(new THREE.Vector3());
+    
+     controls.target.copy(center);
+     controls.update(); 
+     camera.lookAt(center);
+    
+      
+     })
+    
+    
+     function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+     }
+    
+     animate();
+    
+    
+    
+    return renderer.domElement
+    
+    }
+    
 
 
 window.addEventListener('load', async function() {
@@ -105,6 +91,8 @@ window.addEventListener('load', async function() {
     
         try {
             const ws = new WebSocket(`ws://localhost:8888/data?isFirstConnection=${isFirstConnection}`);
+            ws.binaryType = 'arraybuffer'; // Set the WebSocket to receive binary data
+
     
             ws.onopen = function(event) {
                 console.log("Connected to WebSocket.");
@@ -113,8 +101,20 @@ window.addEventListener('load', async function() {
             };
     
             ws.onmessage = function(event) {
+                let data
+                //data = JSON.parse(event.data)
+
+                if (event.data instanceof ArrayBuffer) {
+                    // Decode the MessagePack data
+                    data = msgpackr.unpack(new Uint8Array(event.data));
+
+                    // Now 'data' is your deserialized object
+                } else {
+                    console.error('Received data is not in binary format');
+                }
+
                 console.log("Message received.");
-                render_presentation(JSON.parse(event.data));
+                render_presentation(data);
             };
     
             ws.onerror = function(event) {
@@ -201,11 +201,11 @@ document.getElementById('download').addEventListener('click', function() {
 
    
     
-async function render_presentation(data) {
+async function render_presentation(jsonData) {
    
-    if (data) {
-        const jsonData = data.patch;
-        //console.log(jsonData)
+    if (jsonData) {
+        //const jsonData = data.patch;
+        //console.log(data)
         
         if (jsonData.length > 0){
     

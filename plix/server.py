@@ -5,6 +5,7 @@ import tornado.ioloop
 import tornado.web
 import os
 import json,jsonpatch
+import msgpack
 
 def make_app(data_provider):
     return tornado.web.Application([
@@ -75,7 +76,9 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
     
          patch = list(jsonpatch.JsonPatch.from_diff(old_data,data_to_serve))
          if len(patch) > 0:
-            self.write_message(json.dumps({'patch':patch}))
+             
+            self.write_message(msgpack.packb(patch),binary=True)
+            #self.write_message(json.dumps({'patch':patch}))
 
             #with open('./.cache','w') as f:
             #   json.dump(data_to_serve,f)
