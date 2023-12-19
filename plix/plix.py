@@ -1,4 +1,3 @@
-import os
 import time
 import requests
 import json
@@ -21,7 +20,8 @@ from .server import run
 import random
 import string
 from dict_hash import sha256
-
+import msgpack
+import pickle
 
 
 def update_values_for_key(d):
@@ -118,6 +118,7 @@ def push_data(content,local=False,token=None,verbose=True):
              quit()
    
       name = sha256({'title':content['title']})
+
       #get access token
       response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
                              {'grant_type':'refresh_token',\
@@ -127,21 +128,53 @@ def push_data(content,local=False,token=None,verbose=True):
       accessToken = response['access_token']
       uid         = response['user_id']
 
-       
+
+      def getsize(a):
+
+          print(sys.getsizeof(a)/1024/1024)
+
+      #test
+      with open('model.glb', "rb") as f:
+           #model_data = base64.b64encode(f.read()).decode("utf8")
+           #url = 'data:model/gltf-binary;base64,{}'.format(model_data)
+           url = f.read()
+
+      data = {'url':url}
+      OBJ = msgpack.packb(data,use_bin_type=True)
+      #getsize(data_b)
+
+      #quit()
+
+      #OBJ =    pickle.dumps(data)
+      #with open('data.json',"wb") as f:
+      #    pickle.dump(data,f)
+
+      #getsize(data)
+      #-----
+      #quit()
+
+
       #Upload data
-      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/tt55"
-      response = requests.post(f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{name}",\
+      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{name}"
+      response = requests.post(url,\
                                 headers= {
                                         'Authorization': f'Bearer {accessToken}',
-                                        "Content-Type": "application/json"
+                                        #"Content-Type": "application/json"
+                                         "Content-Type": "application/octet-stream"
                                            },\
-                                json = content).json()
+                                #json = content)
+                                data = OBJ)
 
+   
+      print(response)
 
-      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/users%2F{uid}/{name}"
+      #url = 'http://localhost:9199/b/computo-306914.appspot.com/o/tt.json?uploadType=Media'#/o?name=users/{uid}/{name}'
 
-      url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
+      #url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/users%2F{uid}/{name}"
 
+      #url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
+      url = f'https://computo-306914.web.app/presentation/?uid={uid}&name={name}'
+      #https://computo-306914.web.app/presentation
 
       print(url)
 
@@ -422,7 +455,8 @@ class Slide():
 
         #Process title
         if not(self.title):
-            self.title = sha256({'content':self.content,'style':self.style,'animation':animation})
+            #self.title = sha256({'content':self.content,'style':self.style,'animation':animation})
+            self.title = sha256({'style':self.style,'animation':animation})
 
         #Process children
         children = { self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
@@ -526,9 +560,9 @@ class Slide():
         
         #Local
         with open(filename, "rb") as f:
-           model_data = base64.b64encode(f.read()).decode("utf8")
-           url = 'data:model/gltf-binary;base64,{}'.format(model_data)
-
+           #model_data = base64.b64encode(f.read()).decode("utf8")
+           #url = 'data:model/gltf-binary;base64,{}'.format(model_data)
+           url = f.read()
 
         tmp = {'type':'model3D','className':'interactable componentA','src':url,'style':style}
 
