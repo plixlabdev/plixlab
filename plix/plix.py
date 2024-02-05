@@ -22,30 +22,9 @@ import string
 from dict_hash import sha256
 import msgpack
 import pickle
+import hashlib
+from .remote_server import run_watchdog
 
-
-def update_values_for_key(d):
-
-    token = 'src'
-
-    print(d.keys())
-    quit()
-
-    def check(d):
-      for key,value in d.items() :
-        if key == token:
-
-           d[key] = 'hello'
-           print('here')
-        else:  
-            
-            if isinstance(value,dict):
-                print(key)
-                check(d[key])
-
-    check(d)
-
-    quit()
 
 
 # Get the directory of the current script
@@ -105,9 +84,16 @@ plt.style.use(style_path)
       
 
 
+def getsize(a):
+    print('Size: ' + str(sys.getsizeof(a)/1024/1024) + ' Mb')
 
 
-def push_data(content,local=False,token=None,verbose=True):
+
+
+def push(name,local=False,token=None,verbose=True,visibility='public',emails = []):
+
+      project_id = 'computo-306914'
+      location   = 'us-central1'
 
       #Load credentials
       try : 
@@ -117,7 +103,7 @@ def push_data(content,local=False,token=None,verbose=True):
              webbrowser.open_new_tab(url_subscribe)
              quit()
    
-      name = sha256({'title':content['title']})
+      #name = hashlib.md5(content['title'].encode()).hexdigest()
 
       #get access token
       response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
@@ -127,73 +113,307 @@ def push_data(content,local=False,token=None,verbose=True):
 
       accessToken = response['access_token']
       uid         = response['user_id']
+      email       = cred['email']
+      #print(accessToken)
+      #-----------------------------------
 
+      #Add visibility
+      print(visibility)
+      if visibility == 'public':
+         recipients = ['public']
+      elif visibility == 'private':    
+         recipents = [email]
+      elif visibility == 'custom':    
+         recipients = emails
+      else:   
+         print('No visibility recognized') 
+         quit()
 
-      def getsize(a):
+      data = {'title':self.title,'slides':self.slides,'visibility':{r.replace('.',','):True for r in recipients}}
 
-          print(sys.getsizeof(a)/1024/1024)
+      #Upload resources to cloud
+      for slide in data['content']['slides'].values():
+          for component_name,component in slide['children'].items():
 
-      #test
-      with open('model.glb', "rb") as f:
-           #model_data = base64.b64encode(f.read()).decode("utf8")
-           #url = 'data:model/gltf-binary;base64,{}'.format(model_data)
-           url = f.read()
-
-      data = {'url':url}
-      OBJ = msgpack.packb(data,use_bin_type=True)
-      #getsize(data_b)
-
-      #quit()
-
-      #OBJ =    pickle.dumps(data)
-      #with open('data.json',"wb") as f:
-      #    pickle.dump(data,f)
-
-      #getsize(data)
-      #-----
-      #quit()
-
-
-      #Upload data
-      url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{name}"
-      response = requests.post(url,\
-                                headers= {
+              if 'src' in component.keys():
+                  #METHOD 1: Signed URL
+                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
+                                 headers= {
                                         'Authorization': f'Bearer {accessToken}',
-                                        #"Content-Type": "application/json"
+                                         "Content-Type": "application/json"},
+                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  #print(response)
+
+                  #getsize(component['src'])
+                  
+                  #print(response['result'])
+                  response = requests.put(response['result'],headers = {
                                          "Content-Type": "application/octet-stream"
-                                           },\
-                                #json = content)
-                                data = OBJ)
+                                         },
+                                         data = component['src'])
 
-   
-      print(response)
+                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
+                  #print(response)                       
 
-      #url = 'http://localhost:9199/b/computo-306914.appspot.com/o/tt.json?uploadType=Media'#/o?name=users/{uid}/{name}'
 
-      #url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/users%2F{uid}/{name}"
+      #Create patches
+      content_2 = data.copy()
+      #Update only changes
+      patch = list(jsonpatch.JsonPatch.from_diff({},data))
 
-      #url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
-      url = f'https://computo-306914.web.app/presentation/?uid={uid}&name={name}'
-      #https://computo-306914.web.app/presentation
 
+      old_data = {}
+      if os.path.isfile('./.cache') :
+            with open('./.cache','r') as f:
+                old_data = json.load(f)
+
+      patch = list(jsonpatch.JsonPatch.from_diff(old_data,data))
+
+      #if len(patch) > 0:
+      #  with open('./.cache','w') as f:
+      #      json.dump(content,f)
+
+      #Update patches to database
+      for p in patch:
+          if p['op'] == 'remove':
+            if local:
+              url= f'http://localhost:9001/users/{uid}/presentations/{name}.json/?ns={project_id}' 
+            else:  
+              url= f'https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{name}.json?auth={accessToken}'
+            response = requests.delete(url,json=p['path'])
+
+          if p['op'] in ['add','replace']:
+              if local:  
+               url = f"http://localhost:9001/users/{uid}/presentations/{name}{p['path']}.json/?ns={project_id}&print=silent"
+              else: 
+               url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{name}{p['path']}.json?auth={accessToken}&print=silent"
+              response = requests.put(url,json=p['value'])
+              #if not response.status_code == '204':
+              print(response)
+                  #quit()
+
+      url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
       print(url)
 
+      url = f'https://{project_id}.web.app/presentation/?uid={uid}&name={name}'
+      print(url)
+      #Prepare content
+      #content = {'title':self.title,'slides':self.slides}
+      
+
+      #print('pushing data')
+      #url = push_data(content,self.presentation_ID,**argv)
+     
+      if os.environ.get('RUNNING_FROM_WATCHDOG'):
+         print('already running')
+      else:   
+         print('start watchdog')
+         run_watchdog()
+
+
+
+#def push_data_old(content,local=False,token=None,verbose=True):
+
+      #Load credentials
+#      try : 
+#       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
+#            cred = json.load(f)
+#      except FileNotFoundError:
+#             webbrowser.open_new_tab(url_subscribe)
+#             quit()
+   
+
+#      name = hashlib.md5(content['title'].encode()).hexdigest()
+
+
+      #get access token
+#      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+#                             {'grant_type':'refresh_token',\
+#                             'refresh_token':cred['refreshToken']},\
+#                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
+
+#      accessToken = response['access_token']
+#      uid         = response['user_id']
+
+
+    
+      #Update visibility---
+      #This can work only when cross-service between firestore and realtime database
+      #url = 'https://firestore.googleapis.com/v1/projects/computo-306914/databases/(default)/documents/users/admin'
+
+      # The new data to add
+      #data = {
+      #  'fields': {
+      #  'age': {
+      #      'integerValue': '30'  # Adding a new field 'age' with value 30
+      #    }
+      #   }}
+
+      #response = requests.patch(url,\
+      #                          headers= {
+      #                                   "Content-Type": "application/json"
+      #                                     },\
+      #                                    data = json.dumps(data))
+      #print(response.text)
+
+      #---------------------
+
+      #quit()
+
+
+      #Upload data to Cloud Storage (Production)
+      #response = requests.post(f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{name}",\
+      #                          headers= {
+      #                                  'Authorization': f'Bearer {accessToken}',
+      #                                   "Content-Type": "application/octet-stream"
+      #                                     },\
+      #                          data = msgpack.packb(content,use_bin_type=True))
+      #------------------------------------------
+
+      #Local database
+      #url = f"http://localhost:9001/test.json/?ns=computo-306914"
+      #response = requests.put(url,\
+      #                          headers= {
+      #                                   "Content-Type": "application/json"
+      #                                     },\
+      #                          json=content)
+      #print(response)
+      #----------------------------
+
+      #
+      #Upload to Cloud Storage (Local) [This does not work, it gives 501]
+      #url = f"http://localhost:9199/o?name=users/{uid}/{name}&ns=computo-306914"
+      #response = requests.post(url,\
+      #                          headers= {
+      #                                  'Authorization': f'Bearer {accessToken}',
+      #                                   "Content-Type": "application/octet-stream"
+      #                                     },\
+      #                          data = msgpack.packb(content,use_bin_type=True))
+      #print(response)
+      #----------------------------
+
+
+      #add visibility
+      #data = {'content':content,'visibility':['giusepperomano82@gmail.com']}
+
+      #Upload resources to cloud
+ #     for slide in content['slides'].values():
+ #         for component_name,component in slide['children'].items():
+
+  #            if 'src' in component.keys():
+                  #METHOD 1: Signed URL
+  #                response = requests.post('https://us-central1-computo-306914.cloudfunctions.net/generateSignedURL',\
+  #                               headers= {
+  #                                      'Authorization': f'Bearer {accessToken}',
+  #                                       "Content-Type": "application/json"},
+  #                                       json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  #print(response)
+
+                  #getsize(component['src'])
+                  
+                  #print(response['result'])
+   #               response = requests.put(response['result'],headers = {
+   #                                      "Content-Type": "application/octet-stream"
+   #                                      },
+   #                                      data = component['src'])
+
+                  #print(response)             
+                  #resource_url =     f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{component_name}"
+
+    #              component['src'] = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
+                  #print(response)                       
+
+                  
+                  #METHOD 2:Upload resource to Storage and retrieve URL (this will provide the download token
+                 #response = requests.post(f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?name=users/{uid}/{name}",\
+                 #               headers= {
+                 #                       'Authorization': f'Bearer {accessToken}',
+                 #                        "Content-Type": "application/octet-stream"
+                 #                          },\
+                         #               data = component['src'])
+                 #print(response.json())
+
+
+      #Upload to Real Time Databse (Local)
+      #response = requests.put(f"http://localhost:9001/test.json/?ns=computo-306914",\
+      #                          headers= {
+      #                                   "Content-Type": "application/json"
+      #                                     },\
+      #                          json=content)
+      #print(response.json())
+      #----------------------------
+
+      #Upload to Real Time Databse (production)
+      #url = f"http://localhost:9001/test.json/?ns=computo-306914"
+
+     # content_2 = content.copy()
+      #content_2['title'] = 'st'
+      #ori = {}
+
+      #Update only changes
+     # patch = list(jsonpatch.JsonPatch.from_diff({},content))
+      #print(patch)
+
+
+     # old_data = {}
+     # if os.path.isfile('./.cache') :
+     #       with open('./.cache','r') as f:
+     #           old_data = json.load(f)
+#
+     # patch = list(jsonpatch.JsonPatch.from_diff(old_data,content))
+
+     # if len(patch) > 0:
+
+            #self.write_message(json.dumps({'patch':patch}))
+     #   with open('./.cache','w') as f:
+     #       json.dump(content,f)
+
+
+      #db = 'computo-306914-default-rtdb'
+
+      #for p in patch:
+      #    if p['op'] == 'remove':
+      #      if local:
+      #        url= f'http://localhost:9001/users/{uid}/{name}.json/?ns=computo-306914' 
+      #      else:  
+      #        url= f'https://{db}.firebaseio.com/users/{uid}/{name}.json?auth={accessToken}'
+      #      response = requests.delete(url,json=p['path'])
+
+      #    if p['op'] in ['add','replace']:
+      #        if local:  
+      #         url = f"http://localhost:9001/users/{uid}/{name}{p['path']}.json/?ns=computo-306914&print=silent"
+      #        else: 
+      #         url =f"https://{db}.firebaseio.com/users/{uid}/{name}{p['path']}.json?auth={accessToken}&print=silent"
+
+      #        response = requests.put(url,json=p['value'])
+              #print(response)
+
+
+      #Update the whole document
+      #local
+      #response = requests.put(f'http://localhost:9001/users/{uid}/{name}.json/?ns=computo-306914',json=content)
+      #global
+      ##response = requests.put(f'https://computo-306914.firebaseio.com/users/{uid}/{name}.json?auth={accessToken}',json=content)
+      #print(response)
+      #print(response.json())
+      #----------------------------
+
+      #Update visibility
+      
+
+ 
+      #if local:
+      #url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
+      #print(url)
+
+      #else :
+      #url = f'https://computo-306914.web.app/presentation/?uid={uid}&name={name}'
+      #print(url)
+
+      #https://computo-306914.web.app/presentation
+
+
   
-
-
-      #Realtime Database, this will be fixed in the future---
-      #url = f"http://localhost:9001/user/{uid}/test.json?ns=computo-306914"
-      #response = requests.patch(url, headers=headers,json=content).json()
-      #----
-
-      #json_data = json.dumps(content)
-      #key = hash(frozenset(content))
-      #key = hash(json_data)
-      #encoded_path = quote(f"{uid}/{key}", safe='')
-      #Only live (use POST)
-      #url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o/users?name={uid}"
-
-      #Production
 
 
 
@@ -268,9 +488,13 @@ class Presentation():
             #title = 'title_' + generate_random_string(10) 
 
          self.title = title
+
+         self.presentation_ID = hashlib.md5(self.title.encode()).hexdigest()
+
+
          data = {}
          for slide in slides:
-           data.update(slide.get())
+           data.update(slide.get(self.presentation_ID))
 
          self.slides = data
 
@@ -392,13 +616,21 @@ class Presentation():
            json.dump(content,f)
 
 
-
-   def push(self,**argv):
+   #def push(self,**argv):
 
       #Prepare content
-      content = {'title':self.title,'slides':self.slides}
+   #   content = {'title':self.title,'slides':self.slides}
+      
 
-      url = push_data(content,**argv)
+   #   print('pushing data')
+   #   url = push_data(content,self.presentation_ID,**argv)
+     
+   #   if os.environ.get('RUNNING_FROM_WATCHDOG'):
+   #      print('already running')
+   #   else:   
+   #      print('start watchdog')
+   #      run_watchdog()
+      
 
 
 class Collection:
@@ -415,6 +647,7 @@ def Loader(name):
    with open(filename,'r') as f: 
           data = json.load(f)
 
+   quit()
    #Check if the name is in presentations first
    if name in data['presentations'].keys():
       slides = {title:data['slides'][title] for title in data['presentations'][name]}
@@ -426,6 +659,16 @@ def Loader(name):
 
 
    return Collection(slides)
+
+
+import random
+import string
+
+def generate_random_alphanumeric(length):
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for i in range(length))
+
+# Example usage
 
 
 
@@ -446,24 +689,29 @@ class Slide():
          #Init animation
          self.animation = []
 
+         if not title:
+            title = generate_random_alphanumeric(10)  # Generate a 10-character long string
+             
+         #self.title = hashlib.md5(title.encode()).hexdigest()
+
          self.title = title
   
 
-    def get(self):
+    def get(self,presentation_ID):
 
         animation = self.process_animations()
 
-        #Process title
-        if not(self.title):
-            #self.title = sha256({'content':self.content,'style':self.style,'animation':animation})
-            self.title = sha256({'style':self.style,'animation':animation})
+           
+        slide_ID = presentation_ID + '_' + hashlib.md5(self.title.encode()).hexdigest()
 
         #Process children
-        children = { self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
+        #children = {self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
+        children = {slide_ID + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
 
         data = {'children':children,'style':self.style,'animation':animation} 
             
-        return {self.title:data}
+
+        return {slide_ID:data}
 
 
 
@@ -575,11 +823,13 @@ class Slide():
 
     def img(self,url,**argv):
         """Both local and URLs"""
+
         if url[:4] != 'http':
-            with open(url, "rb") as image_file:
-               img = image_file.read()
-               image =  base64.b64encode(img).decode("utf8")
-            url = 'data:image/png;base64,{}'.format(image)
+            with open(url, "rb") as f:
+               #img = image_file.read()
+               #image =  base64.b64encode(img).decode("utf8")
+               #url = 'data:image/png;base64,{}'.format(image)
+               url  = f.read()
        
         style = get_style(**argv)
         if argv.setdefault('frame',False):
@@ -588,9 +838,6 @@ class Slide():
 
 
         tmp = {'type':"Img",'src':url,'style':style}
-        #self.content['children'].append(tmp)
-        #self.content['children'][f"{self.title}_{len(self.content['children'])}"] = tmp
-        #self.children[f"{self.title}_{len(self.children)}"] = tmp
         self.content.append(tmp)
         self._add_animation(**argv)
         return self
@@ -668,14 +915,12 @@ class Slide():
         with open(graph, 'r') as f:
           data = json.load(f)
 
-      
        style  = get_style(**argv)
-       tmp = {'type':"Bokeh",'graph':data,'style':style,'className':'componentA interactable'}
-       self.content['children'].append(tmp)
-       #self.children[f"{self.title}_{len(self.children)}"] = tmp
+
+       tmp = {'type':"Bokeh",'graph':data,'style':style}
        self.content.append(tmp)
        self._add_animation(**argv)
-       return self 
+       return self
 
 
     def plotly(self,graph,**argv):
@@ -702,14 +947,17 @@ class Slide():
 
     def molecule(self,structure,**argv):
        """Add Molecule"""
-
+       
+       print(structure)
        argv.setdefault('mode','full') 
        style  = get_style(**argv) 
-       tmp = {'type':'molecule','props':{'className':'interactable viewer_3Dmoljs componentA','style':style,'structure':structure,'backgroundColor':self.content['props']['style']['backgroundColor']}}
 
-       self.content['children'].append(tmp)
+       tmp = {'type':'molecule','style':style,'structure':structure,'backgroundColor':self.style['backgroundColor']}
+
+       self.content.append(tmp)
        self._add_animation(**argv)
-       return self
+       return self 
+
 
     def REPL(self,kernel,**argv):
         style = get_style(**argv)

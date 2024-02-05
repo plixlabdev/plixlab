@@ -14,7 +14,7 @@ def make_app(data_provider):
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "static")}),
         (r"/assets/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "assets")}),
         (r"/data", ReloadWebSocketHandler,{"data_provider": data_provider}),
-        (r"/(render.js|styles.css|code.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
+        (r"/(render.js|styles.css|navigation.js|models.js|load.js|local_only.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
     ])
 
 

@@ -1,55 +1,6 @@
+import { toggleAnimations } from './models.js';
+
 window.addEventListener('load', async function() {
-
-//let timeout;
-
-// Function to hide the cursor after a period of inactivity
-//function handleMouseMove() {
- //   if (window.dataStore.mode === 'full') {
-        // If the cursor was hidden, show it
-   //     document.body.classList.remove('hide-cursor');
-
-        // Clear any existing timeout
-     //   clearTimeout(timeout);
-
-        // Set a delay to hide the cursor again
-    //    timeout = setTimeout(() => {
-    //        document.body.classList.add('hide-cursor');
-    //    }, 2000);  // Adjust the time as needed, currently 2 seconds
-   // }
-//}
-
-// Function to hide the cursor when the mouse leaves the document
-//function handleMouseOut() {
-//    if (window.dataStore.mode === 'full') {
-        // Clear any existing timeout when the mouse leaves the document
-  //      clearTimeout(timeout);
-   //     document.body.classList.add('hide-cursor');
-    //}
-//}
-
-//document.addEventListener('mousemove', handleMouseMove);
-//document.addEventListener('mouseout', handleMouseOut);
-
-
-//For Mobile
-//var hammertime = new Hammer(document.body);
-
-//hammertime.on('swiperight', function() {
-//    if (window.dataStore.mode == 'presentation') {
-//        incrementSlide();
-//    } else if (window.dataStore.mode == 'full') {
-//        incrementEvent();
-//    }
-//});
-
-//hammertime.on('swipeleft', function() {
- //   if (window.dataStore.mode == 'presentation') {
- //       decrementSlide();
- //   } else if (window.dataStore.mode == 'full') {
- //       decrementEvent();
-  //  }
-//});
-
 
 
 document.addEventListener('keydown', function(event) {
@@ -398,6 +349,11 @@ function switchMode() {
         } else {
             aright.style.visibility = 'visible'
         }
+
+        //Adjust model animation
+        if (window.dataStore.mode === 'grid'){
+           toggleAnimations(false);}
+        else { toggleAnimations(true)}   
 
 }
 
