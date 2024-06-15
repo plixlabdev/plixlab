@@ -5,7 +5,7 @@ import base64
 import io
 import matplotlib.pyplot as plt
 import plotly.io as pio
-from .utils import get_style,get_youtube_thumbnail,process_plotly,fig_to_base64,load_icon,encode_image_to_base64
+from .utils import get_style,get_youtube_thumbnail,process_plotly,fig_to_base64,load_icon,encode_image_to_base64,process_bokeh
 from plotly.io import from_json as json_to_plotly
 #from .serve import run 
 from .shape import run as shape
@@ -24,6 +24,7 @@ import msgpack
 import pickle
 import hashlib
 from .remote_server import run_watchdog
+from bokeh.embed import json_item
 
 
 
@@ -89,126 +90,6 @@ def getsize(a):
 
 
 
-
-def push(name,local=False,token=None,verbose=True,visibility='public',emails = []):
-
-      project_id = 'computo-306914'
-      location   = 'us-central1'
-
-      #Load credentials
-      try : 
-       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
-            cred = json.load(f)
-      except FileNotFoundError:
-             webbrowser.open_new_tab(url_subscribe)
-             quit()
-   
-      #name = hashlib.md5(content['title'].encode()).hexdigest()
-
-      #get access token
-      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
-                             {'grant_type':'refresh_token',\
-                             'refresh_token':cred['refreshToken']},\
-                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
-
-      accessToken = response['access_token']
-      uid         = response['user_id']
-      email       = cred['email']
-      #print(accessToken)
-      #-----------------------------------
-
-      #Add visibility
-      print(visibility)
-      if visibility == 'public':
-         recipients = ['public']
-      elif visibility == 'private':    
-         recipents = [email]
-      elif visibility == 'custom':    
-         recipients = emails
-      else:   
-         print('No visibility recognized') 
-         quit()
-
-      data = {'title':self.title,'slides':self.slides,'visibility':{r.replace('.',','):True for r in recipients}}
-
-      #Upload resources to cloud
-      for slide in data['content']['slides'].values():
-          for component_name,component in slide['children'].items():
-
-              if 'src' in component.keys():
-                  #METHOD 1: Signed URL
-                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
-                                 headers= {
-                                        'Authorization': f'Bearer {accessToken}',
-                                         "Content-Type": "application/json"},
-                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
-                  #print(response)
-
-                  #getsize(component['src'])
-                  
-                  #print(response['result'])
-                  response = requests.put(response['result'],headers = {
-                                         "Content-Type": "application/octet-stream"
-                                         },
-                                         data = component['src'])
-
-                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
-                  #print(response)                       
-
-
-      #Create patches
-      content_2 = data.copy()
-      #Update only changes
-      patch = list(jsonpatch.JsonPatch.from_diff({},data))
-
-
-      old_data = {}
-      if os.path.isfile('./.cache') :
-            with open('./.cache','r') as f:
-                old_data = json.load(f)
-
-      patch = list(jsonpatch.JsonPatch.from_diff(old_data,data))
-
-      #if len(patch) > 0:
-      #  with open('./.cache','w') as f:
-      #      json.dump(content,f)
-
-      #Update patches to database
-      for p in patch:
-          if p['op'] == 'remove':
-            if local:
-              url= f'http://localhost:9001/users/{uid}/presentations/{name}.json/?ns={project_id}' 
-            else:  
-              url= f'https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{name}.json?auth={accessToken}'
-            response = requests.delete(url,json=p['path'])
-
-          if p['op'] in ['add','replace']:
-              if local:  
-               url = f"http://localhost:9001/users/{uid}/presentations/{name}{p['path']}.json/?ns={project_id}&print=silent"
-              else: 
-               url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{name}{p['path']}.json?auth={accessToken}&print=silent"
-              response = requests.put(url,json=p['value'])
-              #if not response.status_code == '204':
-              print(response)
-                  #quit()
-
-      url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={name}'
-      print(url)
-
-      url = f'https://{project_id}.web.app/presentation/?uid={uid}&name={name}'
-      print(url)
-      #Prepare content
-      #content = {'title':self.title,'slides':self.slides}
-      
-
-      #print('pushing data')
-      #url = push_data(content,self.presentation_ID,**argv)
-     
-      if os.environ.get('RUNNING_FROM_WATCHDOG'):
-         print('already running')
-      else:   
-         print('start watchdog')
-         run_watchdog()
 
 
 
@@ -491,7 +372,6 @@ class Presentation():
 
          self.presentation_ID = hashlib.md5(self.title.encode()).hexdigest()
 
-
          data = {}
          for slide in slides:
            data.update(slide.get(self.presentation_ID))
@@ -582,15 +462,26 @@ class Presentation():
 
         return events    
 
+   #def write_html(self):
+   #    """Write HTML"""
+
 
    def show(self):
         """Display the presentation"""
 
         run({'title':self.title,'slides':self.slides})
 
+   def serialize_slides(self):
+
+       for slide in self.slides.values():
+           for component in slide['children'].values():
+               if 'src' in component.keys():
+                   image =  base64.b64encode(component['src']).decode("utf8")
+                   url = 'data:image/png;base64,{}'.format(image)
+                   component['src'] = url
    
 
-   def save(self,filename='output.json',library=True):
+   def save(self,filename='output',library=False):
         """Save presentation""" 
 
         if library:
@@ -612,9 +503,231 @@ class Presentation():
             
         else:
 
-         with open(filename,'w') as f: 
-           json.dump(content,f)
+         #self.serialize_slides() #This changes bytes to base64 in order to make it serializable
 
+         content = {'title':self.title,'slides':self.slides}
+         #with open(filename + '.json','w') as f: 
+         #  json.dump({'title':self.title,'slides':self.slides},f)
+         #with open(filename + '.pkl','wb') as f: 
+         #  pickle.dump({'title':self.title,'slides':self.slides},f)
+
+         packed_data = msgpack.packb(content)
+
+         # Save the serialized data to a file
+        with open(filename + '.pkl', 'wb') as file:
+          file.write(packed_data)
+
+
+
+        return self    
+
+
+
+   def share(self,local=False,token=None,verbose=True,visibility='public',emails = []):
+
+      project_id = 'computo-306914'
+      location   = 'us-central1'
+
+      #Load credentials
+      try : 
+       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
+            cred = json.load(f)
+      except FileNotFoundError:
+             webbrowser.open_new_tab(url_subscribe)
+             quit()
+   
+      #name = hashlib.md5(content['title'].encode()).hexdigest()
+
+      #get access token
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+                             {'grant_type':'refresh_token',\
+                             'refresh_token':cred['refreshToken']},\
+                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
+
+      accessToken = response['access_token']
+      uid         = response['user_id']
+      email       = cred['email']
+      #-----------------------------------
+
+      #Add visibility
+      print(visibility)
+      if visibility == 'public':
+         recipients = ['public']
+      elif visibility == 'private':    
+         recipents = [email]
+      elif visibility == 'custom':    
+         recipients = emails
+      else:   
+         print('No visibility recognized') 
+         quit()
+
+      visibility = {r.replace('.',','):True for r in recipients}
+
+      #Upload resources to cloud
+      for slide in self.slides.values():
+          for component_name,component in slide['children'].items():
+
+              if 'src' in component.keys():
+                  #METHOD 1: Signed URL
+                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
+                                 headers= {
+                                        'Authorization': f'Bearer {accessToken}',
+                                         "Content-Type": "application/json"},
+                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  response = requests.put(response['result'],headers = {
+                                         "Content-Type": "application/octet-stream"
+                                         },
+                                         data = component['src'])
+
+                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
+
+      visibility = {r.replace('.',','):True for r in recipients}
+
+      #Upload slides--
+      url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/slides.json?auth={accessToken}&print=silent"
+
+      #Add visibility to slides
+      for key,value in self.slides.items():
+          value['visibility'] = visibility
+
+      
+
+      response = requests.patch(url,json=self.slides)
+      print(response)
+
+      #Upload presentations--
+      url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{self.presentation_ID}.json?auth={accessToken}&print=silent"
+      presentations = {'title':self.title,'slide_IDs':{key:value['title'] for key,value in self.slides.items()},'visibility':visibility}
+      response = requests.patch(url,json=presentations)
+
+      print(response)
+     
+      #print(response)
+      url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+      url = f'https://{project_id}.web.app/presentation/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+   def push_old(self,local=False,token=None,verbose=True,visibility='public',emails = []):
+
+      project_id = 'computo-306914'
+      location   = 'us-central1'
+
+      #Load credentials
+      try : 
+       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
+            cred = json.load(f)
+      except FileNotFoundError:
+             webbrowser.open_new_tab(url_subscribe)
+             quit()
+   
+      #name = hashlib.md5(content['title'].encode()).hexdigest()
+
+      #get access token
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+                             {'grant_type':'refresh_token',\
+                             'refresh_token':cred['refreshToken']},\
+                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
+
+      accessToken = response['access_token']
+      uid         = response['user_id']
+      email       = cred['email']
+      #print(accessToken)
+      #-----------------------------------
+
+      #Add visibility
+      print(visibility)
+      if visibility == 'public':
+         recipients = ['public']
+      elif visibility == 'private':    
+         recipents = [email]
+      elif visibility == 'custom':    
+         recipients = emails
+      else:   
+         print('No visibility recognized') 
+         quit()
+
+      data = {'title':self.title,'slides':self.slides,'visibility':{r.replace('.',','):True for r in recipients}}
+
+      #Upload resources to cloud
+      for slide in data['slides'].values():
+          for component_name,component in slide['children'].items():
+
+              if 'src' in component.keys():
+                  #METHOD 1: Signed URL
+                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
+                                 headers= {
+                                        'Authorization': f'Bearer {accessToken}',
+                                         "Content-Type": "application/json"},
+                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  #print(response)
+
+                  #getsize(component['src'])
+                  
+                  #print(response['result'])
+                  response = requests.put(response['result'],headers = {
+                                         "Content-Type": "application/octet-stream"
+                                         },
+                                         data = component['src'])
+
+                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
+                  #print(response)                       
+
+
+      #Create patches
+      content_2 = data.copy()
+      #Update only changes
+      patch = list(jsonpatch.JsonPatch.from_diff({},data))
+
+
+      old_data = {}
+      if os.path.isfile('./.cache') :
+            with open('./.cache','r') as f:
+                old_data = json.load(f)
+
+      patch = list(jsonpatch.JsonPatch.from_diff(old_data,data))
+
+      #if len(patch) > 0:
+      #  with open('./.cache','w') as f:
+      #      json.dump(content,f)
+
+      #Update patches to database
+      for p in patch:
+          if p['op'] == 'remove':
+            if local:
+              url= f'http://localhost:9001/users/{uid}/presentations/{name}.json/?ns={project_id}' 
+            else:  
+              url= f'https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{self.presentation_ID}.json?auth={accessToken}'
+            response = requests.delete(url,json=p['path'])
+
+          if p['op'] in ['add','replace']:
+              if local:  
+               url = f"http://localhost:9001/users/{uid}/presentations/{name}{p['path']}.json/?ns={project_id}&print=silent"
+              else: 
+               url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{self.presentation_ID}{p['path']}.json?auth={accessToken}&print=silent"
+              response = requests.put(url,json=p['value'])
+              #if not response.status_code == '204':
+              print(response)
+                  #quit()
+
+      url = f'http://127.0.0.1:5000/presentation/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+      url = f'https://{project_id}.web.app/presentation/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+      #Prepare content
+      #content = {'title':self.title,'slides':self.slides}
+      
+
+      #print('pushing data')
+      #url = push_data(content,self.presentation_ID,**argv)
+     
+      if os.environ.get('RUNNING_FROM_WATCHDOG'):
+         print('already running')
+      else:   
+         print('start watchdog')
+         run_watchdog()
 
    #def push(self,**argv):
 
@@ -708,7 +821,7 @@ class Slide():
         #children = {self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
         children = {slide_ID + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
 
-        data = {'children':children,'style':self.style,'animation':animation} 
+        data = {'children':children,'style':self.style,'animation':animation,'title':self.title} 
             
 
         return {slide_ID:data}
@@ -761,11 +874,10 @@ class Slide():
 
 
 
-
     #componentA: eveything to show in presentation
     #componentA: eveything to show in grid
 
-    def cite(self,key,**style):
+    def cite(self,key,**argv):
         """Add a set of citation"""
         if not isinstance(key,list):
             keys = [key]
@@ -775,8 +887,8 @@ class Slide():
          text = Bibliography.format(key)
          style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
          style.setdefault('color','#FFFFFF')
-         tmp = {'type':"Markdown",'text':text,'style':style.copy(),'fontsize':0.03}
-         #self.children[f"{self.title}_{len(self.children)}"] = tmp
+
+         tmp = {'type':"Markdown",'text':text,'style':style.copy(),'fontsize':argv.setdefault('fontsize',0.03)}
          self.content.append(tmp)
          self._add_animation(**style)
 
@@ -791,7 +903,7 @@ class Slide():
         style.setdefault('color','#FFFFFF')
 
         #-----------------
-        tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.04),'style':style}
+        tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.1),'style':style}
         #self.content['children'].append(tmp)
         #self.children[f"{self.title}_{len(self.children)}"] = tmp
         self.content.append(tmp)
@@ -826,15 +938,16 @@ class Slide():
 
         if url[:4] != 'http':
             with open(url, "rb") as f:
-               #img = image_file.read()
+               #img = f.read()
                #image =  base64.b64encode(img).decode("utf8")
                #url = 'data:image/png;base64,{}'.format(image)
+
                url  = f.read()
-       
+      
+        #/Add border
         style = get_style(**argv)
         if argv.setdefault('frame',False):
             style['border'] = '2px solid red'
-
 
 
         tmp = {'type':"Img",'src':url,'style':style}
@@ -861,8 +974,8 @@ class Slide():
        """add shape"""
        style = get_style(**argv)
        image = shape(shapeID,**argv)
-       url = 'data:image/png;base64,{}'.format(image) 
-       tmp = {'type':"Img",'src':url,'style':style}
+       #url = 'data:image/png;base64,{}'.format(image) 
+       tmp = {'type':"Img",'src':image,'style':style}
        #self.children[f"{self.title}_{len(self.children)}"] = tmp
        self.content.append(tmp)
        self._add_animation(**argv)
@@ -897,13 +1010,16 @@ class Slide():
        
        style = get_style(**argv)
        buf = io.BytesIO()
-       fig.savefig(buf, format='png',bbox_inches="tight",transparent=True,pad_inches=0.5)
+       fig.savefig(buf, format='png',bbox_inches="tight",transparent=True)
        buf.seek(0)
-       image = base64.b64encode(buf.getvalue()).decode("utf8")
+       #image = base64.b64encode(buf.getvalue()).decode("utf8")
+       #buf.close()
+       #url = 'data:image/png;base64,{}'.format(image)
+       url = buf.getvalue()
        buf.close()
-       url = 'data:image/png;base64,{}'.format(image)
        tmp = {'type':"Img",'src':url,'style':style}
-       self.children[f"{self.title}_{len(self.children)}"] = tmp
+
+       self.content.append(tmp)
        self._add_animation(**argv)
 
        return self
@@ -911,35 +1027,39 @@ class Slide():
 
     def bokeh(self,graph,**argv):
 
-       if isinstance(graph,str):
-        with open(graph, 'r') as f:
-          data = json.load(f)
+       #if isinstance(graph,str):
+       # with open(graph, 'r') as f:
+       #   data = json.load(f)
 
+       process_bokeh(graph)
        style  = get_style(**argv)
+       item = json_item(graph)
 
-       tmp = {'type':"Bokeh",'graph':data,'style':style}
+       tmp = {'type':"Bokeh",'graph':item,'style':style}
        self.content.append(tmp)
        self._add_animation(**argv)
        return self
 
 
-    def plotly(self,graph,**argv):
+    def plotly(self,fig,**argv):
        """Add plotly graph"""
 
        style  = get_style(**argv)
-       if isinstance(graph,str):
-         namefile = f'{graph}.json'
-         fig = pio.read_json(namefile).to_plotly_json()
-       else:  
-          fig = graph.to_json()  
+       #if isinstance(graph,str):
+       #  namefile = f'{graph}.json'
+       #  fig = pio.read_json(namefile).to_plotly_json()
+       #else:  
+       # fig = graph.to_json()  
       
        #This clearly needs to be optimized
        #fig  = json_to_plotly(fig)
-       #fig = process_plotly(fig)
+       fig = process_plotly(fig)
        #fig = fig.to_plotly_json()
+       fig = fig.to_json()
        #--------------------------
-       
-       tmp = {'type':"Plotly",'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy()}
+      
+       #tmp = {'type':"Plotly",'figure':{'layout':fig['layout'],'data':fig['data']},'style':style.copy()}
+       tmp = {'type':"Plotly",'figure':fig,'style':style.copy()}
        #self.children[f"{self.title}_{len(self.children)}"] = tmp
        self.content.append(tmp)
        self._add_animation(**argv)
@@ -948,7 +1068,6 @@ class Slide():
     def molecule(self,structure,**argv):
        """Add Molecule"""
        
-       print(structure)
        argv.setdefault('mode','full') 
        style  = get_style(**argv) 
 
@@ -959,26 +1078,31 @@ class Slide():
        return self 
 
 
-    def REPL(self,kernel,**argv):
+    def python(self,kernel,**argv):
         style = get_style(**argv)
 
         kernel = argv.setdefault('kernel','python')
         code = argv.setdefault('code','')
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
+
+        tmp = {'type':'Iframe','src':url,'style':style}
+        self.content.append(tmp)
+        self._add_animation(**argv)
+
         #Add Iframe--
-        tmp = {'type':'Iframe','className':'PartA componentA','src':url,'style':style,'hidden':False}
-        self.content['children'].append(tmp)
+        #tmp = {'type':'Iframe','className':'PartA componentA','src':url,'style':style,'hidden':False}
+        #tmp = {'type':'Iframe','src':url,'style':style}
+        #self.content['children'].append(tmp)
 
         #Add Thumbnail
-        image = load_icon('jupyter')
-        image = encode_image_to_base64(image)
-        url='data:image/png;base64,{}'.format(image)
-        tmp = {'type':"Img",'src':url,'style':style,'className':'PartB','hidden':True}
-        self.content.append(tmp)
-        #self.children[f"{self.title}_{len(self.children)}"] = tmp
+        #image = load_icon('jupyter')
+        #image = encode_image_to_base64(image)
+        #url='data:image/png;base64,{}'.format(image)
+        #tmp = {'type':"Img",'src':url,'style':style,'className':'PartB','hidden':True}
+        #self.content.append(tmp)
 
-        self._add_animation(**argv)
+        #self._add_animation(**argv)
         return self 
         
     def embed(self,url,**argv):
@@ -988,9 +1112,7 @@ class Slide():
         #Add border
         #style['border'] ='2px solid #000';
         tmp = {'type':'Iframe','src':url,'style':style}
-        #self.children[f"{self.title}_{len(self.children)}"] = tmp
         self.content.append(tmp)
-
         self._add_animation(**argv)
         return self
 
@@ -1000,16 +1122,18 @@ class Slide():
         
         Presentation([self]).show()
 
-    def save(self):
+    def save(self,*args,**kwargs):
         """Save the slide"""
         
-        Presentation([self]).save()
+        Presentation([self]).save(*args,**kwargs)
+
+        return self
 
 
-    def push(self,title='untitled'):
+    def share(self,title='untitled'):
         """Show the slide as a single-slide presentation"""
         
-        Presentation([self],title=title).push()
+        Presentation([self],title=title).share()
 
 
 

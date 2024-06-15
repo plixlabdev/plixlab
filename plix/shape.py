@@ -6,12 +6,7 @@ import numpy as np
  
  
 
-def arrow(context, s, a, b, c, d, orientation):
-
-    # Save the current context state
-    context.save()
-    # Rotate the context by the given orientation
-    context.rotate(orientation)
+def arrow(context, s, a, b, c, d):
 
     a *= s
     b *= s
@@ -29,17 +24,14 @@ def arrow(context, s, a, b, c, d, orientation):
     context.close_path()
     context.stroke()
 
-    # Restore the context state to what it was before rotating
-    context.restore()
+    #context.restore()
 
 
-# Creating function to make the arrow shape
 def square(context,s,a,b):
 
     a *= s
     b *= s
 
-    context.set_line_width(1.0)  # Set the stroke's size. Adjust the value as needed.
     context.move_to( -a/2,    a/2 - b    )
     context.line_to(  a/2,    a/2 - b   )
     context.line_to(  a/2,   a/2    )
@@ -76,11 +68,20 @@ def run(shapeID,**argv) :
 
     context.set_source_rgb(*color)
 
+    # Save the current context state
+    context.save()
+
+    # Rotate the context by the given orientation
+    orientation = argv.setdefault('orientation',0)
+    orientation *=np.pi/180
+    context.rotate(-orientation)
+
+
+
     # Call the function
     if shapeID == 'arrow':
-     orientation = argv.setdefault('orientation',0)
 
-     arrow(context,scale,0.4,0.15,0.25,0.2,orientation)
+     arrow(context,scale,0.4,0.15,0.25,0.2)
 
     elif shapeID == 'square': 
      aspect_ratio = argv.setdefault('aspect_ratio',0.5)
@@ -92,11 +93,17 @@ def run(shapeID,**argv) :
     
     
     # Save the drawing to a BytesIO object
-    png_io = BytesIO()
-    surface.write_to_png(png_io)
+    #png_io = BytesIO()
+    #surface.write_to_png(png_io)
+    #return base64.b64encode(png_io.getvalue()).decode("utf-8")
 
-    # Encode as Base64
-    return base64.b64encode(png_io.getvalue()).decode("utf-8")
+    buf = BytesIO()
+    surface.write_to_png(buf)
+    buf.seek(0)
+    url = buf.getvalue()
+    buf.close()
+
+    return url
 
 
 
