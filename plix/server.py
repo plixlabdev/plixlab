@@ -73,11 +73,13 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
                 old_data = json.load(f)
 
          data_to_serve = self.data_provider
-    
+   
          patch = list(jsonpatch.JsonPatch.from_diff(old_data,data_to_serve))
          if len(patch) > 0:
-             
+            
+            #-------------- 
             self.write_message(msgpack.packb(patch),binary=True)
+
             #self.write_message(json.dumps({'patch':patch}))
 
             #with open('./.cache','w') as f:
@@ -90,13 +92,10 @@ def run(data_provider):
 
         # Check if the environment variable is set
         if not os.environ.get("BROWSER_OPENED"):
-         # Automatically open the browser
          webbrowser.open("http://localhost:8888")
-         # Set the environment variable
          os.environ["BROWSER_OPENED"] = "True"
 
         # Add the hook to send "reload" message to active sockets before restart
-        #autoreload.add_reload_hook(send_reload)
         autoreload.start()
  
         io_loop = tornado.ioloop.IOLoop.current()

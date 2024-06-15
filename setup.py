@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'requests','plotly','matplotlib','pycairo','kaleido','pybtex','hash_dict','msgpackr','watchdog'
+        'requests','plotly','matplotlib','pycairo','pybtex','hash_dict','msgpack','watchdog','tornado','jsonpatch','dict_hash','pandas','bokeh'
     ],
       entry_points = {
      'console_scripts': ['plix=plix.plix_CLI:init']},

@@ -12,6 +12,18 @@ def fig_to_base64(fig):
     base64_string = base64.b64encode(fig_bytes).decode('utf-8')
     return base64_string
 
+def process_bokeh(fig):
+
+     fig.xaxis.major_tick_line_color = "white"
+     fig.xaxis.major_label_text_color = "white"
+     fig.yaxis.major_tick_line_color = "white"
+     fig.yaxis.major_label_text_color = "white"
+     fig.xaxis.axis_label_text_color = "white"
+     fig.yaxis.axis_label_text_color = "white"
+     fig.background_fill_color=None
+     fig.border_fill_color=None
+     fig.sizing_mode='stretch_both'
+
 
 def process_plotly(fig):
              
@@ -129,11 +141,12 @@ def get_style(**options):
              style.update({'height':convert(options['h'])})
      
         elif mode == 'full':
-
-            style['left']   = convert(0)
-            style['bottom'] = convert(0)
-            style['width']  = convert(1)
-            style['height'] = convert(1)
+               
+            w =  options.setdefault('w',1)
+            style['left']   = convert((1-w)/2)
+            style['bottom'] = convert((1-w)/2)
+            style['width']  = convert(w)
+            style['height'] = convert(w)
 
         elif mode == 'hCentered':
             style['bottom'] = convert(options['y'])

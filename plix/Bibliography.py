@@ -43,13 +43,14 @@ def render_book(bib_data):
 
 
 
-
 def format(entry_key):
 
 
     #local
-    if os.path.isfile('biblio.bib') :
+    if os.path.isfile('biblio.bib') : 
        name = 'biblio.bib'
+    elif os.path.isfile('assets/biblio.bib') :
+       name = 'assets/biblio.bib'
     else:   
        home_dir = os.path.expanduser("~")
        #User-wide
