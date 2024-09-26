@@ -520,10 +520,138 @@ class Presentation():
 
 
         return self    
-
-
-
+   
    def share(self,local=False,token=None,verbose=True,visibility='public',emails = []):
+
+      project_id = 'computo-306914'
+      location   = 'us-central1'
+      url_subscribe='test'
+
+      #Load credentials
+      try : 
+       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
+            cred = json.load(f)
+      except FileNotFoundError:
+             webbrowser.open_new_tab(url_subscribe)
+             quit()
+   
+      #name = hashlib.md5(content['title'].encode()).hexdigest()
+
+      #get access token
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+                             {'grant_type':'refresh_token',\
+                             'refresh_token':cred['refreshToken']},\
+                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
+
+      accessToken = response['access_token']
+      uid         = response['user_id']
+   
+
+
+      #Upload resources to cloud
+      for slide in self.slides.values():
+          for component_name,component in slide['children'].items():
+
+              if 'src' in component.keys():
+                  #METHOD 1: Signed URL
+                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
+                                 headers= {
+                                        'Authorization': f'Bearer {accessToken}',
+                                         "Content-Type": "application/json"},
+                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  response = requests.put(response['result'],headers = {
+                                         "Content-Type": "application/octet-stream"
+                                         },
+                                         data = component['src'])
+
+                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
+
+
+   
+      #Set order (because sometimes it gets messed up when uploaded)
+      for k,slide in enumerate(self.slides.values()):
+          slide['order'] = k
+      #---------------------    
+          
+      presentation = {'title':self.title,'slides':self.slides}
+      url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/{self.presentation_ID}.json?auth={accessToken}&print=silent"
+      response = requests.patch(url,json=presentation)
+      #TODO: requests.patch inverts the slides' order
+
+ 
+      #print(response)
+      url = f'http://127.0.0.1:5000/slides/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+      url = f'https://{project_id}.web.app/slides/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+   def share_separated(self,local=False,token=None,verbose=True,visibility='public',emails = []):
+
+      project_id = 'computo-306914'
+      location   = 'us-central1'
+      url_subscribe='test'
+
+      #Load credentials
+      try : 
+       with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
+            cred = json.load(f)
+      except FileNotFoundError:
+             webbrowser.open_new_tab(url_subscribe)
+             quit()
+   
+      #name = hashlib.md5(content['title'].encode()).hexdigest()
+
+      #get access token
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+                             {'grant_type':'refresh_token',\
+                             'refresh_token':cred['refreshToken']},\
+                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
+
+      accessToken = response['access_token']
+      uid         = response['user_id']
+   
+
+
+      #Upload resources to cloud
+      for slide in self.slides.values():
+          for component_name,component in slide['children'].items():
+
+              if 'src' in component.keys():
+                  #METHOD 1: Signed URL
+                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
+                                 headers= {
+                                        'Authorization': f'Bearer {accessToken}',
+                                         "Content-Type": "application/json"},
+                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  response = requests.put(response['result'],headers = {
+                                         "Content-Type": "application/octet-stream"
+                                         },
+                                         data = component['src'])
+
+                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
+
+
+  
+      #Upload slides--
+      url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/slides.json?auth={accessToken}&print=silent"
+      response = requests.patch(url,json=self.slides)
+
+      #Upload presentations--
+      url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{self.presentation_ID}.json?auth={accessToken}&print=silent"
+      presentations = {'title':self.title,'slide_IDs':{key:value['title'] for key,value in self.slides.items()}}
+      response = requests.patch(url,json=presentations)
+
+ 
+      #print(response)
+      url = f'http://127.0.0.1:5000/slides/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+      url = f'https://{project_id}.web.app/slides/?uid={uid}&name={self.presentation_ID}'
+      print(url)
+
+
+   def share_old(self,local=False,token=None,verbose=True,visibility='public',emails = []):
 
       project_id = 'computo-306914'
       location   = 'us-central1'
@@ -546,7 +674,8 @@ class Presentation():
 
       accessToken = response['access_token']
       uid         = response['user_id']
-      email       = cred['email']
+      #email       = cred['email']
+
       #-----------------------------------
 
       #Add visibility
@@ -561,7 +690,6 @@ class Presentation():
          print('No visibility recognized') 
          quit()
 
-      visibility = {r.replace('.',','):True for r in recipients}
 
       #Upload resources to cloud
       for slide in self.slides.values():
@@ -581,19 +709,17 @@ class Presentation():
 
                   component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
 
-      visibility = {r.replace('.',','):True for r in recipients}
+
+      #visibility = {r.replace('.',','):True for r in recipients}
 
       #Upload slides--
       url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/slides.json?auth={accessToken}&print=silent"
 
       #Add visibility to slides
-      for key,value in self.slides.items():
-          value['visibility'] = visibility
-
-      
+      #for key,value in self.slides.items():
+      #    value['visibility'] = visibility
 
       response = requests.patch(url,json=self.slides)
-      print(response)
 
       #Upload presentations--
       url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/presentations/{self.presentation_ID}.json?auth={accessToken}&print=silent"
@@ -632,21 +758,25 @@ class Presentation():
 
       accessToken = response['access_token']
       uid         = response['user_id']
-      email       = cred['email']
+      #email       = cred['email']
       #print(accessToken)
       #-----------------------------------
 
       #Add visibility
-      print(visibility)
-      if visibility == 'public':
-         recipients = ['public']
-      elif visibility == 'private':    
-         recipents = [email]
-      elif visibility == 'custom':    
-         recipients = emails
-      else:   
-         print('No visibility recognized') 
-         quit()
+      #print(visibility)
+      #if visibility == 'public':
+      #   recipients = ['public']
+      #elif visibility == 'private':    
+      #   recipents = [email]
+      #elif visibility == 'custom':    
+      #   recipients = emails
+      #else:   
+      #   print('No visibility recognized') 
+      #   quit()
+
+
+      print(accessToken)
+      quit()
 
       data = {'title':self.title,'slides':self.slides,'visibility':{r.replace('.',','):True for r in recipients}}
 
@@ -900,7 +1030,7 @@ class Slide():
         #Adjust style---
         argv.setdefault('mode','center')
         style = get_style(**argv)
-        style.setdefault('color','#FFFFFF')
+        style.setdefault('color','#DCDCDC')
 
         #-----------------
         tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.1),'style':style}
@@ -947,7 +1077,7 @@ class Slide():
         #/Add border
         style = get_style(**argv)
         if argv.setdefault('frame',False):
-            style['border'] = '2px solid red'
+            style['border'] = '2px solid ' + argv.setdefault('frame_color','#DCDCDC')
 
 
         tmp = {'type':"Img",'src':url,'style':style}
@@ -1078,7 +1208,7 @@ class Slide():
        return self 
 
 
-    def python(self,kernel,**argv):
+    def python(self,**argv):
         style = get_style(**argv)
 
         kernel = argv.setdefault('kernel','python')
@@ -1086,7 +1216,7 @@ class Slide():
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
 
-        tmp = {'type':'Iframe','src':url,'style':style}
+        tmp = {'type':'Iframe','url':url,'style':style}
         self.content.append(tmp)
         self._add_animation(**argv)
 
@@ -1111,7 +1241,7 @@ class Slide():
         style = get_style(**argv)
         #Add border
         #style['border'] ='2px solid #000';
-        tmp = {'type':'Iframe','src':url,'style':style}
+        tmp = {'type':'Iframe','url':url,'style':style}
         self.content.append(tmp)
         self._add_animation(**argv)
         return self

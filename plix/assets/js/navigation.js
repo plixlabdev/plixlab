@@ -73,25 +73,18 @@ function decrementEvent() {
 
 function change_plotly_static(slide,staticc){
 
-    //console.log('here'+slide)
-    const slideElement = document.getElementById(slide);
+    
+   // const slideElement = document.getElementById(slide);
 
-   // console.log(slideElement)
-    const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
+   
+   // const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
 
-    plotlyElements.forEach(element => {
-        //console.log(slide + '' + staticc)
-        Plotly.react(element.id, element.data, element.layout, {staticPlot: staticc,responsive: true,scrollZoom: true} );   
-        //element.hidden=static
-        //if (staticc){
-        //element.style.visibility='hidden'
-       // }
-       // else {element.style.visibility='visible'
-       // }
+   // plotlyElements.forEach(element => {
         
+   //     Plotly.react(element.id, element.data, element.layout, {staticPlot: staticc,responsive: true,scrollZoom: true} );   
+       
 
-
-    });
+   // });
 
 }
 
@@ -100,9 +93,6 @@ function decrementSlide() {
     if (window.dataStore.active_slide > 0) {
         window.dataStore.active_slide -= 1;
 
-        //window.dataStore.index = window.dataStore.presentation.slides['S' + String(window.dataStore.active_slide)].animation.length -1 
-        //const old_slide_id = 'S' + String(window.dataStore.active_slide+1)
-        //const new_slide_id = 'S' + String(window.dataStore.active_slide)
 
 
         const slide_ids = Object.keys(window.dataStore.presentation.slides)
@@ -122,9 +112,9 @@ function decrementSlide() {
        // slide.focus()
 
         change_plotly_static(old_slide_id,true)
-        change_plotly_static(new_slide_id,false)
+       /change_plotly_static(new_slide_id,false)
 
-        updateURL()
+   //     updateURL()
       
     }
 
@@ -139,9 +129,6 @@ function incrementSlide() {
         window.dataStore.index = 0
 
 
-        //const old_slide_id = 'S' + String(window.dataStore.active_slide-1)
-        //const new_slide_id = 'S' + String(window.dataStore.active_slide)
-
         const slide_ids = Object.keys(window.dataStore.presentation.slides)
         
         const old_slide_id = slide_ids[window.dataStore.active_slide-1]
@@ -155,35 +142,29 @@ function incrementSlide() {
         slide.style.visibility = 'visible'
 
 
-        //if (!slide.hasAttribute('tabindex')) {
-        //    slide.setAttribute('tabindex', '-1');
-       // }
-       // slide.focus()
-
-
         change_plotly_static(old_slide_id,true)
         change_plotly_static(new_slide_id,false)
 
-        updateURL()
+       // updateURL()
 
     }
 }
    
 
-function updateURL() {
-    let currentUrl = window.location.href;
+//function updateURL() {
+//    let currentUrl = window.location.href;
     
     // Use a regex to detect and remove the pattern #N followed by numbers
-    const hashPattern = /#\d+$/;
-    if (hashPattern.test(currentUrl)) {
-        currentUrl = currentUrl.replace(hashPattern, '');
-    }
+//    const hashPattern = /#\d+$/;
+//    if (hashPattern.test(currentUrl)) {
+//        currentUrl = currentUrl.replace(hashPattern, '');
+//    }
     
     // Append the new hash fragment.
-    currentUrl += "#" + String(window.dataStore.active_slide);
+//    currentUrl += "#" + String(window.dataStore.active_slide);
     
-    window.history.replaceState(null, null, currentUrl);
-}
+ //   window.history.replaceState(null, null, currentUrl);
+//}
 
 
 
@@ -289,7 +270,7 @@ function switchMode() {
         });
        
          //Make the interactive plot disappear
-         updatePlotly()
+        updatePlotly()
         //Change the number of rows in grid--------
         function setGridRowsBasedOnN(N) {
           const numberOfRows = Math.ceil(N / 4);

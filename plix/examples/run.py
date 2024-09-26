@@ -25,6 +25,14 @@ prefix = '../../docs/source/_static/examples/'
 
 #quit()
 
+
+def markdown():
+    
+ from plix import Slide
+
+ Slide().text('<u> This </u> **text** is *really important*.',x=0.2,y=0.6,\
+               fontsize=0.1,color='orange').show()
+
 def plotly_example():
 
  from plix import Slide
@@ -130,7 +138,6 @@ def example_model3d():
 ##example_model3d_dragon()
 #quit()
 
-example_model3d()
 
 def example_citations():
 
@@ -155,9 +162,12 @@ def animation2():
            text('Text #3',y=0.3,animation=2).save(prefix + 'animation').show()
    
 
-animation2()    
+#animation2()    
 
 
+
+#example_model3d()
+markdown()
 
 #example_bokeh()
 
