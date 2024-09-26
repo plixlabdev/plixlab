@@ -56,8 +56,6 @@ def process_plotly(fig):
              )
              ) ,dragmode=None)
 
-             print('here')
-
 
              return fig
 

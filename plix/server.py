@@ -13,8 +13,8 @@ def make_app(data_provider):
         (r"/share", ShareHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "static")}),
         (r"/assets/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "assets")}),
-        (r"/data", ReloadWebSocketHandler,{"data_provider": data_provider}),
-        (r"/(render.js|styles.css|navigation.js|models.js|load.js|local_only.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
+        (r"/data", ReloadWebSocketHandler,{"data_provider": data_provider})
+        #(r"/(render.js|styles.css|navigation.js|models.js|load.js|local_only.js)", tornado.web.StaticFileHandler, {"path": os.path.dirname(os.path.abspath(__file__))})
     ])
 
 
@@ -32,7 +32,6 @@ class ShareHandler(tornado.web.RequestHandler):
 
         #Send back the url to the client
         self.write(url)
-
 
 
 class NoCacheHandler(tornado.web.RequestHandler):
@@ -87,12 +86,13 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
 
 def run(data_provider):
 
+        port = 8889
         app = make_app(data_provider)
-        app.listen(8888)
+        app.listen(port)
 
         # Check if the environment variable is set
         if not os.environ.get("BROWSER_OPENED"):
-         webbrowser.open("http://localhost:8888")
+         webbrowser.open("http://localhost:" + str(port))
          os.environ["BROWSER_OPENED"] = "True"
 
         # Add the hook to send "reload" message to active sockets before restart
