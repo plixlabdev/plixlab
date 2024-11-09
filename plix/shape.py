@@ -1,10 +1,18 @@
 import cairo
 import base64
 from io import BytesIO
-from .utils import hex_to_rgb
 import numpy as np
  
  
+def hex_to_rgb(hex_color):
+    """
+    Convert a hexadecimal color string to an RGB tuple.
+
+    :param hex_color: Hexadecimal color string (e.g., "#FFFFFF")
+    :return: RGB tuple
+    """
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 def arrow(context, s, a, b, c, d):
 

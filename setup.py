@@ -9,6 +9,8 @@ setup(
         'requests',\
          'plotly',\
          'matplotlib',\
+         'flask',\
+         'flask_cors',\
          'pycairo',\
          'pybtex',\
          'hash_dict',\
