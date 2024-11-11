@@ -172,27 +172,66 @@ class Presentation():
 
         return self    
    
-   def share(self,local=False,token=None,verbose=True,visibility='public',emails = []):
+
+   def share(self):
+
+
+      #Load credentials
+      filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
+      if not os.path.isfile(filename):
+            print('Visit computo.dev to get your token')
+            quit()
+      else:      
+            with open(filename,'r') as f:
+                cred = json.load(f)
+
+      
+
+      #Get access token
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+                             {'grant_type':'refresh_token',\
+                             'refresh_token':cred['refreshToken']},\
+                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
+
+      #Get Permission
+
+
+
+
+      #Upload
+      file_name = 'test'
+      bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name={file_name}"
+
+      # Headers with authorization token and content type
+      headers = {
+        'Authorization': f'Bearer {response['access_token']}',
+        "Content-Type": "application/octet-stream"
+      }
+
+      # Send the binary data directly using `data`
+      response = requests.post(bucket_url, headers=headers, data=msgpack.packb({'title':self.title,'slides':self.slides}))
+      response_content = response.json() if response.status_code == 200 else response.text
+      print(response_content)
+
+
+
+
+   def share_old(self,local=False,token=None,verbose=True,visibility='public',emails = []):
 
       project_id = 'computo-306914'
       location   = 'us-central1'
-      url_subscribe='https://computo.dev/signin'
+      #url_subscribe='https://computo.dev/signin'
 
       #Load credentials
 
       filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
       if not os.path.isfile(filename):
-            webbrowser.open_new_tab(url_subscribe)
+            print('Visit computo.dev to get your token')
+            quit()
       else:      
             with open(filename,'r') as f:
                 cred = json.load(f)
-      # quit()
-      #try : 
-      # with open(os.path.expanduser("~") + '/.plix/plix_credentials.json','r') as f:
-      #      cred = json.load(f)
-      #except FileNotFoundError:
-      #       webbrowser.open_new_tab(url_subscribe)
-      #       quit()
+
    
 
       #get access token
@@ -242,11 +281,8 @@ class Presentation():
       url = f'http://127.0.0.1:5000/share/?uid={uid}&name={self.presentation_ID}'
       print(url)
 
-      url = f'https://{project_id}.web.app/share/?uid={uid}&name={self.presentation_ID}'
-      print(url)
-
       url = f'https://computo.dev/share/?uid={uid}&name={self.presentation_ID}'
-      print(url)
+      print(f'visit {url}')
 
   
      
