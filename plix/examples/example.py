@@ -109,6 +109,6 @@ s8 = Slide().\
 #     model3D('assets/dragon_gold.glb').text('Blue Flower Animated" (https://skfb.ly/oDIqT) by morphy.vision is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).',y=0.000,fontsize=0.03)
 
 #Presentation([s6],title='test2').show()
-Presentation([s1],title='test2').share()
+Presentation([s6],title='test2').share()
 
 
