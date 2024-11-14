@@ -186,16 +186,11 @@ class Presentation():
                 cred = json.load(f)
 
       
-
       #Get access token
       response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
                              {'grant_type':'refresh_token',\
                              'refresh_token':cred['refreshToken']},\
                              headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
-
-      #Get Permission
-
-
 
 
       #Upload
@@ -209,7 +204,7 @@ class Presentation():
       }
 
       # Send the binary data directly using `data`
-      response = requests.post(bucket_url, headers=headers, data=msgpack.packb({'title':self.title,'slides':self.slides}))
+      response = requests.post(bucket_url, headers=headers, data=msgpack.packb({'title':self.title,'slides':self.slides}, use_bin_type=True))
       response_content = response.json() if response.status_code == 200 else response.text
       print(response_content)
 
@@ -418,7 +413,6 @@ class Slide():
         
         #Local
         with open(filename, "rb") as f:
-        
            url = f.read()
 
         tmp = {'type':'model3D','className':'interactable componentA','src':url,'style':style}
@@ -427,7 +421,6 @@ class Slide():
 
         self._add_animation(**argv)
         return self
-
 
 
     def img(self,url,**argv):
