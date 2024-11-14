@@ -64,6 +64,7 @@ class ReloadWebSocketHandler(websocket.WebSocketHandler):
 
 
     def send_data_to_client(self):
+         #We send the patch to the client
 
          old_data = {}        
          

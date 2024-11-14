@@ -16,8 +16,6 @@ function apply_style(element,style) {
 }
 
 
-   
-
 function update_markdown(element,field,value){
     //Update Markdown
    // console.log(field)
@@ -218,7 +216,7 @@ function add_component(id,data,outer_element){
     if (data.type === 'model3D'){
 
         function add_model(src){
-            const element = import3DModel(new Uint8Array(src),data.style.width)
+            const element = import3DModel(src,data.style.width)
             element.id = id
             outer_element.appendChild(element)
             element.className ='interactable componentA'
