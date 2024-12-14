@@ -54,6 +54,7 @@ def get_style(**options):
         """Format the style"""
 
         style = {'position':'absolute'}
+        #style = {'position':'relative'}
 
         if 'color' in options.keys(): style['color'] = options['color']
         #style.update({'position':'absolute'})
@@ -84,12 +85,14 @@ def get_style(**options):
              style.update({'height':convert(options['h'])})
      
         elif mode == 'full':
+          
                
             w =  options.setdefault('w',1)
+            h =  options.setdefault('h',1)
             style['left']   = convert((1-w)/2)
             style['bottom'] = convert((1-w)/2)
             style['width']  = convert(w)
-            style['height'] = convert(w)
+            style['height'] = convert(h)
 
         elif mode == 'hCentered':
             style['bottom'] = convert(options['y'])
@@ -98,7 +101,10 @@ def get_style(**options):
             #This needs to be texted with other objects than text
             style['justifyContent'] = 'center'
             if 'w' in options.keys():
-              style['width']   = convert(options['w'])
+             style['width']   = convert(options['w'])
+
+            if 'h' in options.keys():
+             style['height']  = convert(options['h'])
             
 
         elif mode == 'vCentered':
@@ -112,5 +118,11 @@ def get_style(**options):
             if 'w' in options.keys():
               style['width']   = convert(options['w'])
 
+            
+        if 'align' in options.keys():
+            style['text-align'] = options['align']   
+            style['transform']= "translateX(-50%)"
+
+      
         return style
 

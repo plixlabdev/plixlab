@@ -56,8 +56,10 @@ class Presentation():
          self.presentation_ID = hashlib.md5(self.title.encode()).hexdigest()
 
          data = {}
-         for slide in slides:
-           data.update(slide.get(self.presentation_ID))
+         for s,slide in enumerate(slides):
+           #data.update(slide.get(self.presentation_ID))
+           data.update(slide.get(self.presentation_ID+'_'+str(s)))
+
 
          self.slides = data
 
@@ -128,17 +130,14 @@ class Presentation():
    def show(self):
         """Display the presentation"""
 
-        run({'title':self.title,'slides':self.slides})
+    
 
-   #def serialize_slides(self):
+        #run({'title': self.title, 'slides': self.slides})
+        run(self.slides)
+        
 
-     #  for slide in self.slides.values():
-     #      for component in slide['children'].values():
-     #          if 'src' in component.keys():
-     #              image =  base64.b64encode(component['src']).decode("utf8")
-     #              url = 'data:image/png;base64,{}'.format(image)
-     #              component['src'] = url
-   
+
+
 
    def save(self,filename='output',library=False):
         """Save presentation""" 
@@ -174,7 +173,9 @@ class Presentation():
    
 
    def share(self):
-
+ 
+      project_id = 'computo-306914'
+      location   = 'us-central1'
 
       #Load credentials
       filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
@@ -186,6 +187,10 @@ class Presentation():
                 cred = json.load(f)
 
       
+      data_to_be_sent = msgpack.packb({'title':self.title,'slides':self.slides})
+      expected_size = len(data_to_be_sent)  # Calculate the size of the packed data
+     
+      
       #Get access token
       response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
                              {'grant_type':'refresh_token',\
@@ -193,9 +198,47 @@ class Presentation():
                              headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
 
 
-      #Upload
-      file_name = 'test'
-      bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name={file_name}"
+      hash_url =  hashlib.md5(self.title.encode()).hexdigest()
+      uid         = response['user_id']
+
+
+
+   
+   
+      #url = 'http://127.0.0.1:5001/computo-306914/us-central1/'
+      #url = 'https://{location}-{project_id}.cloudfunctions.net/'
+
+      #payload = {'data': {'title': self.title, 'expectedSize': expected_size}}
+      #response = requests.post('http://127.0.0.1:5001/computo-306914/us-central1/generateSignedURL',\
+      #                           headers= {
+      #                                  'Authorization': f'Bearer {response['access_token']}',
+      #                                   "Content-Type": "application/json"},
+      #                                   json = payload)
+      
+      #print(response.json()['hash'])
+      #print(response.json()['signedURL'])
+      #signedURL = response.json()['signedURL']
+
+      #We kae different data
+
+      #data_to_be_sent = msgpack.packb({'title':self.title,'slides':self.slides})
+      #response = requests.put(signedURL,headers = {
+      #                                   "Content-Type": "application/octet-stream",
+      #                                   'X-Upload-Content-Length': str(expected_size)
+      #                                   },
+      #                                   data = data_to_be_sent)
+      
+      #print(response)
+
+      #quit()
+
+
+      bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
+      #bucket_url = f"http://127.0.0.1:9199/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
+
+
+
+      #bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
 
       # Headers with authorization token and content type
       headers = {
@@ -204,9 +247,26 @@ class Presentation():
       }
 
       # Send the binary data directly using `data`
-      response = requests.post(bucket_url, headers=headers, data=msgpack.packb({'title':self.title,'slides':self.slides}, use_bin_type=True))
+      response = requests.post(bucket_url, headers=headers, data=data_to_be_sent)
+      print(response)
+   
+
+      unique_url = uid+hash_url
+      #print(unique_url)
+      #print(len(uid))
+      #print(len(hash_url))
+      #quit()
       response_content = response.json() if response.status_code == 200 else response.text
-      print(response_content)
+
+      #print(response)
+      url = f'http://127.0.0.1:5000/share/{unique_url}'
+      print(url)
+
+      url = f'https://computo.dev/share/{unique_url}'
+      print(f'visit {url}')
+      
+
+      #print(response_content)
 
 
 
@@ -252,6 +312,7 @@ class Presentation():
                                         'Authorization': f'Bearer {accessToken}',
                                          "Content-Type": "application/json"},
                                          json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
+                  
                   response = requests.put(response['result'],headers = {
                                          "Content-Type": "application/octet-stream"
                                          },
@@ -293,12 +354,11 @@ def generate_random_alphanumeric(length):
 class Slide():
     """A simple example class"""
     def __init__(self,title=None,background='#303030'):
+         
         
-       
          self.content = []
          self.style = {'backgroundColor':background}
        
-
 
          #Init animation
          self.animation = []
@@ -311,12 +371,14 @@ class Slide():
          self.title = title
   
 
-    def get(self,presentation_ID):
+    #def get(self,presentation_ID):
+
+    def get(self,slide_ID):
 
         animation = self.process_animations()
 
            
-        slide_ID = presentation_ID + '_' + hashlib.md5(self.title.encode()).hexdigest()
+        #slide_ID = presentation_ID + '_' + hashlib.md5(self.title.encode()).hexdigest()
 
         #Process children
         #children = {self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
@@ -380,14 +442,32 @@ class Slide():
             keys = [key]
         else: keys = key    
 
+        
         for i,key in enumerate(keys):
          text = Bibliography.format(key)
-         style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
-         style.setdefault('color','#FFFFFF')
 
-         tmp = {'type':"Markdown",'text':text,'style':style.copy(),'fontsize':argv.setdefault('fontsize',0.03)}
+         print(f'{i*4+1}%')
+         #quit()
+         #style = get_style(**argv)
+         style = {}
+         style.setdefault('color','#DCDCDC')
+         style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
+
+         print(style)
+
+         #-----------------
+         tmp ={'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.03),'style':style}
+    
          self.content.append(tmp)
-         self._add_animation(**style)
+         self._add_animation(**argv)
+         
+         #style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
+         #style.setdefault('color','#FFFFFF')
+
+         #tmp = {'type':"Markdown",'text':text,'style':style.copy(),'fontsize':argv.setdefault('fontsize',0.03)}
+         #self.content.append(tmp)
+
+         #self._add_animation(**style)
 
         return self
         
@@ -400,7 +480,7 @@ class Slide():
         style.setdefault('color','#DCDCDC')
 
         #-----------------
-        tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.1),'style':style}
+        tmp = {'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.05),'style':style}
        
         self.content.append(tmp)
         self._add_animation(**argv)
@@ -463,6 +543,7 @@ class Slide():
 
         #Add Video--
         url = f"https://www.youtube.com/embed/{videoID}?controls=0&rel=0"
+       
         tmp = {'type':'Iframe','className':'interactable','src':url,'style':style.copy()}
         self.content.append(tmp)
         #----------
@@ -501,22 +582,28 @@ class Slide():
        self._add_animation(**argv)
        return self
 
+    def plotly(self, fig, **argv):
+      """Add Plotly graph with user-defined style."""
 
-    def plotly(self,fig,**argv):
-       """Add plotly graph"""
+      if type(fig) == str:
+        fig = pio.read_json(fig + '.json')
 
-       style  = get_style(**argv)
-   
-       fig = process_plotly(fig)
+
+      style = get_style(**argv)
+      fig = process_plotly(fig)
+      fig_json = fig.to_json()
      
-       fig = fig.to_json()
-       #--------------------------
-     
-       tmp = {'type':"Plotly",'figure':fig,'style':style.copy()}
-      
-       self.content.append(tmp)
-       self._add_animation(**argv)
-       return self 
+      component = {
+        'type': "Plotly",
+        'figure': fig_json,
+        'style': style
+      }
+      self.content.append(component)
+      self._add_animation(**argv)
+      return self
+
+
+ 
 
     def molecule(self,structure,**argv):
        """Add Molecule"""
@@ -534,12 +621,14 @@ class Slide():
     def python(self,**argv):
         style = get_style(**argv)
 
-        kernel = argv.setdefault('kernel','python')
-        code = argv.setdefault('code','')
+        
+        #kernel = argv.setdefault('kernel','python')
+        #code = argv.setdefault('code','')
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
 
         tmp = {'type':'Iframe','url':url,'style':style}
+        #SStmp = {'type':'Python','style':style}
         self.content.append(tmp)
         self._add_animation(**argv)
 
