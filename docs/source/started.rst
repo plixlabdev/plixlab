@@ -23,7 +23,7 @@ A minimal single-slide presentation can be created with two lines of code
          .img('assets/logo.png',y=0.1,w=0.2).show()
 
 
-.. import_example:: image
+.. import_example:: logo
 
 | Plix features several interactive data-oriented components. Here is an example for embedding plotly data
 

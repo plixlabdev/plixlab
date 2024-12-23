@@ -50,8 +50,7 @@ export function toggleAnimations(shouldAnimate) {
 
 export function import3DModel(modelDataURL,width){
 
-    
-    console.log(modelDataURL)
+   
     const w = extractAndDivide(width)
     console.log('Three.js version:', THREE.REVISION);
      //Scene
@@ -85,11 +84,13 @@ export function import3DModel(modelDataURL,width){
     
      const controls = new OrbitControls(camera, renderer.domElement);
     
-     //const blobURL = dataURItoBlob(modelDataURL);
+     const arrayBuffer = modelDataURL.data ? new Uint8Array(modelDataURL.data) : new Uint8Array(modelDataURL);
 
-     const blob = new Blob([modelDataURL], { type: 'model/gltf-binary' });
-     const blobURL = URL.createObjectURL(blob);
-    
+
+     const blob        = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
+     const blobURL     = URL.createObjectURL(blob);
+
+     
      // Now you can use the three.js loader with the blob URL
      const loader = new GLTFLoader();
      let mixer; // Animation mixer

@@ -1,0 +1,1 @@
+§slide_0„¨children€¥style¯backgroundColor§#303030©animation¥title¦python

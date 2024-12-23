@@ -7,10 +7,10 @@ A fully-featured Python REPL can be instantiated with the tag ``python``
 
      Slide().python().show()
 
-.. import_example:: REPL
+.. import_example:: python
 
-| Under the hood, it uses `JupyterLite <jupyterlite>`_
+| Under the hood, it uses `JupyterLite <jupyterliteref>`_
 
-.. _jupyterlite: https://jupyterlite.readthedocs.io/en/stable/
+.. _jupyterliteref: https://jupyterlite.readthedocs.io/en/stable/
 
 
