@@ -15,6 +15,9 @@ class ImportExample(Directive):
         ImportExample.instance_counter += 1
 
         filename = self.arguments[0]
+        print('Example ' + filename)
+        print(' ')
+        
         #filename_path = os.path.join('_static', filename)
 
         # Modify iframe ID to include the instance number
@@ -23,14 +26,13 @@ class ImportExample(Directive):
         # Embeds an iframe that will be the target for the postMessage
         html_content = f'''
 <div class="embed-container">
-    <iframe id="{iframe_id}" src="_static/plix.html" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
+    <iframe id="{iframe_id}" src="_static/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
-    fetch('_static/examples/{filename}.pkl')
+    fetch('_static/{filename}.plx')
         .then(response => response.blob()) // Fetch the file as Blob
         .then(blob => {{
-            console.log(blob);
             const reader = new FileReader();
             reader.onload = function() {{
                 const arrayBuffer = this.result;

@@ -1,3 +1,12 @@
+def normalize_dict(data):
+    if isinstance(data, dict):
+        return {k: normalize_dict(v) for k, v in data.items()}
+    elif isinstance(data, (list, tuple)):
+        return [normalize_dict(v) for v in data]
+    else:
+        return data
+
+
 def process_bokeh(fig):
 
      fig.xaxis.major_tick_line_color = "white"

@@ -7,16 +7,17 @@ Components
   
    markdown
    image
-   matplotlib
-   shapes
-   embed
-   youtube
    plotly
    bokeh
-   proteins
+   matplotlib
+   protein
    python
-   3D_model
+   shape
+   embed
+   youtube
+   model
    citation
+   
 
 
 

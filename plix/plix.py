@@ -4,7 +4,7 @@ import base64
 import io
 import matplotlib.pyplot as plt
 import plotly.io as pio
-from .utils import get_style,process_plotly,process_bokeh
+from .utils import get_style,process_plotly,process_bokeh,normalize_dict
 from .shape import run as shape
 import os,sys
 import json
@@ -17,7 +17,6 @@ import random
 import string
 from dict_hash import sha256
 import msgpack
-import pickle
 import hashlib
 from bokeh.embed import json_item
 import random
@@ -28,9 +27,9 @@ import string
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Construct the full path to the style file
-style_path = os.path.join(script_dir, 'assets', 'mpl_style')
+#style_path = os.path.join(script_dir, 'assets', 'mpl_style')
 # Use the style
-plt.style.use(style_path)
+#plt.style.use('mpl_style')
 
 
 def getsize(a):
@@ -51,14 +50,18 @@ class Presentation():
             #assign a random title
             #title = 'title_' + generate_random_string(10) 
 
+         #if len(slides) == 0:
+         #    self.title = slides[0].title
+
          self.title = title
 
-         self.presentation_ID = hashlib.md5(self.title.encode()).hexdigest()
+         #self.presentation_ID = hashlib.md5(self.title.encode()).hexdigest()
 
          data = {}
          for s,slide in enumerate(slides):
            #data.update(slide.get(self.presentation_ID))
-           data.update(slide.get(self.presentation_ID+'_'+str(s)))
+           #data.update(slide.get(self.presentation_ID+'_'+str(s)))
+           data.update(slide.get(f'slide_{s}'))
 
 
          self.slides = data
@@ -130,46 +133,27 @@ class Presentation():
    def show(self):
         """Display the presentation"""
 
-    
 
         #run({'title': self.title, 'slides': self.slides})
         run(self.slides)
-        
+         
 
 
 
-
-   def save(self,filename='output',library=False):
+   def save(self,filename='output'):
         """Save presentation""" 
 
-        if library:
-         filename = os.path.expanduser("~") + '/.plix/library.json'
       
-         #Create if it does not exist
-         if not os.path.isfile(filename):
-          with open(filename,'w') as f: 
-              json.dump({'presentations':{},'slides':{}},f)
-
-         with open(filename,'r') as f: 
-            data = json.load(f)
-            if len(self.slides) > 1:
-             data['presentations'][self.title] = list(self.slides.keys())
-            data['slides'].update(self.slides)
-
-         with open(filename,'w') as f: 
-              json.dump(data,f)
-            
-        else:
-
-         content = {'title':self.title,'slides':self.slides}
-      
-         packed_data = msgpack.packb(content)
-
-         # Save the serialized data to a file
-        with open(filename + '.pkl', 'wb') as file:
-          file.write(packed_data)
+        with open(filename + '.plx', 'wb') as file:
+          file.write(msgpack.packb(normalize_dict(self.slides)))
 
         return self    
+   
+  
+   def get_data(self):
+        """Save presentation""" 
+
+        return self.slides
    
 
    def share(self):
@@ -186,9 +170,9 @@ class Presentation():
             with open(filename,'r') as f:
                 cred = json.load(f)
 
-      
-      data_to_be_sent = msgpack.packb({'title':self.title,'slides':self.slides})
-      expected_size = len(data_to_be_sent)  # Calculate the size of the packed data
+      data = normalize_dict({'title':self.title,'slides':self.slides})
+      data_to_be_sent = msgpack.packb(data)
+      #expected_size = len(data_to_be_sent)  # Calculate the size of the packed data
      
       
       #Get access token
@@ -201,36 +185,6 @@ class Presentation():
       hash_url =  hashlib.md5(self.title.encode()).hexdigest()
       uid         = response['user_id']
 
-
-
-   
-   
-      #url = 'http://127.0.0.1:5001/computo-306914/us-central1/'
-      #url = 'https://{location}-{project_id}.cloudfunctions.net/'
-
-      #payload = {'data': {'title': self.title, 'expectedSize': expected_size}}
-      #response = requests.post('http://127.0.0.1:5001/computo-306914/us-central1/generateSignedURL',\
-      #                           headers= {
-      #                                  'Authorization': f'Bearer {response['access_token']}',
-      #                                   "Content-Type": "application/json"},
-      #                                   json = payload)
-      
-      #print(response.json()['hash'])
-      #print(response.json()['signedURL'])
-      #signedURL = response.json()['signedURL']
-
-      #We kae different data
-
-      #data_to_be_sent = msgpack.packb({'title':self.title,'slides':self.slides})
-      #response = requests.put(signedURL,headers = {
-      #                                   "Content-Type": "application/octet-stream",
-      #                                   'X-Upload-Content-Length': str(expected_size)
-      #                                   },
-      #                                   data = data_to_be_sent)
-      
-      #print(response)
-
-      #quit()
 
 
       bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
@@ -252,10 +206,7 @@ class Presentation():
    
 
       unique_url = uid+hash_url
-      #print(unique_url)
-      #print(len(uid))
-      #print(len(hash_url))
-      #quit()
+   
       response_content = response.json() if response.status_code == 200 else response.text
 
       #print(response)
@@ -270,82 +221,6 @@ class Presentation():
 
 
 
-
-   def share_old(self,local=False,token=None,verbose=True,visibility='public',emails = []):
-
-      project_id = 'computo-306914'
-      location   = 'us-central1'
-      #url_subscribe='https://computo.dev/signin'
-
-      #Load credentials
-
-      filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
-      if not os.path.isfile(filename):
-            print('Visit computo.dev to get your token')
-            quit()
-      else:      
-            with open(filename,'r') as f:
-                cred = json.load(f)
-
-   
-
-      #get access token
-      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
-                             {'grant_type':'refresh_token',\
-                             'refresh_token':cred['refreshToken']},\
-                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
-
-      accessToken = response['access_token']
-      uid         = response['user_id']
-   
-
-
-      #Upload resources to cloud
-      for slide in self.slides.values():
-          for component_name,component in slide['children'].items():
-
-              if 'src' in component.keys():
-                  #print(component_name)
-                  #METHOD 1: Signed URL
-                  response = requests.post(f'https://{location}-{project_id}.cloudfunctions.net/generateSignedURL',\
-                                 headers= {
-                                        'Authorization': f'Bearer {accessToken}',
-                                         "Content-Type": "application/json"},
-                                         json ={'data':{'filename':f'users/{uid}/{component_name}'}}).json()
-                  
-                  response = requests.put(response['result'],headers = {
-                                         "Content-Type": "application/octet-stream"
-                                         },
-                                         data = component['src'])
-
-                  component['src'] = f"https://firebasestorage.googleapis.com/v0/b/{project_id}.appspot.com/o?name=users/{uid}/{component_name}&alt=media"
-
-
-      
-      #Set order (because sometimes it gets messed up when uploaded)
-      for k,slide in enumerate(self.slides.values()):
-          slide['order'] = k
-      #---------------------    
-          
-      presentation = {'title':self.title,'slides':self.slides}
-      url =f"https://{project_id}-default-rtdb.firebaseio.com/users/{uid}/{self.presentation_ID}.json?auth={accessToken}&print=silent"
-      response = requests.patch(url,json=presentation)
-      #TODO: requests.patch inverts the slides' order
-
- 
-      #print(response)
-      url = f'http://127.0.0.1:5000/share/?uid={uid}&name={self.presentation_ID}'
-      print(url)
-
-      url = f'https://computo.dev/share/?uid={uid}&name={self.presentation_ID}'
-      print(f'visit {url}')
-
-  
-     
-
-
-
-
 def generate_random_alphanumeric(length):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for i in range(length))
@@ -353,7 +228,7 @@ def generate_random_alphanumeric(length):
 
 class Slide():
     """A simple example class"""
-    def __init__(self,title=None,background='#303030'):
+    def __init__(self,title='default',background='#303030'):
          
         
          self.content = []
@@ -363,8 +238,8 @@ class Slide():
          #Init animation
          self.animation = []
 
-         if not title:
-            title = generate_random_alphanumeric(10)  # Generate a 10-character long string
+         #if not title:
+         #   title = generate_random_alphanumeric(10)  # Generate a 10-character long string
              
          #self.title = hashlib.md5(title.encode()).hexdigest()
 
@@ -436,24 +311,23 @@ class Slide():
         return slide_events
 
 
-    def cite(self,key,**argv):
+    def cite(self,biblio,key,**argv):
         """Add a set of citation"""
+
         if not isinstance(key,list):
             keys = [key]
         else: keys = key    
 
         
         for i,key in enumerate(keys):
-         text = Bibliography.format(key)
+         text = Bibliography.format(biblio,key)
 
          print(f'{i*4+1}%')
-         #quit()
-         #style = get_style(**argv)
+        
          style = {}
          style.setdefault('color','#DCDCDC')
          style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
 
-         print(style)
 
          #-----------------
          tmp ={'type':"Markdown",'text':text,'fontsize':argv.setdefault('fontsize',0.03),'style':style}
@@ -515,7 +389,7 @@ class Slide():
         if argv.setdefault('frame',False):
             style['border'] = '2px solid ' + argv.setdefault('frame_color','#DCDCDC')
 
-
+       
         tmp = {'type':"Img",'src':url,'style':style}
         self.content.append(tmp)
         self._add_animation(**argv)
@@ -658,6 +532,13 @@ class Slide():
         Presentation([self]).save(*args,**kwargs)
 
         return self
+    
+    def get_data(self):
+
+         return Presentation([self]).get_data()
+
+
+
 
 
     def share(self,title='untitled'):

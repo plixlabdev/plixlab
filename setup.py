@@ -9,10 +9,9 @@ setup(
         'requests',\
          'plotly',\
          'matplotlib',\
-         'flask',\
-         'flask_cors',\
+         'pytest',\
          'pycairo',\
-         'pybtex',\
+         'bibtexparser',\
          'hash_dict',\
          'jsonpointer',\
          'msgpack',\
@@ -21,7 +20,7 @@ setup(
          'jsonpatch',\
          'dict_hash',\
          'pandas',\
-         'bokeh',\
+         'bokeh==3.6.2',\
          'requests',\
          'matplotlib',\
          'numpy'
