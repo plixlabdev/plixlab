@@ -36,10 +36,6 @@ def generate_or_validate(slide,pytestconfig):
         data = normalize_dict(slide.get_data())
         reference = load_data(filename)
 
-        #if filename == 'bokeh':
-        # print(data)
-        # print(reference)
-       
         assert data == reference, f"Data does not match the reference for {filename}!"
 
 

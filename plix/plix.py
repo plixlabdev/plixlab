@@ -496,12 +496,10 @@ class Slide():
         style = get_style(**argv)
 
         
-        #kernel = argv.setdefault('kernel','python')
-        #code = argv.setdefault('code','')
+
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
-
-        tmp = {'type':'Iframe','url':url,'style':style}
+        tmp = {'type':'Iframe','src':url,'style':style}
         #SStmp = {'type':'Python','style':style}
         self.content.append(tmp)
         self._add_animation(**argv)
@@ -515,7 +513,7 @@ class Slide():
         style = get_style(**argv)
         #Add border
         #style['border'] ='2px solid #000';
-        tmp = {'type':'Iframe','url':url,'style':style}
+        tmp = {'type':'Iframe','src':url,'style':style}
         self.content.append(tmp)
         self._add_animation(**argv)
         return self
