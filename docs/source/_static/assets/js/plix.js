@@ -1,5 +1,7 @@
 import { import3DModel, toggleAnimations } from './models.js';
 
+
+
 function apply_style(element, style) {
     for (let styleProp in style) {
         let cssValue = style[styleProp];
@@ -9,6 +11,64 @@ function apply_style(element, style) {
         element.style[styleProp] = cssValue;
     }
 }
+
+
+
+
+
+document.getElementById("embed").addEventListener("click", () => {
+  const link = window.location.href;
+  const embedCode = `<div style="position: relative; width: 100%; max-width: 800px; height: 450px; margin: auto;">
+  <iframe
+    src="${link}"
+    title="Plix"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+    allowfullscreen
+  ></iframe>
+</div>`;
+
+  const popup = window.open("", "Plix Share", "width=640,height=580");
+  popup.document.write(`
+    <html>
+    <head>
+      <title>Share Plix</title>
+      <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input, textarea { width: 100%; margin-top: 5px; margin-bottom: 10px; }
+        .copy-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 1.2em;
+          vertical-align: middle;
+          margin-left: 8px;
+        }
+      </style>
+    </head>
+    <body>
+      <h2>Share this Plix</h2>
+      <p><strong>Link:</strong><br>
+        <input id="plix-link" type="text" value="${link}" readonly />
+        <button class="copy-btn" onclick="copyToClipboard('plix-link')" title="Copy Link">📋</button>
+      </p>
+      <p><strong>Embed Code:</strong><br>
+        <textarea id="plix-embed" rows="8" readonly>${embedCode}</textarea>
+        <button class="copy-btn" onclick="copyToClipboard('plix-embed')" title="Copy Embed Code">📋</button>
+      </p>
+      <script>
+        function copyToClipboard(id) {
+          const el = document.getElementById(id);
+          el.select();
+          el.setSelectionRange(0, 99999); // mobile
+          document.execCommand("copy");
+        }
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+
 
 
 function update_markdown(element, field, value) {
@@ -134,12 +194,12 @@ export async function render_slides(slides) {
     //    render_slide('slide_'+index, slide); 
     //});
 
-    window.dataStore = {
-        index: 0,
-        active_slide: 0,
-        mode: 'presentation'
-    }; 
-   
+
+    //Initialize datastore
+    window.dataStore = {'active_slide': 0, 'index': 0, 'mode': 'presentation'};
+
+
+
     await initializeCharts();
     if (window.MathJax) {
                 MathJax.typesetPromise();
@@ -191,12 +251,7 @@ function add_component(id, data, outer_element) {
             const blobURL = URL.createObjectURL(blob);
             element.src = blobURL;
         }
-        //console.log('jere')
-        // Apply styles to the element
-        //data.style['pointerEvents']= 'none'; 
-        //data.style['user-select']= "none";
-        //data.style['contenteditable']= "false" 
-        //data.style['tabindex']="-1"
+       
         apply_style(element, data.style);
     }
 
@@ -221,9 +276,9 @@ function add_component(id, data, outer_element) {
 
     if (data.type === 'Iframe') {
         const element = document.createElement('iframe');
-        console.log(data)
         element.setAttribute('frameborder', '1');
-        element.src = data.src;
+        //console.log(data)
+        element.src = data.url;
         element.id = id;
         element.className = 'interactable componentA';
         apply_style(element, data.style);
@@ -248,7 +303,6 @@ function add_component(id, data, outer_element) {
         const figure = JSON.parse(data.figure);
 
         // Resize observer for Plotly charts
-
         const observer = new ResizeObserver(() => {Plotly.Plots.resize(element);})
 
         element.observer = observer;
@@ -257,6 +311,8 @@ function add_component(id, data, outer_element) {
         if (style) {
           element.style.width = style.width || '100%';
           element.style.height = style.height || '100%';
+          element.style.minWidth = '300px'; 
+          element.style.minHeight = '200px';
         }
         Plotly.react(element, figure.data, figure.layout, config);
         Plotly.Plots.resize(element); // Ensure proper resizing
@@ -309,18 +365,15 @@ function add_component(id, data, outer_element) {
     if (data.type === 'molecule') {
         // Create a new div element
         const element = document.createElement("div");
-        id = 'test';
+        //id = 'test';
         element.id = id;
+        element.className = 'interactable';
         outer_element.appendChild(element);
-        //element.className ='interactable componentA viewer_3Dmoljs'
-        //element.setAttribute('data-pdb',data.structure);
-        //element.setAttribute('data-backgroundcolor','0xffffff');
-        //element.setAttribute('data-style','stick');
-        //element.setAttribute('data-ui','true');
+    
         apply_style(element, data.style);
 
         // Initialize the viewer with a background color
-        var viewer = $3Dmol.createViewer('test', {
+        var viewer = $3Dmol.createViewer(id, {
             defaultcolors: $3Dmol.rasmolElementColors,
             backgroundColor: data.backgroundColor
         });
@@ -401,35 +454,12 @@ async function initializeCharts() {
     if (initializationPromises.length > 0) {
         await Promise.all(initializationPromises);
     }
-    //console.log(window.dataStore.active_slide)
- 
 
-   //console.log('slides') 
-    //console.log(window.dataStore.presentation.slides)
 
     // Update visibility
     const slides = document.querySelectorAll(".slide");
 
-     
-    //slides.forEach((slide, index) => {
-    //     if (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide) {
-    //         slide.style.visibility = 'hidden';
-    //     } else {
-    //         slide.style.visibility = 'visible';
-    //     }
-    // });
 
-
-//    const active_id = Object.keys(window.dataStore.presentation.slides)[window.dataStore.active_slide];
-//     for (let i = 0; i < slides.length; i++) {
-//         if (slides[i].id === active_id) {
-//             change_plotly_static(slides[i].id, false);
-//             slides[i].style.visibility = 'visible';
-//         } else {
-//             change_plotly_static(slides[i].id, true);
-//             slides[i].style.visibility = 'hidden';
-//         }
-//     }
 
     for (let i = 0; i < slides.length; i++) {
         if (i==0) {
@@ -442,16 +472,58 @@ async function initializeCharts() {
     }
 
 
-
-
 }
+
+
+
+
 
 
 
 window.addEventListener('load', async function () {
 
+    function setupSwipeNavigation() {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const threshold = 50;
+    
+        function handleGesture() {
+            const deltaX = touchEndX - touchStartX;
+            if (Math.abs(deltaX) < threshold) return;
+    
+            if (deltaX > 0) {
+                if (window.dataStore.mode === 'presentation') {
+                    decrementSlide();
+                } else if (window.dataStore.mode === 'full') {
+                    decrementEvent();
+                }
+            } else {
+                if (window.dataStore.mode === 'presentation') {
+                    incrementSlide();
+                } else if (window.dataStore.mode === 'full') {
+                    incrementEvent();
+                }
+            }
+        }
+    
+        const swipeTarget = document.getElementById('slide-container');
+    
+        swipeTarget.addEventListener("touchstart", (e) => {
+            if (e.target.closest('.PLOTLY')) return;
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: false });  // not passive
+    
+        swipeTarget.addEventListener("touchend", (e) => {
+            if (e.target.closest('.PLOTLY')) return;
+            touchEndX = e.changedTouches[0].screenX;
+            handleGesture();
+        }, { passive: false });  // not passive
+    }
+
+    setupSwipeNavigation();
 
 
+    //Keys
     document.addEventListener('keydown', function (event) {
       
         if (window.dataStore.mode == 'presentation') {
@@ -470,19 +542,61 @@ window.addEventListener('load', async function () {
                 decrementEvent();
             }
         }
+
+
+
+        if (window.dataStore.mode == 'grid') {
+        const slides = document.querySelectorAll(".slide");
+        const columns = 4; // assuming 4-column grid
+        const totalSlides = slides.length;
+        const current = window.dataStore.active_slide;
+        let next = current;
+
+        if (event.key === 'ArrowRight') {
+            next = (current + 1 < totalSlides) ? current + 1 : current;
+        } else if (event.key === 'ArrowLeft') {
+            next = (current - 1 >= 0) ? current - 1 : current;
+        } else if (event.key === 'ArrowDown') {
+            next = (current + columns < totalSlides) ? current + columns : current;
+        } else if (event.key === 'ArrowUp') {
+            next = (current - columns >= 0) ? current - columns : current;
+        }
+
+        if (next !== current) {
+            // Update active slide and borders
+            window.dataStore.active_slide = next;
+            slides.forEach((slide, index) => {
+                slide.style.border = (index === next) ? '4px solid #007BFF' : 'none';
+            });
+
+            // Optional: scroll into view
+            slides[next].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        }
+     }
+
+//       //from full to grid
+//      if (window.dataStore.mode === 'full' && event.ctrlKey && event.key.toLowerCase() === 'g') {
+//     event.preventDefault();
+//     console.log('here')
+  
+//     switchMode();
+//     return;
+// }
+
+
     });
 
-    document.getElementById('aleft').addEventListener('click', function (event) {
-        if (window.dataStore.mode == 'presentation') {
-            decrementSlide();
-        }
-    });
+    // document.getElementById('aleft').addEventListener('click', function (event) {
+    //     if (window.dataStore.mode == 'presentation') {
+    //         decrementSlide();
+    //     }
+    // });
 
-    document.getElementById('aright').addEventListener('click', function (event) {
-        if (window.dataStore.mode == 'presentation') {
-            incrementSlide();
-        }
-    });
+    // document.getElementById('aright').addEventListener('click', function (event) {
+    //     if (window.dataStore.mode == 'presentation') {
+    //         incrementSlide();
+    //     }
+    // });
 
     function incrementEvent() {
 
@@ -491,7 +605,7 @@ window.addEventListener('load', async function () {
         //const NSlideEvents = window.dataStore.presentation.slides[slide_ids[window.dataStore.active_slide]].animation.length;
         const NSlideEvents = JSON.parse(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation).length;
 
-        console.log(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation)
+        //console.log(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation)
         if (window.dataStore.index < NSlideEvents - 1) {
             window.dataStore.index += 1;
         } else {
@@ -513,7 +627,7 @@ window.addEventListener('load', async function () {
 
     function decrementSlide() {
         const slides = document.querySelectorAll(".slide"); // Select all slides
-        const totalSlides = slides.length;
+        //const totalSlides = slides.length;
     
         // Check if there is a previous slide to show
         if (window.dataStore.active_slide > 0) {
@@ -532,6 +646,10 @@ window.addEventListener('load', async function () {
             // Trigger plot updates
             change_plotly_static(currentSlide.id, true);
             change_plotly_static(prevSlide.id, false);
+
+            const NSlideEvents = JSON.parse(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation).length;
+            window.dataStore.index = NSlideEvents - 1;
+
         }
     }
     
@@ -563,9 +681,9 @@ window.addEventListener('load', async function () {
     
         
 
-    function updateURL() {
+    //function updateURL() {
         // Update URL if necessary
-    }
+   // }
 
     function updateEventVisibility() {
        
@@ -629,6 +747,30 @@ window.addEventListener('load', async function () {
         }
     });
 
+
+    function updateInteractivity(){
+
+            // Manage interactable elements
+            const interactables = document.querySelectorAll('.interactable');
+            interactables.forEach(el => {
+            el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
+            });
+
+            updatePlotly();
+              // Manage PartA and PartB components
+            const componentsA = document.querySelectorAll('.PartA');
+            componentsA.forEach(component => {
+            component.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'inherit';
+             });
+
+            const componentsB = document.querySelectorAll('.PartB');
+            componentsB.forEach(component => {
+            component.style.visibility = (window.dataStore.mode === 'grid') ? 'inherit' : 'hidden';
+            });
+            //Adjust model animation
+            toggleAnimations(window.dataStore.mode !== 'grid');
+    }
+
     function switchMode() {
         //change mode
         window.dataStore.mode = (window.dataStore.mode === 'grid') ? 'presentation' : 'grid';
@@ -645,10 +787,19 @@ window.addEventListener('load', async function () {
             }
         });
 
-        //Make the interactive plot disappear
-        updatePlotly();
+        slides.forEach((slide, index) => {
+            if (window.dataStore.mode !== 'grid') {
+                slide.style.border = 'none'; 
+            }
 
-        //Change the number of rows in grid
+             if (window.dataStore.mode == 'grid' && index == window.dataStore.active_slide) {
+                slide.style.border = '4px solid #007BFF';
+                 
+            }
+        });
+
+       
+
         function setGridRowsBasedOnN(N) {
             const numberOfRows = Math.ceil(N / 4);
             const gridElement = document.querySelector('.grid');
@@ -660,35 +811,17 @@ window.addEventListener('load', async function () {
             setGridRowsBasedOnN(N);
         }
 
-        // Manage interactable elements
-        const interactables = document.querySelectorAll('.interactable');
-        interactables.forEach(el => {
-            el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
-        });
 
-        // Manage PartA and PartB components
-        const componentsA = document.querySelectorAll('.PartA');
-        componentsA.forEach(component => {
-            component.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'inherit';
-        });
 
-        const componentsB = document.querySelectorAll('.PartB');
-        componentsB.forEach(component => {
-            component.style.visibility = (window.dataStore.mode === 'grid') ? 'inherit' : 'hidden';
-        });
 
         // Adjust switch button styling
         const switchBtn = document.getElementById('switch-view-btn');
         switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
 
-        const aleft = document.getElementById('aleft');
-        aleft.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'visible';
+       
+         updateInteractivity();
+        
 
-        const aright = document.getElementById('aright');
-        aright.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'visible';
-
-        //Adjust model animation
-        toggleAnimations(window.dataStore.mode !== 'grid');
     }
 
     document.getElementById('switch-view-btn').addEventListener('click', function () {
@@ -696,15 +829,45 @@ window.addEventListener('load', async function () {
     });
 
     function fullScreen() {
+
+
+        // Hide/Show slides
+        const slides = document.querySelectorAll(".slide"); 
         var outerContainer = document.getElementById('slide-container');
 
         function adjustFontSize() {
+
+            
+             window.dataStore.mode = 'full';
+
+            //In case we are coming from grid
+            outerContainer.classList.remove('grid'); 
+            document.getElementById('switch-view-btn').className = 'button-base';
+
+            updateInteractivity()
+
+            slides.forEach((slide, index) => {
+                               slide.style.border = 'none'; 
+            });
+
+            slides.forEach((slide, index) => {
+                    if (index === window.dataStore.active_slide){
+                        slide.style.visibility = 'visible';
+                    }
+                    else {
+                        slide.style.visibility = 'hidden';
+                    }
+            });
+            //---------------------
+
             outerContainer.classList.add('fullscreen-mode');
-            window.dataStore.mode = 'full';
+           
             window.dataStore.index = 0;
 
+           // resizeFullscreenSlide();  
             updateEventVisibility();
-        }
+
+          }
 
         outerContainer.requestFullscreen().then(adjustFontSize);
 
@@ -717,6 +880,8 @@ window.addEventListener('load', async function () {
                 const slides = document.querySelectorAll(".slide");
                 slides.forEach((slide, index) => {
                     slide.style.visibility = (index == window.dataStore.active_slide) ? 'visible' : 'hidden';
+                    slide.style.border = 'none'; 
+
                 });
 
                 // Show all components in presentation mode
@@ -733,3 +898,24 @@ window.addEventListener('load', async function () {
         fullScreen();
      });
 });
+
+
+// function resizeFullscreenSlide() {
+//     const slide = document.querySelector('.fullscreen-mode .slide');
+//     if (!slide) return;
+
+//     const container = document.getElementById('slide-container');
+//     container.style.height = '100vh';
+//     container.style.width = '100vw';
+
+//     // No need to manually set slide width/height — CSS will do it
+// }
+
+
+// document.addEventListener('fullscreenchange', () => {
+//     if (document.fullscreenElement) resizeFullscreenSlide();
+// });
+
+// window.addEventListener('resize', () => {
+//     if (document.fullscreenElement) resizeFullscreenSlide();
+// });

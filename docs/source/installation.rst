@@ -6,6 +6,12 @@ PLIX can be installed as a PIP package
 
 .. code-block:: bash
 
-   pip install --upgrade plix
+   python3 -m venv plix-env
+
+   source plix-env/bin/activate
+
+   pip install --upgrade pip
+
+   pip install -U --no-cache  git+https://github.com/ComputoLab/plix.git
 
 
