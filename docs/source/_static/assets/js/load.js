@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     eventSource.onmessage = (event) => {
       if (event.data === "ready") {
+        //console.log('Server is ready. Connecting WebSocket...');
         // Server is ready. Connecting WebSocket
         connectWebSocket();
       }
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Handle errors if needed
     eventSource.onerror = (error) => {
-      console.error("SSE connection error:", error);
+    // console.warn("SSE connection error:", error);
     };
   }
 
@@ -41,11 +42,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+      //console.error("WebSocket error:", error);
     };
 
     ws.onclose = () => {
-      console.warn("WebSocket connection closed.");
+      //console.warn("WebSocket connection closed.");
     };
   }
 

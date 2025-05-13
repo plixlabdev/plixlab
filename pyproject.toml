@@ -13,6 +13,15 @@ authors = [
   {name = "Giuseppe Romano", email = "romanog@mit.edu"}
 ]
 
+
+[project.optional-dependencies]
+docs = [
+  "sphinx>=7",
+  "sphinx-book-theme",
+  "sphinx-copybutton"
+]
+
+
 dependencies = [
     "requests",
     "plotly",
