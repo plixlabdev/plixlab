@@ -32,9 +32,9 @@ class ReadySSEHandler(tornado.web.RequestHandler):
 
         try:
             print("New SSE connection established.")
-            self.write("retry: 2000\n")  # Retry after 2 seconds if disconnected
+            self.write("retry: 3000\n")  # Retry after 2 seconds if disconnected
             self.write("data: ready\n\n")  # Initial SSE signal
-            self.flush()  # Ensure immediate transmission
+            await self.flush()  # Ensure immediate transmission
 
             # Keep the connection alive with periodic messages
             while True:
