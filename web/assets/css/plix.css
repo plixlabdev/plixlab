@@ -51,6 +51,7 @@ body::-webkit-scrollbar,
 .control-div {
     position: absolute;
     right: 1%;
+    z-index: 1000; /* Ensure it's above slide content */
     top: 1%
 }
 

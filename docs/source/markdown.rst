@@ -12,3 +12,14 @@ The tag ``text`` accepts Markdown syntax, e.g.
 
 
 .. import_example:: markdown
+
+Equations are supported via Mathjax. You can use latex format between the dollar signs, i.e.
+
+
+.. code-block:: python
+
+  from plix import Slide
+  
+  Slide().text(r'''$\frac{1}{2}$''').show()
+
+
