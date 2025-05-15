@@ -495,16 +495,13 @@ class Slide():
     def python(self,**argv):
         style = get_style(**argv)
 
-        
 
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
         tmp = {'type':'Iframe','src':url,'style':style}
-        #SStmp = {'type':'Python','style':style}
+        
         self.content.append(tmp)
-        self._add_animation(**argv)
-
-     
+        self._add_animation(**argv)     
         return self 
         
     def embed(self,url,**argv):

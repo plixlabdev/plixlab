@@ -14,8 +14,6 @@ function apply_style(element, style) {
 
 
 
-
-
 document.getElementById("embed").addEventListener("click", () => {
   const link = window.location.href;
   const embedCode = `<div style="position: relative; width: 100%; max-width: 800px; height: 450px; margin: auto;">
@@ -278,7 +276,7 @@ function add_component(id, data, outer_element) {
         const element = document.createElement('iframe');
         element.setAttribute('frameborder', '1');
         //console.log(data)
-        element.src = data.url;
+        element.src = data.src;
         element.id = id;
         element.className = 'interactable componentA';
         apply_style(element, data.style);
