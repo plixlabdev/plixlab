@@ -26,10 +26,6 @@ import string
 # Get the directory of the current script
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-# Construct the full path to the style file
-#style_path = os.path.join(script_dir, 'assets', 'mpl_style')
-# Use the style
-#plt.style.use('mpl_style')
 
 
 def getsize(a):
@@ -47,26 +43,17 @@ class Presentation():
 
    def __init__(self,slides,title='default'):
 
-            #assign a random title
-            #title = 'title_' + generate_random_string(10) 
-
-         #if len(slides) == 0:
-         #    self.title = slides[0].title
 
          self.title = title
 
-         #self.presentation_ID = hashlib.md5(self.title.encode()).hexdigest()
 
          data = {}
          for s,slide in enumerate(slides):
-           #data.update(slide.get(self.presentation_ID))
-           #data.update(slide.get(self.presentation_ID+'_'+str(s)))
            data.update(slide.get(f'slide_{s}'))
 
 
          self.slides = data
 
-         #self.animation = [slide.animation for slide in slides]
 
    def slide(self,slide):  
          """Add a slide"""
@@ -238,24 +225,14 @@ class Slide():
          #Init animation
          self.animation = []
 
-         #if not title:
-         #   title = generate_random_alphanumeric(10)  # Generate a 10-character long string
-             
-         #self.title = hashlib.md5(title.encode()).hexdigest()
 
          self.title = title
   
-
-    #def get(self,presentation_ID):
 
     def get(self,slide_ID):
 
         animation = self.process_animations()
 
-           
-        #slide_ID = presentation_ID + '_' + hashlib.md5(self.title.encode()).hexdigest()
-
-        #Process children
         #children = {self.title + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
         children = {slide_ID + '_' + str(k)  :tmp for k,tmp in enumerate(self.content)}
 
@@ -335,13 +312,6 @@ class Slide():
          self.content.append(tmp)
          self._add_animation(**argv)
          
-         #style.update({'position':'absolute','left':'1%','bottom':f'{i*4+1}%'})
-         #style.setdefault('color','#FFFFFF')
-
-         #tmp = {'type':"Markdown",'text':text,'style':style.copy(),'fontsize':argv.setdefault('fontsize',0.03)}
-         #self.content.append(tmp)
-
-         #self._add_animation(**style)
 
         return self
         

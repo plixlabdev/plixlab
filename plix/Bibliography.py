@@ -68,11 +68,8 @@ def render_book(bib_data):
 
 
 
-
 def format(filename,entry_key):
 
-
-    #bib_data = bibtex.Parser().parse_file(filename).entries[entry_key]
 
 
     library = bibtexparser.parse_file(filename)
