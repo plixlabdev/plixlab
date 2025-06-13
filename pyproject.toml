@@ -26,6 +26,7 @@ dependencies = [
   "tornado",
   "jsonpatch",
   "dict_hash",
+  "dash_bio",
   "pandas",
   "bokeh==3.6.2",
   "numpy"

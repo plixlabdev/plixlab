@@ -15,15 +15,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     eventSource.onmessage = (event) => {
       if (event.data === "ready") {
-        //console.log('Server is ready. Connecting WebSocket...');
-        // Server is ready. Connecting WebSocket
+       
         connectWebSocket();
       }
     };
 
     // Handle errors if needed
     eventSource.onerror = (error) => {
-    // console.warn("SSE connection error:", error);
+    
     };
   }
 

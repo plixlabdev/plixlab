@@ -11,6 +11,7 @@ Components
    bokeh
    matplotlib
    protein
+   bio
    python
    shape
    embed

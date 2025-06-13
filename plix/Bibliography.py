@@ -1,5 +1,6 @@
-#from pybtex.database.input import bibtex
 import bibtexparser
+import os
+
 def get_authors(authors_str):
     """
     Generate a string representation of authors from a BibTeX-style string.
@@ -68,11 +69,14 @@ def render_book(bib_data):
 
 
 
-def format(filename,entry_key):
+def format(entry_key,bibfile=None):
+
+    #If not provided we default to the user-wide one
+    if not bibfile:
+       bibfile = os.path.expanduser("~/.plix/biblio.bib")
 
 
-
-    library = bibtexparser.parse_file(filename)
+    library = bibtexparser.parse_file(bibfile)
 
 
     # Access a specific entry by key
