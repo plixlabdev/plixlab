@@ -6,11 +6,13 @@ from plix import Slide,Presentation
 from plix.utils import normalize_dict
 import plotly.express as px
 from bokeh.plotting import figure, show
+import dash_bio as dashbio
+import pandas as pd
 
 
 # Prefix for paths
-prefix = 'tests'
-#prefix = '.'
+#prefix = 'tests'
+prefix = '.'
 
 def load_data(filename):
     """
@@ -29,8 +31,9 @@ def generate_or_validate(slide,pytestconfig):
     if generate_references:
       
         # Generate and save reference data
-        slide.save(f'{prefix}/reference/{filename}')
-        print(f"Reference data for {filename} generated.")
+        path = f'{prefix}/reference/{filename}'
+        slide.save(path)
+        print(f"Reference data for {path} generated.")
     else:
         # Validate against reference data
         data = normalize_dict(slide.get_data())
@@ -230,6 +233,36 @@ def test_presentation(pytestconfig):
 
    generate_or_validate(presentation,pytestconfig)   
 
+
+def test_volcano(pytestconfig):
+   """
+   Test volcano functionality.
+   """
+
+
+   df = pd.read_csv('https://git.io/volcano_data1.csv')
+
+   fig=dashbio.VolcanoPlot(dataframe=df)
+
+   slide = Slide('volcano').plotly(fig)
+
+   generate_or_validate(slide,pytestconfig)
+
+
+def test_manhattan(pytestconfig):
+   """
+   Test Manhattan functionality.
+   """
+
+   df = pd.read_csv('https://git.io/manhattan_data.csv')
+  
+   fig = dashbio.ManhattanPlot(dataframe=df)
+
+   slide = Slide('manhattan2').plotly(fig)
+
+   generate_or_validate(slide,pytestconfig)
+
+
 def test_animation(pytestconfig):
    """
    Test animation functionality.
@@ -243,17 +276,20 @@ def test_animation(pytestconfig):
 
 
 if __name__ == '__main__':
+
     # Simulate pytestconfig for testing manually
     class MockPytestConfig:
         def getoption(self, option):
             if option == "--generate-references":
-                return False  # Change to True to generate references
+                return True  # Change to True to generate references
 
     # Create a mock pytestconfig instance
     pytestconfig = MockPytestConfig()
 
     # Run the test function
-    test_bokeh(pytestconfig)
+    #test_bokeh(pytestconfig)
+    #test_volcano(pytestconfig)
+    test_manhattan(pytestconfig)
 
 
 

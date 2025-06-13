@@ -145,27 +145,31 @@ class Presentation():
 
    def share(self):
  
+
+      data = normalize_dict({'title':self.title,'slides':self.slides})
+      data_to_be_sent = msgpack.packb(data)
+
       project_id = 'computo-306914'
       location   = 'us-central1'
 
       #Load credentials
-      filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
-      if not os.path.isfile(filename):
+      token = os.getenv('PLIXLAB_TOKEN',None)
+     
+      if not token:
+          
+       filename = os.path.expanduser("~") + '/.plix/plix_credentials.json'
+       if not os.path.isfile(filename):
             print('Visit computo.dev to get your token')
             quit()
-      else:      
+       else:      
             with open(filename,'r') as f:
-                cred = json.load(f)
+                token = json.load(f)['token']
 
-      data = normalize_dict({'title':self.title,'slides':self.slides})
-      data_to_be_sent = msgpack.packb(data)
-      #expected_size = len(data_to_be_sent)  # Calculate the size of the packed data
      
-      
       #Get access token
-      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key={cred['apiKey']}",\
+      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key=AIzaSyCBeY5-WeodH3AFfPRLsYKeCr2FgvfFkvQ",\
                              {'grant_type':'refresh_token',\
-                             'refresh_token':cred['refreshToken']},\
+                             'refresh_token':token},\
                              headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
 
 
