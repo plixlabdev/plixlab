@@ -12,6 +12,8 @@
 #
 import os
 import sys
+import shutil
+import glob
 sys.path.insert(0, os.path.abspath('.'))
 
 
@@ -68,4 +70,30 @@ html_favicon = '_static/assets/favicon.ico'
 html_css_files = [
     'assets/css/custom.css',
 ]
+
+
+def copy_web_and_reference_files(app, exception):
+    # --- Copy entire web/ folder to _static/web ---
+    web_src_dir = os.path.abspath(os.path.join(app.confdir, '..', '..', 'web'))
+    web_dst_dir = os.path.join(app.outdir, '_static', 'web')
+    
+
+    # Remove old destination if it exists, then copy entire directory
+    if os.path.exists(web_dst_dir):
+        shutil.rmtree(web_dst_dir)
+    shutil.copytree(web_src_dir, web_dst_dir)
+
+    # --- Copy *.plx from ../../tests/reference to _static/reference ---
+    ref_src_dir = os.path.abspath(os.path.join(app.confdir, '..', '..', 'tests', 'reference'))
+    ref_dst_dir = os.path.join(app.outdir, '_static', 'reference')
+    
+    os.makedirs(ref_dst_dir, exist_ok=True)
+
+    for plx_path in glob.glob(os.path.join(ref_src_dir, '*.plx')):
+        dst_path = os.path.join(ref_dst_dir, os.path.basename(plx_path))
+        shutil.copy2(plx_path, dst_path)
+
+
+def setup(app):
+    app.connect('build-finished', copy_web_and_reference_files)
 

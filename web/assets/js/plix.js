@@ -376,8 +376,10 @@ function add_component(id, data, outer_element) {
             backgroundColor: data.backgroundColor
         });
 
+       
+
         $3Dmol.download("pdb:" + data.structure, viewer, function () {
-            viewer.setStyle({ stick: {} });
+            viewer.setStyle({}, {cartoon: {color: 'spectrum' }});
             viewer.zoomTo();
             viewer.render();
         });

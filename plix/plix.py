@@ -292,7 +292,7 @@ class Slide():
         return slide_events
 
 
-    def cite(self,biblio,key,**argv):
+    def cite(self,key,**argv):
         """Add a set of citation"""
 
         if not isinstance(key,list):
@@ -301,7 +301,7 @@ class Slide():
 
         
         for i,key in enumerate(keys):
-         text = Bibliography.format(biblio,key)
+         text = Bibliography.format(key,**argv)
 
          print(f'{i*4+1}%')
         

@@ -75,6 +75,9 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# Ignore stray PLX files accidentally dropped into the source static dir
+docs/source/_static/*.plx
+
 # PyBuilder
 .pybuilder/
 target/

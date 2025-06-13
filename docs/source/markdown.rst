@@ -13,13 +13,19 @@ The tag ``text`` accepts Markdown syntax, e.g.
 
 .. import_example:: markdown
 
-Equations are supported via Mathjax. You can use latex format between the dollar signs, i.e.
+
+Equations can be added using ``Latex`` syntax, e.g.
 
 
 .. code-block:: python
 
   from plix import Slide
   
-  Slide().text(r'''$\frac{1}{2}$''').show()
+  Slide().text(r'''$-C\frac{\partial T}{\partial t} - \nabla \cdot \left(\kappa \nabla T\\right) = Q$''').show()
+   
+
+.. import_example:: equation
+
+
 
 
