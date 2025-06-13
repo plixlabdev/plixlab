@@ -26,20 +26,21 @@ class ImportExample(Directive):
         # Embeds an iframe that will be the target for the postMessage
         html_content = f'''
 <div class="embed-container">
-    <iframe id="{iframe_id}" src="_static/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
+    <iframe id="{iframe_id}" src="_static/web/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
 </div>
+<div style="height: 1em;"></div>  <!-- spacer added here -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
-    fetch('_static/{filename}.plx')
+    fetch('_static/reference/{filename}.plx')
         .then(response => response.blob()) // Fetch the file as Blob
         .then(blob => {{
             const reader = new FileReader();
             reader.onload = function() {{
                 const arrayBuffer = this.result;
                 const iframe = document.getElementById('{iframe_id}');
-                iframe.onload = () => iframe.contentWindow.postMessage(arrayBuffer, '*'); // Send the ArrayBuffer
+                iframe.onload = () => iframe.contentWindow.postMessage(arrayBuffer, '*');
             }};
-            reader.readAsArrayBuffer(blob); // Read the Blob as ArrayBuffer
+            reader.readAsArrayBuffer(blob);
         }})
         .catch(error => console.error('Error loading file:', error));
 }});

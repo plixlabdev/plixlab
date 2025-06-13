@@ -8,10 +8,10 @@ Citations can be imported with the tag ``cite``
 
   from plix import Slide
 
-  Slide().cite('biblio.bib','einstein1935').show()
+  Slide().cite('einstein1935',bibfile='biblio.bib').show()
 
 .. import_example:: citation
 
-| Multiple citations, which can be added using a list of keys, will be stacked vertically. 
+| Multiple citations, which can be added using a list of keys, will be stacked vertically. If ``bibfile`` is not specified, the file ``~/.plix/biblio.bib`` will be used.
 
 

@@ -12,13 +12,15 @@ import pandas as pd
 
 # Prefix for paths
 #prefix = 'tests'
-prefix = '.'
+prefix = 'reference'
+assets_prefix = 'assets'
+#prefix = '../docs/source/_static'
 
 def load_data(filename):
     """
     Load reference data from a file.
     """
-    with open(f'{prefix}/reference/{filename}.plx', 'rb') as f:
+    with open(f'{prefix}/{filename}.plx', 'rb') as f:
         return normalize_dict(msgpack.unpackb(f.read()))
 
 def generate_or_validate(slide,pytestconfig):
@@ -31,7 +33,7 @@ def generate_or_validate(slide,pytestconfig):
     if generate_references:
       
         # Generate and save reference data
-        path = f'{prefix}/reference/{filename}'
+        path = f'{prefix}/{filename}'
         slide.save(path)
         print(f"Reference data for {path} generated.")
     else:
@@ -47,7 +49,7 @@ def test_citation(pytestconfig):
     Test citation functionality.
     """
    
-    slide = Slide('citation').cite(f'{prefix}/assets/biblio.bib', 'einstein1935')
+    slide = Slide('citation').cite(key='einstein1935',bibfile = f'{assets_prefix}/biblio.bib')
     generate_or_validate(slide, pytestconfig)
 
 def test_markdown(pytestconfig):
@@ -61,12 +63,24 @@ def test_markdown(pytestconfig):
     )
     generate_or_validate(slide,pytestconfig)
 
+def test_equation(pytestconfig):
+    """
+    Test equation.
+    """
+    
+    slide = Slide('equation').text(
+        r'''$-C\frac{\partial T}{\partial t} - \nabla \cdot \left(\kappa \nabla T\\right) = Q$''')
+
+    generate_or_validate(slide,pytestconfig)
+
+
+
 def test_image(pytestconfig):
     """
     Test image functionality.
     """
     
-    slide = Slide('image').img(f'{prefix}/assets/image.png',x=0.2,y=0.3,w=0.65)
+    slide = Slide('image').img(f'{assets_prefix}/image.png',x=0.2,y=0.3,w=0.65)
     
     generate_or_validate(slide,pytestconfig)
 
@@ -192,7 +206,7 @@ def test_model(pytestconfig):
 
    credits  = 'Blue Flower Animated" (https://skfb.ly/oDIqT) by morphy.vision is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).'
 
-   slide = Slide('model').model3D(f'{prefix}/assets/model.glb').text(credits,y=0.1,fontsize=0.03)
+   slide = Slide('model').model3D(f'{assets_prefix}/model.glb').text(credits,y=0.1,fontsize=0.03)
 
    generate_or_validate(slide,pytestconfig)                 
 
@@ -210,7 +224,7 @@ def test_logo(pytestconfig):
    Test logo functionality.
    """
 
-   slide = Slide('logo').text('Welcome to Plix!').img(f'{prefix}/assets/logo.png',y=0.1,w=0.2)
+   slide = Slide('logo').text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.1,w=0.2)
 
    generate_or_validate(slide,pytestconfig)
 
@@ -289,7 +303,9 @@ if __name__ == '__main__':
     # Run the test function
     #test_bokeh(pytestconfig)
     #test_volcano(pytestconfig)
-    test_manhattan(pytestconfig)
+    #test_equation(pytestconfig)
+    #test_markdown(pytestconfig)
+    #test_manhattan(pytestconfig)
 
 
 
