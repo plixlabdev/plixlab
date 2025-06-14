@@ -1,7 +1,7 @@
-Bio
-==========
+Volcano Plots
+===============
 
-Bio plots are based on `Dash-bio`_ and can be created with the ``plotly`` module. Currently, only Volcano plots are supported:
+Volcano plots can be embedded via `Dash-bio`_ , which creates ``plotly`` figures. Example:
 
 .. code-block:: python
 

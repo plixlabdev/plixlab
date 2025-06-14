@@ -11,18 +11,34 @@ Plix is a data-centric presentation tool that allows for dynamic slide explorati
 
    installation
    started
-
-   
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: APIs
-
-   components
    animations
    hot_reload
    styling
    deployment
    reference
+
+
+   
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Components
+
+
+   markdown
+   image
+   plotly
+   bokeh
+   matplotlib
+   volcano
+   protein
+   python
+   shape
+   embed
+   youtube
+   model
+   citation
+   
+
 
 

@@ -363,91 +363,34 @@ function add_component(id, data, outer_element) {
     if (data.type === 'molecule') {
         // Create a new div element
         const element = document.createElement("div");
-        //id = 'test';
+       
         element.id = id;
         element.className = 'interactable';
+    
+
         outer_element.appendChild(element);
     
         apply_style(element, data.style);
 
-        // Initialize the viewer with a background color
+        //$3Dmol.embed(element);
+
+        
         var viewer = $3Dmol.createViewer(id, {
-            defaultcolors: $3Dmol.rasmolElementColors,
-            backgroundColor: data.backgroundColor
+           defaultcolors: $3Dmol.rasmolElementColors,
+           backgroundColor: data.backgroundColor
         });
 
-       
 
-        $3Dmol.download("pdb:" + data.structure, viewer, function () {
-            viewer.setStyle({}, {cartoon: {color: 'spectrum' }});
-            viewer.zoomTo();
-            viewer.render();
+        $3Dmol.download("pdb:" + data.structure, viewer,{}, function () {
+            viewer.setBackgroundColor(data.backgroundColor);
+                  viewer.setViewStyle({style:"outline"});
+                  viewer.setStyle({},{cartoon:{ color: 'spectrum'}});
+                  viewer.render();
         });
+ 
+
     }
 }
-
-// // Adjusted rendering function
-// export async function render_patch(jsonData) {
-//     // Clear initializationPromises
-//     initializationPromises = [];
-
-//     // Reference to the slide-container
-//     let container = document.getElementById('slide-container');
-
-//     for (const key in jsonData) {
-//         const patch = jsonData[key];
-//         // const operation = patch.op
-//         // console.log('Operation ',operation)
-//         // console.log(patch.patch)
-
-//         if (!patch.path.split('/').includes('animation')) {
-//             if (patch.op === 'add') {
-//                 //Add whole presentation 
-//                 if (patch.path === '/slides') {
-//                     await render_slides(patch.value);
-//                 }
-
-//                 if (patch.path.split('/')[3] === 'children') {
-//                     //Add component  
-//                     const component_ID = patch.path.split('/')[4];
-//                     const value = patch.value;
-//                     add_component(component_ID, value, container);
-//                 }
-//             }
-
-//             if (patch.op === 'remove') {
-//                 //remove component
-//                 if (patch.path.split('/')[3] === 'children') {
-//                     const component_ID = patch.path.split('/')[4];
-//                     document.getElementById(component_ID).remove();
-//                 } 
-//             }
-
-//             if (patch.op === 'replace') {
-//                 const component_ID = patch.path.split('/')[4];
-//                 const field = patch.path.split('/')[5];
-//                 const placeholder = patch.value;
-//                 let value = null;
-
-//                 if (field === 'style') {
-//                     value = { [patch.path.split('/')[6]]: placeholder };
-//                 } else {
-//                     value = placeholder;
-//                 }
-
-//                 update_component(component_ID, field, value);
-//             }
-//         }
-//     }
-
-//     // Run MathJax
-//     if (window.MathJax) {
-//         MathJax.typesetPromise();
-//     }
-
-//     // Initialize charts after rendering
-//     await initializeCharts();
-// }
 
 async function initializeCharts() {
 
