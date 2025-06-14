@@ -23,22 +23,36 @@ class ImportExample(Directive):
         # Modify iframe ID to include the instance number
         iframe_id = f"iframeExample_{ImportExample.instance_counter}"
 
-        # Embeds an iframe that will be the target for the postMessage
         html_content = f'''
+
 <div class="embed-container">
     <iframe id="{iframe_id}" src="_static/web/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
 </div>
 <div style="height: 1em;"></div>  <!-- spacer added here -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {{
+document.addEventListener('DOMContentLoaded', function () {{
+    const iframe = document.getElementById('{iframe_id}');
+    let arrayBuffer = null;
+    let iframeLoaded = false;
+
+    function tryPostMessage() {{
+        if (iframeLoaded && arrayBuffer) {{
+            iframe.contentWindow.postMessage(arrayBuffer, '*');
+        }}
+    }}
+
+    iframe.addEventListener('load', function () {{
+        iframeLoaded = true;
+        tryPostMessage();
+    }});
+
     fetch('_static/reference/{filename}.plx')
-        .then(response => response.blob()) // Fetch the file as Blob
+        .then(response => response.blob())
         .then(blob => {{
             const reader = new FileReader();
-            reader.onload = function() {{
-                const arrayBuffer = this.result;
-                const iframe = document.getElementById('{iframe_id}');
-                iframe.onload = () => iframe.contentWindow.postMessage(arrayBuffer, '*');
+            reader.onload = function () {{
+                arrayBuffer = this.result;
+                tryPostMessage();
             }};
             reader.readAsArrayBuffer(blob);
         }})
