@@ -34,7 +34,7 @@ jobs:
       - name: Push to GitHub Pages repo
         uses: peaceiris/actions-gh-pages@v3
         with:
-          deploy_key: ${{ secrets.GH_PAT }}
+          personal_token: ${{ secrets.GH_PAT }}
           publish_dir: ./docs/build/html
           external_repository: plixlabdev/plixlabdev.github.io
           publish_branch: main  # target branch in plixlabdev.github.io
