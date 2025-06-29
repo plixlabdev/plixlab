@@ -6,6 +6,6 @@ When you show a presentation, any change to the document is immediately applied 
 
 .. code-block:: python
 
-   from plix import Slide
+   from plixlab import Slide
 
    Slide.text('Example Hot Reload').show(hot_reload=False)

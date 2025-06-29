@@ -5,7 +5,7 @@ Volcano plots can be embedded via `Dash-bio`_ , which creates ``plotly`` figures
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
   import dash_bio as dashbio
   import pandas as pd
 

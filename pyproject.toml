@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "plix"
+name = "plixlab"
 version = "0.0.6"
 description = "Interactive scientific presentations in Python"
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
   "matplotlib",
   "pytest",
   "pycairo",
-  "bibtexparser",
+  "bibtexparser==1.4.3",
   "hash_dict",
   "jsonpointer",
   "msgpack",
@@ -29,7 +29,7 @@ dependencies = [
   "dash_bio",
   "pandas",
   "bokeh==3.6.2",
-  "numpy"
+  "numpy==1.26.4"
 ]
 
 [project.optional-dependencies]

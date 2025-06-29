@@ -5,7 +5,7 @@ A minimal single-slide presentation can be created with two lines of code
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
   
   Slide().text('Welcome to Plix!').show()
 
@@ -16,7 +16,7 @@ A minimal single-slide presentation can be created with two lines of code
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
   
 
   Slide().text('Welcome to Plix!')
@@ -29,7 +29,7 @@ A minimal single-slide presentation can be created with two lines of code
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
   import plotly.express as px
 
   df = px.data.iris()
@@ -47,7 +47,7 @@ A minimal single-slide presentation can be created with two lines of code
 
 .. code-block:: python
 
-  from plix import Slide,Presentation
+  from plixlab import Slide,Presentation
   import plotly.express as px
 
   s1 = Slide().text('Welcome to Plix!')

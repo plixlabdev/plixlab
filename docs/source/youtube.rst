@@ -5,7 +5,7 @@ Youtube videos are included with the tag ``youtube``
 
 .. code-block:: python
 
- from plix import Slide
+ from plixlab import Slide
 
  Slide().youtube('zDtx6Z9g4xA').show()
 

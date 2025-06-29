@@ -7,7 +7,7 @@ Matplotlib
 
   import numpy as np
   import matplotlib.pyplot as plt
-  from plix import Slide
+  from plixlab import Slide
 
   # Create data points
   x = np.linspace(0, 2 * np.pi, 100)

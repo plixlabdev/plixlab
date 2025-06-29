@@ -5,7 +5,7 @@ Images are added with ``img``
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
  
   Slide().img('assets/image.png',x=0.2,y=0.3,w=0.65).show()
 
