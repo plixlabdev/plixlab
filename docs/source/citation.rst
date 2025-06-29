@@ -6,7 +6,7 @@ Citations can be imported with the tag ``cite``
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
 
   Slide().cite('einstein1935',bibfile='biblio.bib').show()
 

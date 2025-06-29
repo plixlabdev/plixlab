@@ -2,8 +2,8 @@ import msgpack
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from plix import Slide,Presentation
-from plix.utils import normalize_dict
+from plixlab import Slide,Presentation
+from plixlab.utils import normalize_dict
 import plotly.express as px
 from bokeh.plotting import figure, show
 import dash_bio as dashbio
@@ -50,6 +50,7 @@ def test_citation(pytestconfig):
     """
    
     slide = Slide('citation').cite(key='einstein1935',bibfile = f'{assets_prefix}/biblio.bib')
+
     generate_or_validate(slide, pytestconfig)
 
 def test_markdown(pytestconfig):
@@ -210,23 +211,6 @@ def test_model(pytestconfig):
 
    generate_or_validate(slide,pytestconfig)                 
 
-def test_welcome(pytestconfig):
-   """
-   Test welcome functionality.
-   """
-
-   slide = Slide('welcome').text('Welcome to Plix!')
-
-   generate_or_validate(slide,pytestconfig)
-
-def test_logo(pytestconfig):
-   """
-   Test logo functionality.
-   """
-
-   slide = Slide('logo').text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.1,w=0.2)
-
-   generate_or_validate(slide,pytestconfig)
 
 def test_presentation(pytestconfig):
    """
@@ -263,19 +247,6 @@ def test_volcano(pytestconfig):
    generate_or_validate(slide,pytestconfig)
 
 
-def test_manhattan(pytestconfig):
-   """
-   Test Manhattan functionality.
-   """
-
-   df = pd.read_csv('https://git.io/manhattan_data.csv')
-  
-   fig = dashbio.ManhattanPlot(dataframe=df)
-
-   slide = Slide('manhattan2').plotly(fig)
-
-   generate_or_validate(slide,pytestconfig)
-
 
 def test_animation(pytestconfig):
    """
@@ -301,11 +272,20 @@ if __name__ == '__main__':
     pytestconfig = MockPytestConfig()
 
     # Run the test function
-    #test_bokeh(pytestconfig)
-    #test_volcano(pytestconfig)
-    #test_equation(pytestconfig)
-    #test_markdown(pytestconfig)
-    #test_manhattan(pytestconfig)
+    test_citation(pytestconfig)
+    test_markdown(pytestconfig)
+    test_equation(pytestconfig)
+    test_image(pytestconfig)
+    test_matplotlib(pytestconfig)
+    test_shape(pytestconfig)
+    test_embed(pytestconfig)
+    test_youtube(pytestconfig)
+    test_plotly(pytestconfig)
+    test_bokeh(pytestconfig)
+    test_protein(pytestconfig)
+    test_presentation(pytestconfig)
+    test_volcano(pytestconfig)
+    test_animation(pytestconfig)
 
 
 

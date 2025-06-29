@@ -5,6 +5,8 @@ Websites can be embedded with ``embed``
 
 .. code-block:: python
 
+   from plixlab import Slide
+
    url = 'https://examples.pyscriptapps.com/antigravity/latest/'
    Slide().embed(url).show()
 

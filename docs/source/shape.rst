@@ -5,7 +5,7 @@ It is possible to embed simple shapes. Currently, only arrows and squares are su
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
 
   Slide().shape('arrow',x=0.2,y=0.45,w=0.2,orientation=45,color=[1,0.015,0]).\
                 shape('square',x=0.6,y=0.5,w=0.2,aspect_ratio=0.25).show()

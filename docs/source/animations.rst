@@ -5,7 +5,7 @@ You can specify the order of appearing of an individual component with the optio
 
 .. code-block:: python
 
-   from plix import Slide
+   from plixlab import Slide
 
    Slide().text('Text #1',y=0.7).\
            text('Text #2',y=0.5,animation= 1).\

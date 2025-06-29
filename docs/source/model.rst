@@ -5,7 +5,7 @@ Three-dimensional models can be embedded with the tag ``model3D``
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
 
   credits  = 'Blue Flower Animated" (https://skfb.ly/oDIqT) by morphy.vision is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).' 
 

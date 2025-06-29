@@ -1,1 +1,0 @@
-§slide_0„¨children©slide_0_0„¤type¨Markdown¤text°Welcome to Plix!¨fontsizeË?©™™™™™š¥style‚¨position¨absolute¥color§#DCDCDC¥style¯backgroundColor§#303030©animation‘¡0Â¥title§welcome
