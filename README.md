@@ -1,4 +1,4 @@
-# PLixLab
+# PlixLab
 
 PlixLab is a Python package for interactive presentation
 
