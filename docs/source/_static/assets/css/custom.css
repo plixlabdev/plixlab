@@ -1,16 +1,5 @@
 
 
-/* TEST BANNER: temporary — remove when working */
-body::before {
-  content: "✅ custom.css is loaded";
-  display: block;
-  background: red;
-  color: white;
-  padding: 10px;
-  text-align: center;
-  font-weight: bold;
-}
-
 /* Fix layout width across all devices and platforms */
 .bd-container,
 .bd-main,
