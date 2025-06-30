@@ -35,7 +35,7 @@ jobs:
       - name: Deploy to Repo B
 
         run: |
-           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/plixlab/plixlab.github.io.git repo-b
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/plixlabdev/plixlabdev.github.io.git repo-b
 
            rm -rf repo-b/*
            cp -r docs/build/html/* repo-b/
@@ -46,7 +46,7 @@ jobs:
            git add .
 
            if ! git diff --cached --quiet; then
-            git commit -m "Update docs from plixlab.io"
+            git commit -m "Update docs from plixlabdev.io"
             git push
            else
             echo "No changes to commit"
