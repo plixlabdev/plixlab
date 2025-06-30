@@ -30,7 +30,7 @@ jobs:
         run: |
           cd docs
           make clean html  # or sphinx-build -b html source build/html
-          ce ..
+          cd ..
 
 
       - name: Deploy to Repo B
