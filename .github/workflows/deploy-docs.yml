@@ -29,15 +29,23 @@ jobs:
       - name: Build docs
         run: |
           cd docs
-          make html  # or sphinx-build -b html source build/html
+          make clean html  # or sphinx-build -b html source build/html
+          ce ..
 
-      - name: Push to GitHub Pages repo
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.GH_PAT }}
-          publish_dir: ./docs/build/html
-          external_repository: plixlabdev/plixlabdev.github.io
-          publish_branch: main  # target branch in plixlabdev.github.io
-          user_name: github-actions
-          user_email: actions@github.com
 
+      - name: Deploy to Repo B
+        run: |
+          git clone https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/plixlab/plixlab.github.io.git repo-b
+
+          rm -rf repo-b/*
+          cp -r docs/build/html/* repo-b/
+          cd repo-b
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Update docs from plixlab.io"
+            git push
+          else
+           echo "No changes to commit"
