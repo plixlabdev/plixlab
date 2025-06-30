@@ -1,3 +1,8 @@
+body {
+  outline: 3px solid red !important;
+}
+
+
 /* Uniform content styling */
 .custom-content {
   background-color: #f0f0f0;
