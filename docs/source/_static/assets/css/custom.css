@@ -1,35 +1,43 @@
-body {
-  outline: 3px solid red !important;
+
+
+/* TEST BANNER: temporary — remove when working */
+body::before {
+  content: "✅ custom.css is loaded";
+  display: block;
+  background: red;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
 }
 
-
-/* Uniform content styling */
-.custom-content {
-  background-color: #f0f0f0;
-  padding: 15px;
-  border-radius: 5px;
+/* Fix layout width across all devices and platforms */
+.bd-container,
+.bd-main,
+.bd-content,
+.bd-content > main,
+.bd-content > main > div {
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
-/* Override ReadTheDocs layout container */
-.wy-nav-content {
-  max-width: 900px !important;
-  width: 100% !important;
-  margin: 0 auto !important;
-  box-sizing: border-box;
+.bd-content > main > div {
+  width: min(90ch, 100vw);
 }
 
-/* Responsive iframe container (16:9 aspect ratio) */
+/* Responsive iframe styling */
 .embed-container {
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 */
+  padding-bottom: 56.25%;
   height: 0;
   overflow: hidden;
   width: 100%;
-  max-width: 100%;
-  min-width: 300px;
-  margin: 0 auto;
-  box-sizing: border-box;
+  margin: 1rem auto;
 }
 
 .embed-container iframe {
@@ -39,19 +47,11 @@ body {
   width: 100%;
   height: 100%;
   border: 2px solid gray;
-  box-sizing: border-box;
 }
 
-/* Prevent wide code blocks from breaking layout */
+/* Code blocks and long lines */
 pre, code {
   white-space: pre-wrap;
   overflow-x: auto;
   word-break: break-word;
 }
-
-/* Optional: Tables shouldn't overflow on mobile */
-.wy-table-responsive table {
-  display: table;
-  width: 100%;
-}
-
