@@ -25,7 +25,7 @@ class ImportExample(Directive):
 
         html_content = f'''
 <div style="width: 100%; display: block;">
-<div class="embed-container">
+<div class="embed-container wide">
     <iframe id="{iframe_id}" src="_static/web/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
 </div>
 </div>

@@ -4,15 +4,25 @@
     border-radius: 5px;
 }
 
-/* Fix responsive iframe sizing */
+/* Default responsive iframe container */
 .embed-container {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-    height: 0;
-    overflow: hidden;
-    max-width: 100%;
-    min-width: 300px;  /* <-- Add this to avoid narrow iframes */
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 300px;
 }
+
+/* Break out of content container to fill full viewport */
+.embed-container.wide {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  max-width: none;
+}
+
+
 
 .embed-container iframe {
     position: absolute;
