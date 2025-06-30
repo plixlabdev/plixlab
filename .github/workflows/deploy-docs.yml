@@ -32,20 +32,21 @@ jobs:
           make clean html  # or sphinx-build -b html source build/html
           cd ..
 
-
       - name: Deploy to Repo B
+
         run: |
-          git clone https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/plixlab/plixlab.github.io.git repo-b
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/plixlab/plixlab.github.io.git repo-b
 
-          rm -rf repo-b/*
-          cp -r docs/build/html/* repo-b/
-          cd repo-b
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add .
+           rm -rf repo-b/*
+           cp -r docs/build/html/* repo-b/
 
-          if ! git diff --cached --quiet; then
+           cd repo-b
+           git config user.name "github-actions"
+           git config user.email "github-actions@github.com"
+           git add .
+
+           if ! git diff --cached --quiet; then
             git commit -m "Update docs from plixlab.io"
             git push
-          else
-           echo "No changes to commit"
+           else
+            echo "No changes to commit"
