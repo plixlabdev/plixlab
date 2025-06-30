@@ -53,6 +53,25 @@ def test_citation(pytestconfig):
 
     generate_or_validate(slide, pytestconfig)
 
+
+def test_welcome(pytestconfig):
+   """
+   Test welcome functionality.
+   """
+
+   slide = Slide('welcome').text('Welcome to Plix!')
+
+   generate_or_validate(slide,pytestconfig)
+
+def test_logo(pytestconfig):
+   """
+   Test logo functionality.
+   """
+
+   slide = Slide('logo').text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.1,w=0.2)
+
+   generate_or_validate(slide,pytestconfig)
+
 def test_markdown(pytestconfig):
     """
     Test markdown functionality.

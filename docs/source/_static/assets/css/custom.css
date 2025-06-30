@@ -1,17 +1,30 @@
+/* Uniform content styling */
 .custom-content {
-    background-color: #f0f0f0; /* Light grey background */
-    padding: 15px;
-    border-radius: 5px;
+  background-color: #f0f0f0;
+  padding: 15px;
+  border-radius: 5px;
+  box-sizing: border-box;
 }
+
+/* Override ReadTheDocs layout container */
+.wy-nav-content {
+  max-width: 900px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  box-sizing: border-box;
+}
+
+/* Responsive iframe container (16:9 aspect ratio) */
 .embed-container {
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  padding-bottom: 56.25%; /* 16:9 */
   height: 0;
   overflow: hidden;
   width: 100%;
-  min-width: 300px;
   max-width: 100%;
+  min-width: 300px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .embed-container iframe {
@@ -21,15 +34,19 @@
   width: 100%;
   height: 100%;
   border: 2px solid gray;
+  box-sizing: border-box;
 }
 
-
-
-.embed-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
+/* Prevent wide code blocks from breaking layout */
+pre, code {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  word-break: break-word;
 }
+
+/* Optional: Tables shouldn't overflow on mobile */
+.wy-table-responsive table {
+  display: table;
+  width: 100%;
+}
+
