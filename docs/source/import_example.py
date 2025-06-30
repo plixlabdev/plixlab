@@ -24,9 +24,10 @@ class ImportExample(Directive):
         iframe_id = f"iframeExample_{ImportExample.instance_counter}"
 
         html_content = f'''
-
+<div style="width: 100%; display: block;">
 <div class="embed-container">
     <iframe id="{iframe_id}" src="_static/web/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
+</div>
 </div>
 <div style="height: 1em;"></div>  <!-- spacer added here -->
 <script>
