@@ -26,40 +26,10 @@ class ImportExample(Directive):
         html_content = f'''
 <div style="width: 100%; display: block;">
 <div class="embed-container">
-    <iframe id="{iframe_id}" src="_static/web/index.html?suppress_SSE=true" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
+  <iframe id="{iframe_id}" src="_static/examples/index.html?file=references/{filename}.plx" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
 </div>
 </div>
-<div style="height: 1em;"></div>  <!-- spacer added here -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {{
-    const iframe = document.getElementById('{iframe_id}');
-    let arrayBuffer = null;
-    let iframeLoaded = false;
-
-    function tryPostMessage() {{
-        if (iframeLoaded && arrayBuffer) {{
-            iframe.contentWindow.postMessage(arrayBuffer, '*');
-        }}
-    }}
-
-    iframe.addEventListener('load', function () {{
-        iframeLoaded = true;
-        tryPostMessage();
-    }});
-
-    fetch('_static/reference/{filename}.plx')
-        .then(response => response.blob())
-        .then(blob => {{
-            const reader = new FileReader();
-            reader.onload = function () {{
-                arrayBuffer = this.result;
-                tryPostMessage();
-            }};
-            reader.readAsArrayBuffer(blob);
-        }})
-        .catch(error => console.error('Error loading file:', error));
-}});
-</script>
+<div style="height: 1em;"></div> 
 '''
         return [nodes.raw('', html_content, format='html')]
 

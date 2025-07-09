@@ -8,7 +8,7 @@ SOURCEDIR     = source
 BUILDDIR      = build
 WEBDIR        = ../web
 TESTOUTPUTDIR = ../tests/reference
-STATICDIR     = $(SOURCEDIR)/_static
+STATICDIR     = $(SOURCEDIR)/_static/examples
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -21,7 +21,8 @@ copy-assets:
 	@echo "Copying web assets and test outputs to $(STATICDIR)..."
 	@mkdir -p "$(STATICDIR)"
 	@cp -r "$(WEBDIR)/." "$(STATICDIR)/"
-	@cp -r "$(TESTOUTPUTDIR)/." "$(STATICDIR)/"
+	@cp -r "$(WEBDIR)/assets/js/local_only.js" "$(STATICDIR)/assets/js/load.js"
+	@cp -r "$(TESTOUTPUTDIR)/." "$(STATICDIR)/references"
 	@echo "Assets and test outputs copied."
 
 # Optional target to clean the _static directory

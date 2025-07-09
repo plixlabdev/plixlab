@@ -1,7 +1,5 @@
 import { import3DModel, toggleAnimations } from './models.js';
 
-
-
 function apply_style(element, style) {
     for (let styleProp in style) {
         let cssValue = style[styleProp];
@@ -155,7 +153,7 @@ function change_plotly_static(slide, staticc) {
 // Array to store initialization promises
 let initializationPromises = [];
 
-export function render_slide(slide_id, slide) {
+function render_slide(slide_id, slide) {
     let element = document.createElement('div');
     element.className = 'slide';
     element.id = slide_id;
@@ -202,10 +200,10 @@ export async function render_slides(slides) {
     if (window.MathJax) {
                 MathJax.typesetPromise();
     }
-    
-  
  
 }
+
+
 
 // function update_component(component_ID, field, value) {
 //     const element = document.getElementById(component_ID);
