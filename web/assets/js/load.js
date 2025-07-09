@@ -1,6 +1,7 @@
 import { render_slides } from './plix.js';
 
 document.addEventListener('DOMContentLoaded', function () {
+  
   function getUrlParameter(name) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(name);
@@ -57,30 +58,5 @@ document.addEventListener('DOMContentLoaded', function () {
     setupSSE();
   } else {
     console.log("SSE suppressed due to suppress_SSE=true in the URL.");
-  }
-});
-
-
-
-window.addEventListener('message', function (event) {
-  // Ensure the message contains the data
-  if (event.data instanceof ArrayBuffer) {
-    try {
-      // Decode the ArrayBuffer using msgpackr
-      const data = msgpackr.unpack(new Uint8Array(event.data));
-      
-
-      // Render the slides into the container
-      const container = document.getElementById('slide-container');
-      if (container) {
-        render_slides(data, container);
-      } else {
-        console.error('Slide container not found in plix.html.');
-      }
-    } catch (error) {
-      console.error('Error unpacking or rendering data:', error);
-    }
-  } else {
-    console.warn('Received message does not contain valid ArrayBuffer data.');
   }
 });

@@ -21,11 +21,11 @@ import hashlib
 from bokeh.embed import json_item
 import random
 import string
+import shutil
 
 
 # Get the directory of the current script
 script_dir = os.path.dirname(os.path.realpath(__file__))
-
 
 
 def getsize(a):
@@ -127,10 +127,51 @@ class Presentation():
 
 
 
+   def save_presentation(self,directory='outupt'):
+       
+
+    #Copy the web file to the current directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))  
+    src = os.path.abspath(os.path.join(script_dir, '..', 'web'))
+
+   
+    dst = os.path.join(os.getcwd(), directory)
+
+    # Copy
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+
+    #Update the local mechanism
+
+    # Source path (relative to script)
+    src_file = os.path.join(script_dir, '..', 'web', 'assets', 'js', 'local_only.js')
+    src_file = os.path.abspath(src_file)
+
+    # Destination path (relative to current working directory)
+    dst_dir = os.path.join(os.getcwd(), directory, 'assets', 'js')
+    os.makedirs(dst_dir, exist_ok=True)
+
+    # Destination file
+    dst_file = os.path.join(dst_dir, 'load.js')
+
+    # Copy
+    shutil.copyfile(src_file, dst_file)
+
+    #Save the presentation data
+    self.save(dst + '/data')
+
+
+  
+
+
+
+
+
+
    def save(self,filename='output'):
         """Save presentation""" 
 
-      
         with open(filename + '.plx', 'wb') as file:
           file.write(msgpack.packb(normalize_dict(self.slides)))
 
@@ -494,6 +535,14 @@ class Slide():
         """Show the slide as a single-slide presentation"""
         
         Presentation([self]).show()
+
+    def save_resentation(self,*args,**kwargs):
+        """Save the entire presentation in stand-along mode"""
+        
+        Presentation([self]).save_presentation(*args,**kwargs)
+
+        return self
+
 
     def save(self,*args,**kwargs):
         """Save the slide"""

@@ -1,69 +1,29 @@
+import { render_slides } from './plix.js';
 
-window.addEventListener('load', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
+  const container = document.getElementById('slide-container');
 
+  function getPlxPathFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('file') || 'data.plx';
+  }
 
-//document.getElementById('share').addEventListener('click', function() {
-//    fetch("/share")
- //       .then(response => response.text())
-  //      .then(url => {
-   //         showModal(url);
-   //     })
-   //     .catch(error => {
-    //        console.error("Error fetching share URL:", error);
-    //    });
-//});
+  const plxPath = getPlxPathFromURL();
 
-// Initialize clipboard
-//const clipboard = new ClipboardJS('#copyBtn');
+  try {
+    const response = await fetch(plxPath);
+    if (!response.ok) throw new Error(`${plxPath} not found`);
 
-//clipboard.on('success', function(e) {
- //   const modalText = document.getElementById('modalText');
- //   modalText.textContent = "Copied to clipboard!";
-    
-  //  setTimeout(() => {
-  //      closeModal(); // Close the modal after 1.5 seconds
-  //  }, 1500);
-    
-   // e.clearSelection();
-//});
+    const buffer = await response.arrayBuffer();
+    const unpackedData = msgpackr.unpack(new Uint8Array(buffer));
 
-
-//function showModal(text) {
-//    const modal = document.getElementById('customModal');
-//    const modalText = document.getElementById('modalText');
-//    const copyBtn = document.getElementById('copyBtn');
-
- //   modalText.textContent = text;
- //   copyBtn.setAttribute('data-clipboard-text', text); // set the clipboard text for the button
- //   modal.style.display = 'block';
-
-    // This will close the modal if you click outside of it
-  //  window.onclick = function(event) {
-   //     if (event.target === modal) {
-   //         closeModal();
-   //     }
-   // }
-//}
-
-//function closeModal() {
- //   const modal = document.getElementById('customModal');
- //   modal.style.display = 'none';
-//}
-
-
-
-//function downloadJSONData() {
- //   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data.data));
-  //  const downloadAnchorNode = document.createElement('a');
-   // downloadAnchorNode.setAttribute("href", dataStr);
- //   downloadAnchorNode.setAttribute("download", "presentation.plx");
- //   document.body.appendChild(downloadAnchorNode); 
- //   downloadAnchorNode.click(); 
- //   downloadAnchorNode.remove();
-//}
-
-//document.getElementById('download').addEventListener('click', function() {
-//    downloadJSONData();
-//});
-
-})
+    if (container) {
+      render_slides(unpackedData, container);
+    } else {
+      console.error('Slide container not found in index.html.');
+    }
+  } catch (err) {
+    console.error(`Failed to load ${plxPath}:`, err);
+  }
+});
+       

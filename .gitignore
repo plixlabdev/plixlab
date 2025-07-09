@@ -76,7 +76,7 @@ instance/
 docs/_build/
 
 # Ignore stray PLX files accidentally dropped into the source static dir
-docs/source/_static/*.plx
+docs/source/_static/examples/
 
 # PyBuilder
 .pybuilder/
