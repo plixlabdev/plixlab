@@ -68,7 +68,7 @@ html_static_path = ['_static']
 
 
 html_css_files = [
-    'assets/css/custom.css',
+    'custom.css',
 ]
 
 
