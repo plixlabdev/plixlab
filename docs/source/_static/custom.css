@@ -20,3 +20,7 @@
     top: 0;
     left: 0;
 }
+.bd-content .bd-article-container {
+    max-width: 100% !important;
+    width: 100% !important;
+}

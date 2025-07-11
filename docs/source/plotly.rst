@@ -16,6 +16,6 @@ Interactive plots from `Plotly <plotly_web>`_ can be embedded with ``plotly``
 
   Slide().plotly(fig).show()
 
-.. .. import_example:: plotly
+.. import_example:: plotly
 
 .. _plotly_web: https://plotly.com/
