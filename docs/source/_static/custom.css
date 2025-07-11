@@ -1,8 +1,3 @@
-.custom-content {
-    background-color: #f0f0f0; /* Light grey background */
-    padding: 15px;
-    border-radius: 5px;
-}
 
 .embed-container {
     aspect-ratio: 16 / 9;
@@ -24,4 +19,14 @@
 .bd-content .bd-article {
     max-width: none !important;
     width: 100% !important;
+}
+
+/* Make code blocks full-width */
+div.highlight,
+div.highlight pre {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
