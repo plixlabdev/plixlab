@@ -15,18 +15,25 @@
     top: 0;
     left: 0;
 }
-.bd-content .bd-article-container,
-.bd-content .bd-article {
-    max-width: none !important;
+
+
+/* Force full width layout */
+.bd-container {
+    max-width: 100% !important;
     width: 100% !important;
 }
 
-/* Make code blocks full-width */
-div.highlight,
-div.highlight pre {
+/* Force main content to have fixed width */
+.bd-main {
+    max-width: none !important;
+    flex-grow: 1 !important;
     width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+}
+
+/* Force article body width */
+.bd-content {
+    max-width: 1200px !important;  /* Set desired width */
+    width: 100% !important;
+    margin-left: auto;
+    margin-right: auto;
 }
