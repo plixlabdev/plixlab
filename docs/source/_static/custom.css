@@ -20,79 +20,8 @@
     top: 0;
     left: 0;
 }
-.bd-content .bd-article-container {
-    max-width: 100% !important;
+.bd-content .bd-article-container,
+.bd-content .bd-article {
+    max-width: none !important;
     width: 100% !important;
-}
-
-/* Fix code block width issues */
-pre {
-    white-space: pre !important;
-    word-wrap: normal !important;
-    overflow-x: auto !important;
-    max-width: none !important;
-    width: auto !important;
-}
-
-code {
-    white-space: pre !important;
-    word-wrap: normal !important;
-}
-
-.highlight pre {
-    white-space: pre !important;
-    word-wrap: normal !important;
-    overflow-x: auto !important;
-    max-width: none !important;
-    width: auto !important;
-}
-
-/* Ensure code blocks don't wrap */
-div[class*="highlight-"] pre {
-    white-space: pre !important;
-    word-wrap: normal !important;
-    overflow-x: auto !important;
-    max-width: none !important;
-    width: auto !important;
-}
-
-/* Fix for sphinx-book-theme specific styles */
-.bd-content pre {
-    white-space: pre !important;
-    word-wrap: normal !important;
-    overflow-x: auto !important;
-    max-width: none !important;
-    width: auto !important;
-}
-
-/* Ensure proper scrolling for long code lines */
-.highlight {
-    overflow-x: auto !important;
-    max-width: none !important;
-}
-
-/* Remove any responsive constraints on code blocks */
-@media (max-width: 768px) {
-    pre, code, .highlight pre, div[class*="highlight-"] pre {
-        white-space: pre !important;
-        word-wrap: normal !important;
-        overflow-x: auto !important;
-        max-width: none !important;
-        width: auto !important;
-    }
-}
-
-/* Force code blocks to not wrap and allow horizontal scrolling */
-.bd-content .highlight pre,
-.bd-content pre,
-div.highlight pre,
-div[class*="highlight-"] pre,
-pre {
-    white-space: pre !important;
-    word-break: normal !important;
-    word-wrap: normal !important;
-    overflow-x: auto !important;
-    max-width: 100% !important;
-    min-width: 600px !important; /* Adjust as needed */
-    width: auto !important;
 }
