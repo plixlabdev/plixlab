@@ -81,3 +81,18 @@ div[class*="highlight-"] pre {
         width: auto !important;
     }
 }
+
+/* Force code blocks to not wrap and allow horizontal scrolling */
+.bd-content .highlight pre,
+.bd-content pre,
+div.highlight pre,
+div[class*="highlight-"] pre,
+pre {
+    white-space: pre !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    overflow-x: auto !important;
+    max-width: 100% !important;
+    min-width: 600px !important; /* Adjust as needed */
+    width: auto !important;
+}
