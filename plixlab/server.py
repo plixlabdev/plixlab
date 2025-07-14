@@ -94,16 +94,21 @@ def cleanup_connections():
             print(f"Error closing SSE connection: {e}")
     active_sse_connections.clear()
 
-def run(data_provider):
+def run(data_provider,**kwargs):
     """Run the Tornado server."""
     print("Starting Tornado server...")
     port = 8889
     app = make_app(data_provider)
     app.listen(port)
 
+    if kwargs.setdefault("carousel",False):
+        options = "?carousel=True"
+    else:
+        options = ""
+
     # Open the browser on the first run
     if not os.environ.get("BROWSER_OPENED"):
-        webbrowser.open(f"http://localhost:{port}")
+        webbrowser.open(f"http://localhost:{port}{options}")
         os.environ["BROWSER_OPENED"] = "True"
 
     # Set up autoreload hooks

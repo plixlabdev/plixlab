@@ -1,12 +1,12 @@
-Installing PLIX
-================
+Installing PlixLab
+===================
 
    
 PLIX can be installed as a PIP package
 
 .. code-block:: bash
 
-   pip install -U --no-cache  git+https://github.com/plixlabdev/plixlab.git
+   pip install plixlab
 
 
 Test:

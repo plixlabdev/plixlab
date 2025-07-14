@@ -1,4 +1,4 @@
-import { render_slides } from './plix.js';
+import { render_slides } from './plixlab.js';
 
 document.addEventListener('DOMContentLoaded', function () {
   

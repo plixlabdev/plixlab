@@ -117,12 +117,12 @@ class Presentation():
         return events    
 
 
-   def show(self):
+   def show(self,**argv):
         """Display the presentation"""
 
 
         #run({'title': self.title, 'slides': self.slides})
-        run(self.slides)
+        run(self.slides,**argv)
          
 
 
