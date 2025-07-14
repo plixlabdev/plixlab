@@ -44,17 +44,18 @@
 <link href="assets/css/all.min.css" rel="stylesheet">
 <script defer src="assets/js/plotly-3.0.1.min.js" charset="utf-8"></script>
 
-<!-- <script defer src="assets/js/3Dmol-min.js"></script>
-<script defer src="assets/js/3Dmol.ui-min.js"></script> -->
-<!-- <script src="https://3Dmol.org/build/3Dmol-min.js"></script> -->
-<script src="https://3Dmol.org/build/3Dmol.js"></script>
+ <script defer src="assets/js/3Dmol-min.js"></script>
+<script defer src="assets/js/3Dmol.ui-min.js"></script>
+
 
 
 <link rel="stylesheet" href="assets/css/dark.min.css">
 <script defer src="assets/js/marked.min.js"></script>
 <script defer src="assets/js/highlight.min.js"></script>
 <script defer src="assets/js/index.umd.js"></script>
-<script defer src="assets/js/clipboard.min.js"></script>
+<script src="assets/js/clipboard.min.js"></script>
+
+
 
 
 <script type="text/javascript" async
@@ -65,6 +66,8 @@
 
 <script src="assets/js/msgpackr.js"></script>
   
+
+
 <!--
 <script src="./assets/js/rfc6902.min.js"></script>
 
@@ -93,9 +96,9 @@
 
 
 
-  <link rel="stylesheet" href="assets/css/plix.css">
+  <link rel="stylesheet" href="assets/css/plixlab.css">
   <script type='module' src="assets/js/load.js"></script>
-  <script type='module' src="assets/js/plix.js"></script>
+  <script type='module' src="assets/js/plixlab.js"></script>
 
 
 </head>
@@ -154,6 +157,29 @@
     <!--<div id="loader" class="loader">
     <div id="slide-container"></div>
    </div>-->
+
+  <!-- Embed Modal -->
+<div id="embed-modal" style="display:none; position:fixed; top:10%; left:50%; transform:translateX(-50%);
+  width:600px; background:white; border:1px solid #ccc; padding:20px; z-index:1000; box-shadow:0 2px 10px rgba(0,0,0,0.2)">
+  <h2>Share this Plix</h2>
+
+  <label>
+    <input type="checkbox" id="carousel-toggle" /> Enable carousel mode
+  </label>
+
+  <p><strong>Link:</strong></p>
+  <input type="text" id="embed-link" style="width:100%" readonly />
+  <button class="copy-btn" data-clipboard-target="#embed-link">📋 Copy Link</button>
+
+  <p><strong>Embed Code:</strong></p>
+  <textarea id="embed-code" style="width:100%" rows="5" readonly></textarea>
+  <button class="copy-btn" data-clipboard-target="#embed-code">📋 Copy Embed</button>
+
+  <div style="text-align:right; margin-top:10px">
+    <button onclick="document.getElementById('embed-modal').style.display='none'">Close</button>
+  </div>
+</div>
+
   
 </body>
 

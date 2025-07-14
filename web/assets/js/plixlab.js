@@ -10,59 +10,42 @@ function apply_style(element, style) {
     }
 }
 
-
-
 document.getElementById("embed").addEventListener("click", () => {
-  const link = window.location.href;
-  const embedCode = `<div style="position: relative; width: 100%; max-width: 800px; height: 450px; margin: auto;">
+  const modal = document.getElementById("embed-modal");
+  const checkbox = document.getElementById("carousel-toggle");
+  const linkInput = document.getElementById("embed-link");
+  const embedTextarea = document.getElementById("embed-code");
+
+  const baseLink = window.location.href.split('?')[0];
+
+  function updateEmbed() {
+    const link = checkbox.checked ? `${baseLink}?carousel=true` : baseLink;
+
+    linkInput.value = link;
+
+    embedTextarea.value = `
+<div style="position: relative; width: 100%; max-width: 800px; height: 450px; margin: auto;">
   <iframe
     src="${link}"
     title="Plix"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
     allowfullscreen
   ></iframe>
-</div>`;
+</div>`.trim();
+  }
 
-  const popup = window.open("", "Plix Share", "width=640,height=580");
-  popup.document.write(`
-    <html>
-    <head>
-      <title>Share Plix</title>
-      <style>
-        body { font-family: sans-serif; padding: 20px; }
-        input, textarea { width: 100%; margin-top: 5px; margin-bottom: 10px; }
-        .copy-btn {
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 1.2em;
-          vertical-align: middle;
-          margin-left: 8px;
-        }
-      </style>
-    </head>
-    <body>
-      <h2>Share this Plix</h2>
-      <p><strong>Link:</strong><br>
-        <input id="plix-link" type="text" value="${link}" readonly />
-        <button class="copy-btn" onclick="copyToClipboard('plix-link')" title="Copy Link">📋</button>
-      </p>
-      <p><strong>Embed Code:</strong><br>
-        <textarea id="plix-embed" rows="8" readonly>${embedCode}</textarea>
-        <button class="copy-btn" onclick="copyToClipboard('plix-embed')" title="Copy Embed Code">📋</button>
-      </p>
-      <script>
-        function copyToClipboard(id) {
-          const el = document.getElementById(id);
-          el.select();
-          el.setSelectionRange(0, 99999); // mobile
-          document.execCommand("copy");
-        }
-      </script>
-    </body>
-    </html>
-  `);
+  checkbox.onchange = updateEmbed;
+  updateEmbed(); // initialize
+  modal.style.display = "block"; // show modal
 });
+
+function copyToClipboard(id) {
+  const el = document.getElementById(id);
+  el.select();
+  el.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+}
+
 
 
 
@@ -568,60 +551,74 @@ window.addEventListener('load', async function () {
 
     function decrementSlide() {
         const slides = document.querySelectorAll(".slide"); // Select all slides
-        //const totalSlides = slides.length;
+        const totalSlides = slides.length;
     
-        // Check if there is a previous slide to show
-        if (window.dataStore.active_slide > 0) {
-            // Get the current slide and hide it
-            const currentSlide = slides[window.dataStore.active_slide];
-            currentSlide.style.visibility = 'hidden'; // Use 'hidden' to hide it
-    
-            // Get the previous slide and show it
-            const prevSlide = slides[window.dataStore.active_slide - 1];
-            prevSlide.style.visibility = 'visible';
-    
-            // Update the dataStore
-            window.dataStore.active_slide -= 1;
-            window.dataStore.index = 0;
-    
-            // Trigger plot updates
-            change_plotly_static(currentSlide.id, true);
-            change_plotly_static(prevSlide.id, false);
+        const currentSlide = slides[window.dataStore.active_slide];
+        currentSlide.style.visibility = 'hidden'; // Use 'hidden' to hide it
 
-            const NSlideEvents = JSON.parse(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation).length;
-            window.dataStore.index = NSlideEvents - 1;
+        const prev_index = (window.dataStore.active_slide - 1 + totalSlides) % totalSlides;
 
-        }
+        const prevSlide = slides[prev_index];
+        prevSlide.style.visibility = 'visible';
+
+        window.dataStore.active_slide = prev_index;
+        window.dataStore.index = 0;
+        change_plotly_static(currentSlide.id, true);
+        change_plotly_static(prevSlide.id, false);  
+        const NSlideEvents = JSON.parse(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation).length;
+        window.dataStore.index = NSlideEvents - 1;
+
+
     }
     
 
     function incrementSlide() {
-        const slides = document.querySelectorAll(".slide"); // Select all slides
+        const slides = document.querySelectorAll(".slide"); 
         const totalSlides = slides.length;
-        //console.log('increment slide')
-    
-        // Check if there are more slides to show
-        if (window.dataStore.active_slide < totalSlides - 1) {
-            // Get the current slide and hide it
-            const currentSlide = slides[window.dataStore.active_slide];
-            currentSlide.style.visibility = 'hidden'; // Use 'hidden' for visibility
-    
-            // Get the next slide and show it
-            const newSlide = slides[window.dataStore.active_slide + 1];
-            newSlide.style.visibility = 'visible';
-    
-            // Update the dataStore
-            window.dataStore.active_slide += 1;
-            window.dataStore.index = 0;
-    
-            // Trigger plot updates
-            change_plotly_static(currentSlide.id, true);
-            change_plotly_static(newSlide.id, false);
-        }
-    }
-    
-        
+      
+        const currentSlide = slides[window.dataStore.active_slide];
+        const newSlide_index = (window.dataStore.active_slide + 1) % totalSlides;
+        const newSlide = slides[newSlide_index];
 
+       
+        currentSlide.style.visibility = 'hidden';
+        newSlide.style.visibility = 'visible';
+
+        window.dataStore.active_slide = newSlide_index
+        window.dataStore.index = 0;
+
+        change_plotly_static(currentSlide.id, true);
+        change_plotly_static(newSlide.id, false);
+
+       
+    }
+
+
+
+
+const urlParams = new URLSearchParams(window.location.search);
+const isCarousel = urlParams.get('carousel') === 'True';
+
+
+let carouselInterval;
+
+if (isCarousel) {
+    
+    const interval = 5000; // ms between slides
+
+    carouselInterval = setInterval(() => {
+        incrementSlide();  // you handle wraparound inside this
+    }, interval);
+
+    const stopCarousel = () => clearInterval(carouselInterval);
+
+    document.addEventListener('keydown', stopCarousel, { once: true });
+    document.addEventListener('click', stopCarousel, { once: true });
+    document.addEventListener('touchstart', stopCarousel, { once: true });
+}
+
+    
+    
     //function updateURL() {
         // Update URL if necessary
    // }
@@ -841,22 +838,4 @@ window.addEventListener('load', async function () {
 });
 
 
-// function resizeFullscreenSlide() {
-//     const slide = document.querySelector('.fullscreen-mode .slide');
-//     if (!slide) return;
 
-//     const container = document.getElementById('slide-container');
-//     container.style.height = '100vh';
-//     container.style.width = '100vw';
-
-//     // No need to manually set slide width/height — CSS will do it
-// }
-
-
-// document.addEventListener('fullscreenchange', () => {
-//     if (document.fullscreenElement) resizeFullscreenSlide();
-// });
-
-// window.addEventListener('resize', () => {
-//     if (document.fullscreenElement) resizeFullscreenSlide();
-// });
