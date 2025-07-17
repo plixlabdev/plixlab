@@ -126,7 +126,6 @@ class Presentation():
          
 
 
-
    def save_presentation(self,directory='outupt'):
        
 
@@ -183,74 +182,6 @@ class Presentation():
 
         return self.slides
    
-
-   def share(self):
- 
-
-      data = normalize_dict({'title':self.title,'slides':self.slides})
-      data_to_be_sent = msgpack.packb(data)
-
-      project_id = 'computo-306914'
-      location   = 'us-central1'
-
-      #Load credentials
-      token = os.getenv('PLIXLAB_TOKEN',None)
-     
-      if not token:
-          
-       filename = os.path.expanduser("~") + '/.plixlab/plixlab_credentials.json'
-       if not os.path.isfile(filename):
-            print('Visit computo.dev to get your token')
-            quit()
-       else:      
-            with open(filename,'r') as f:
-                token = json.load(f)['token']
-
-     
-      #Get access token
-      response = requests.post(f"https://securetoken.googleapis.com/v1/token?key=AIzaSyCBeY5-WeodH3AFfPRLsYKeCr2FgvfFkvQ",\
-                             {'grant_type':'refresh_token',\
-                             'refresh_token':token},\
-                             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }).json()
-
-
-      hash_url =  hashlib.md5(self.title.encode()).hexdigest()
-      uid         = response['user_id']
-
-
-
-      bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
-      #bucket_url = f"http://127.0.0.1:9199/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
-
-
-
-      #bucket_url = f"https://firebasestorage.googleapis.com/v0/b/computo-306914.appspot.com/o?uploadType=media&name=users/{uid}/{hash_url}"
-
-      # Headers with authorization token and content type
-      headers = {
-        'Authorization': f'Bearer {response['access_token']}',
-        "Content-Type": "application/octet-stream"
-      }
-
-      # Send the binary data directly using `data`
-      response = requests.post(bucket_url, headers=headers, data=data_to_be_sent)
-      print(response)
-   
-
-      unique_url = uid+hash_url
-   
-      response_content = response.json() if response.status_code == 200 else response.text
-
-      #print(response)
-      url = f'http://127.0.0.1:5000/share/{unique_url}'
-      print(url)
-
-      url = f'https://computo.dev/share/{unique_url}'
-      print(f'visit {url}')
-      
-
-      #print(response_content)
-
 
 
 def generate_random_alphanumeric(length):
