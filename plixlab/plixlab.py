@@ -183,7 +183,6 @@ class Presentation():
         return self.slides
    
 
-
 def generate_random_alphanumeric(length):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for i in range(length))
@@ -226,6 +225,7 @@ class Slide():
         self.animation.append(animation)
 
     def process_animations(self):
+        """Process animation"""
 
         #Convert from number to lists
         tmp = []
@@ -293,6 +293,7 @@ class Slide():
         
 
     def text(self,text,**argv):   
+        """Add text"""
        
         #Adjust style---
         argv.setdefault('mode','center')
@@ -439,9 +440,10 @@ class Slide():
 
 
     def python(self,**argv):
+        """Python REPL"""
+
+
         style = get_style(**argv)
-
-
         url = "https://jupyterlite.readthedocs.io/en/stable/_static/repl/index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
 
         tmp = {'type':'Iframe','src':url,'style':style}
@@ -483,15 +485,9 @@ class Slide():
         return self
     
     def get_data(self):
+        """Get presentation data"""
 
          return Presentation([self]).get_data()
 
 
-
-
-
-    def share(self,title='untitled'):
-        """Show the slide as a single-slide presentation"""
-        
-        Presentation([self],title=title).share()
 
