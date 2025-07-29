@@ -1,4 +1,4 @@
-PLIX Quickstart
+PlixLab Quickstart
 ===============
 
 A minimal single-slide presentation can be created with two lines of code
