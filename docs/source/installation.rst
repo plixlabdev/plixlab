@@ -2,7 +2,7 @@ Installing PlixLab
 ===================
 
    
-PLIX can be installed as a PIP package
+PlixLab can be installed as a PIP package
 
 .. code-block:: bash
 
