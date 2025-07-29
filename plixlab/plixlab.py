@@ -487,7 +487,7 @@ class Slide():
     def get_data(self):
         """Get presentation data"""
 
-         return Presentation([self]).get_data()
+        return Presentation([self]).get_data()
 
 
 
