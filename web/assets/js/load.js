@@ -1,6 +1,10 @@
 import { render_slides } from './plixlab.js';
 
 document.addEventListener('DOMContentLoaded', function () {
+
+  const PLIXLAB_PORT = window.PLIXLAB_PORT || 8889;
+
+  const eventSource = new EventSource(`http://localhost:${PLIXLAB_PORT}/events`);
   
   function getUrlParameter(name) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -8,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function setupSSE() {
-    const eventSource = new EventSource("http://localhost:8889/events");
+    //const eventSource = new EventSource(`http://localhost:${PLIXLAB_PORT}/events`);
 
     eventSource.onopen = () => {
       // SSE connection established
@@ -28,7 +32,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function connectWebSocket() {
-    const ws = new WebSocket("ws://localhost:8889/data");
+    //const ws = new WebSocket("ws://localhost:8889/data");
+    const ws = new WebSocket(`ws://localhost:${PLIXLAB_PORT}/data`);
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {

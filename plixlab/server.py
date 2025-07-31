@@ -60,13 +60,18 @@ class NoCacheHandler(tornado.web.RequestHandler):
         self.set_header("Expires", "0")
 
     def get(self):
-        """Serve the index.html file."""
-        if os.path.exists(self.file_path):
-            with open(self.file_path, "r") as f:
-                self.write(f.read())
-        else:
-            self.set_status(404)
-            self.write("404: index.html not found")
+     """Serve the index.html file."""
+     if os.path.exists(self.file_path):
+        with open(self.file_path, "r") as f:
+            html = f.read()
+        # Inject the script that sets window.PLIXLAB_PORT
+        port = int(os.environ.get("PLIXLAB_PORT", 8889))
+        injected = f'<script>window.PLIXLAB_PORT = {port};</script>'
+        html = html.replace('</head>', f'{injected}\n</head>')
+        self.write(html)
+     else:
+        self.set_status(404)
+        self.write("404: index.html not found")
 
 class ReloadWebSocketHandler(websocket.WebSocketHandler):
     """Handler for WebSocket connections."""
@@ -97,7 +102,7 @@ def cleanup_connections():
 def run(data_provider,**kwargs):
     """Run the Tornado server."""
     print("Starting Tornado server...")
-    port = 8889
+    port = int(os.environ.get("PLIXLAB_PORT", 8889))
     app = make_app(data_provider)
     app.listen(port)
 
