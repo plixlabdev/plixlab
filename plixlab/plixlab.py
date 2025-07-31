@@ -22,6 +22,7 @@ from bokeh.embed import json_item
 import random
 import string
 import shutil
+import nest_asyncio
 
 
 # Get the directory of the current script
@@ -118,6 +119,8 @@ class Presentation():
    def show(self,**argv):
         """Display the presentation"""
 
+      
+        nest_asyncio.apply()
 
         #run({'title': self.title, 'slides': self.slides})
         run(self.slides,**argv)
@@ -466,10 +469,10 @@ class Slide():
         return self
 
 
-    def show(self):
+    def show(self,**kwargs):
         """Show the slide as a single-slide presentation"""
-        
-        Presentation([self]).show()
+
+        Presentation([self]).show(**kwargs)
 
     def save_presentation(self,*args,**kwargs):
         """Save the entire presentation in stand-along mode"""
