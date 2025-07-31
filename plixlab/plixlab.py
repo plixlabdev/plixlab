@@ -174,7 +174,12 @@ class Presentation():
 
         return self.slides
    
-   def get_binary_data(self):
+   def get_title(self):
+        """Get presentation title"""
+
+        return self.title
+   
+   def binary(self):
         """Get data in binary format""" 
 
         return msgpack.packb(normalize_dict(self.slides))
@@ -486,16 +491,20 @@ class Slide():
 
         return Presentation([self]).get_data()
     
-    def get_title(self):
-        """Get presentation title"""
+    # def get_title(self):
+    #     """Get presentation title"""
 
-        return Presentation([self]).title
-    
-    
-    def get_binary_data(self,title=''):
-        """Get presentation data in binary format"""
+    #     return Presentation([self]).title
 
-        return Presentation([self],title=title).get_binary_data()
+    def get_presentation(self,title=''):
+        """Get presentation object"""
+
+        return Presentation([self],title=title)
+
+    # def get_binary_data(self,title=''):
+    #     """Get presentation data in binary format"""
+
+    #     return Presentation([self],title=title).get_binary_data()
 
 
 
