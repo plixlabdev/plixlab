@@ -43,9 +43,7 @@ class Presentation():
 
    def __init__(self,slides,title='default'):
 
-
          self.title = title
-
 
          data = {}
          for s,slide in enumerate(slides):
@@ -141,7 +139,6 @@ class Presentation():
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
 
-    #Update the local mechanism
 
     # Source path (relative to script)
     src_file = os.path.join(script_dir, '..', 'web', 'assets', 'js', 'local_only.js')
@@ -163,11 +160,6 @@ class Presentation():
 
   
 
-
-
-
-
-
    def save(self,filename='output'):
         """Save presentation""" 
 
@@ -178,9 +170,14 @@ class Presentation():
    
   
    def get_data(self):
-        """Save presentation""" 
+        """Get data""" 
 
         return self.slides
+   
+   def get_binary_data(self):
+        """Get data in binary format""" 
+
+        return msgpack.packb(normalize_dict(self.slides))
    
 
 def generate_random_alphanumeric(length):
@@ -469,7 +466,7 @@ class Slide():
         
         Presentation([self]).show()
 
-    def save_resentation(self,*args,**kwargs):
+    def save_presentation(self,*args,**kwargs):
         """Save the entire presentation in stand-along mode"""
         
         Presentation([self]).save_presentation(*args,**kwargs)
@@ -488,6 +485,17 @@ class Slide():
         """Get presentation data"""
 
         return Presentation([self]).get_data()
+    
+    def get_title(self):
+        """Get presentation title"""
+
+        return Presentation([self]).title
+    
+    
+    def get_binary_data(self,title=''):
+        """Get presentation data in binary format"""
+
+        return Presentation([self],title=title).get_binary_data()
 
 
 
