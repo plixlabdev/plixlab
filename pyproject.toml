@@ -28,8 +28,7 @@ dependencies = [
   "dict_hash",
   "dash_bio",
   "pandas",
-  "bokeh==3.6.2",
-  "numpy==1.26.4"
+  "bokeh==3.6.2"
 ]
 dynamic = ["version"]
 
