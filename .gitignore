@@ -6,6 +6,36 @@ __pycache__/
 # C extensions
 *.so
 
+#Cloc
+run_cloc.sh
+
+# Third-party web assets (downloaded during installation)
+# Note: PlixLab's own files (plixlab.js, models.js, load.js, local_only.js, 
+# plixlab.css) should NOT be ignored
+web/assets/js/3Dmol*.js
+web/assets/js/bokeh-*.js
+web/assets/js/BufferGeometryUtils.js
+web/assets/js/GLTFLoader.js
+web/assets/js/OrbitControls.js
+web/assets/js/clipboard.min.js
+web/assets/js/fast-json-patch*.js
+web/assets/js/highlight.min.js
+web/assets/js/index.umd.js
+web/assets/js/jsonpatch*.js
+web/assets/js/marked.min.js
+web/assets/js/msgpackr.js
+web/assets/js/plotly-*.js
+web/assets/js/pyodide.js
+web/assets/js/rfc6902*.js
+web/assets/js/tex-mml-chtml.js*
+web/assets/js/three*.js
+web/assets/js/input/
+web/assets/js/output/
+web/assets/css/all.min.css
+web/assets/css/bootstrap.min.css*
+web/assets/css/dark.min.css
+web/assets/webfonts/
+
 # Distribution / packaging
 .Python
 build/
