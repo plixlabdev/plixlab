@@ -16,10 +16,30 @@ def get_web_assets_dir():
     return current_dir / "web" / "assets"
 
 def download_file(url, destination):
-    """Download a file from URL to destination."""
+    """Download a file from URL to destination with verification."""
     print(f"Downloading {url} -> {destination}")
     os.makedirs(os.path.dirname(destination), exist_ok=True)
-    urllib.request.urlretrieve(url, destination)
+    
+    try:
+        # Download the file
+        urllib.request.urlretrieve(url, destination)
+        
+        # Verify the download for critical JavaScript files
+        if destination.name.endswith('.js'):
+            with open(destination, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read(100)  # Read first 100 chars
+                if content.strip().startswith('<!DOCTYPE') or content.strip().startswith('<html'):
+                    # File contains HTML instead of JavaScript - this is an error page
+                    print(f"Warning: {destination.name} contains HTML instead of JavaScript")
+                    print("This usually means the CDN returned an error page")
+                    os.remove(destination)  # Remove the bad file
+                    raise ValueError(f"Downloaded file {destination.name} contains HTML error page")
+        
+        print(f"Successfully downloaded {destination.name}")
+        
+    except Exception as e:
+        print(f"Failed to download {url}: {e}")
+        raise
 
 def download_mathjax_components(js_dir):
     """Download MathJax input and output components."""
@@ -88,15 +108,14 @@ def download_assets():
         "three.min.js": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
         "three.module.js": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js",
         
-        # Three.js addons
-        "GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js",
-        "OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
-        "BufferGeometryUtils.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js",
+        # Three.js addons (ES6 modules from JSM path)
+        "GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js",
+        "OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/controls/OrbitControls.js",
+        "BufferGeometryUtils.js": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/utils/BufferGeometryUtils.js",
         
-        # 3DMol.js for molecular visualization
-        "3Dmol-min.js": "https://cdnjs.cloudflare.com/ajax/libs/3dmol/2.0.4/3Dmol-min.js",
-        "3Dmol.js": "https://cdnjs.cloudflare.com/ajax/libs/3dmol/2.0.4/3Dmol.js",
-        "3Dmol.ui-min.js": "https://cdnjs.cloudflare.com/ajax/libs/3dmol/2.0.4/3Dmol.ui-min.js",
+        # 3DMol.js for molecular visualization (using unpkg which has reliable downloads)
+        "3Dmol-min.js": "https://unpkg.com/3dmol@2.5.2/build/3Dmol-min.js",
+        "3Dmol.js": "https://unpkg.com/3dmol@2.5.2/build/3Dmol.js",
         
         # Plotly for interactive plots
         "plotly-3.0.1.min.js": "https://cdn.plot.ly/plotly-3.0.1.min.js",
@@ -127,9 +146,6 @@ def download_assets():
         
         # Pyodide for Python in browser
         "pyodide.js": "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js",
-        
-        # UMD index (need to identify what this is)
-        "index.umd.js": "https://cdn.jsdelivr.net/npm/@msgpack/msgpack@3.0.0/dist/index.umd.js",
     }
     
     # Third-party CSS libraries
@@ -155,10 +171,35 @@ def download_assets():
     
     # Download JavaScript files
     for filename, url in js_downloads.items():
+        destination = js_dir / filename
         try:
-            download_file(url, js_dir / filename)
+            download_file(url, destination)
         except Exception as e:
             print(f"Warning: Could not download {filename}: {e}")
+            
+            # For critical 3DMol.js and Three.js files, try alternative sources
+            if filename == "3Dmol-min.js":
+                print("Trying alternative CDN for 3Dmol-min.js...")
+                try:
+                    alt_url = "https://3dmol.csb.pitt.edu/build/3Dmol-min.js"
+                    download_file(alt_url, destination)
+                except Exception as e2:
+                    print(f"Alternative download also failed: {e2}")
+            
+            elif filename.startswith("GLTFLoader") or filename.startswith("OrbitControls") or filename.startswith("BufferGeometry"):
+                print(f"Trying direct GitHub source for {filename}...")
+                try:
+                    # Use direct GitHub raw files as fallback
+                    github_base = "https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/jsm/"
+                    if "GLTFLoader" in filename:
+                        alt_url = github_base + "loaders/GLTFLoader.js"
+                    elif "OrbitControls" in filename:
+                        alt_url = github_base + "controls/OrbitControls.js"
+                    elif "BufferGeometry" in filename:
+                        alt_url = github_base + "utils/BufferGeometryUtils.js"
+                    download_file(alt_url, destination)
+                except Exception as e2:
+                    print(f"GitHub fallback also failed: {e2}")
     
     # Download CSS files
     for filename, url in css_downloads.items():

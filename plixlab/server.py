@@ -8,7 +8,7 @@ import tornado.web
 def make_app(data_provider):
     """Create the Tornado application with routes."""
     base_dir = os.path.dirname(__file__)
-    public_dir = os.path.join(base_dir, "../web")
+    public_dir = os.path.join(base_dir, "web")
 
     return tornado.web.Application([
         (r"/", NoCacheHandler, {"path": os.path.join(public_dir, "index.html")}),
