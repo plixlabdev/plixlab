@@ -1,4 +1,4 @@
 from .plixlab  import Slide,Presentation
 from .plixlab import Bibliography
 
-__version__ = "0.1.5"
+__version__ = "0.1.0"
