@@ -110,7 +110,7 @@ def test_matpltlib(pytestconfig):
     Test matplotlib functionality.
     """
     
-    style_file = f'{prefix}/assets/mpl_style_light'
+    style_file = f'{assets_prefix}/mpl_style_light'
     
     if os.path.exists(style_file):
      plt.style.use(style_file)
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     test_markdown(pytestconfig)
     test_equation(pytestconfig)
     test_image(pytestconfig)
-    test_matplotlib(pytestconfig)
+    test_matpltlib(pytestconfig)
     test_shape(pytestconfig)
     test_embed(pytestconfig)
     test_youtube(pytestconfig)
