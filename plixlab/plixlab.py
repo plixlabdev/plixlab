@@ -129,7 +129,6 @@ class Presentation():
 
    def save_presentation(self,directory='outupt'):
        
-
     #Copy the web file to the current directory
     script_dir = os.path.dirname(os.path.abspath(__file__))  
     src = os.path.abspath(os.path.join(script_dir, '..', 'web'))

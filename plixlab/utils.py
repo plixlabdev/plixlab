@@ -63,10 +63,8 @@ def get_style(**options):
         """Format the style"""
 
         style = {'position':'absolute'}
-        #style = {'position':'relative'}
 
         if 'color' in options.keys(): style['color'] = options['color']
-        #style.update({'position':'absolute'})
 
         if ('x' in options.keys()) and ('y' in options.keys()):
            """Infer manual mode""" 
@@ -95,7 +93,7 @@ def get_style(**options):
      
         elif mode == 'full':
           
-               
+
             w =  options.setdefault('w',1)
             h =  options.setdefault('h',1)
             style['left']   = convert((1-w)/2)
