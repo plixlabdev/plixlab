@@ -14,7 +14,6 @@ Plix is a data-centric presentation tool that allows for dynamic slide explorati
    animations
    hot_reload
    styling
-   deployment
    reference
 
 

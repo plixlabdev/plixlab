@@ -6,7 +6,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
-WEBDIR        = ../web
+WEBDIR        = ../plixlab/web
 TESTOUTPUTDIR = ../tests/reference
 STATICDIR     = $(SOURCEDIR)/_static/examples
 

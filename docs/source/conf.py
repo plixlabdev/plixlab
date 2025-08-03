@@ -74,7 +74,7 @@ html_css_files = [
 
 def copy_web_and_reference_files(app, exception):
     # --- Copy entire web/ folder to _static/web ---
-    web_src_dir = os.path.abspath(os.path.join(app.confdir, '..', '..', 'web'))
+    web_src_dir = os.path.abspath(os.path.join(app.confdir, '..', '..', 'plixlab', 'web'))
     web_dst_dir = os.path.join(app.outdir, '_static', 'web')
     
 
