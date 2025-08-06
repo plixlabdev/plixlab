@@ -45,19 +45,16 @@ dynamic = ["version"]
 [project.optional-dependencies]
 docs = [
   "sphinx>=7",
-  "sphinx-book-theme==1.0.1",
-  "sphinx-copybutton==0.5.0",
-  "sphinxcontrib-video==0.4.1",
-  "sphinx-autodoc-typehints==1.22",
-  "setuptools-scm==8.3.1"
+  "sphinx-book-theme>=1.1.4",
+  "sphinx-copybutton",
+  "sphinxcontrib-video",
+  "setuptools-scm",
+  "sphinx-autodoc-typehints"
 ]
+
 dev = [
   "pytest>=6.0",
-  "pytest-cov",
-  "black",
-  "isort",
-  "flake8",
-  "mypy"
+  "pytest-cov"
 ]
 
 [project.urls]
