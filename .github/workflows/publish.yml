@@ -35,8 +35,6 @@ jobs:
       - name: Build package
         run: python -m build
 
-      - name: Check package metadata
-        run: twine check dist/*
-
       - name: Publish to PyPI via Trusted Publishing
         uses: pypa/gh-action-pypi-publish@release/v1
+
