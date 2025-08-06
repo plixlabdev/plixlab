@@ -21,7 +21,7 @@ copy-assets:
 	@echo "Copying web assets and test outputs to $(STATICDIR)..."
 	@mkdir -p "$(STATICDIR)"
 	@cp -r "$(WEBDIR)/." "$(STATICDIR)/"
-	@cp -r "$(WEBDIR)/assets/js/local_only.js" "$(STATICDIR)/assets/js/load.js"
+	@cp -r "$(WEBDIR)/assets/js/load_standalone.js" "$(STATICDIR)/assets/js/load.js"
 	@cp -r "$(TESTOUTPUTDIR)/." "$(STATICDIR)/references"
 	@echo "Assets and test outputs copied."
 

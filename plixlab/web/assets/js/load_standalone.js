@@ -1,4 +1,4 @@
-import { render_slides } from './plix.js';
+import { render_slides } from './plixlab.js';
 
 document.addEventListener('DOMContentLoaded', async function () {
   const container = document.getElementById('slide-container');
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!response.ok) throw new Error(`${plxPath} not found`);
 
     const buffer = await response.arrayBuffer();
-    const unpackedData = msgpackr.unpack(new Uint8Array(buffer));
+    const unpackedData = msgpack.decode(new Uint8Array(buffer));
 
     if (container) {
       render_slides(unpackedData, container);

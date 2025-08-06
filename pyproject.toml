@@ -1,22 +1,34 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "plixlab"
-
 description = "Interactive scientific presentations in Python"
 readme = "README.md"
-requires-python = ">=3.8"
-license = {text = "MIT"}
+requires-python = ">=3.9"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 authors = [
   {name = "Giuseppe Romano", email = "romanog@mit.edu"}
+]
+keywords = ["presentations", "scientific", "interactive", "visualization", "jupyter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Multimedia :: Graphics :: Presentation",
 ]
 dependencies = [
   "requests",
   "plotly",
   "matplotlib",
-  "pytest",
   "pycairo",
   "bibtexparser==1.4.3",
   "hash_dict",
@@ -28,7 +40,8 @@ dependencies = [
   "dict_hash",
   "dash_bio",
   "pandas",
-  "bokeh==3.6.2"
+  "bokeh==3.6.2",
+  "numpy<2.0"
 ]
 dynamic = ["version"]
 
@@ -38,6 +51,20 @@ docs = [
   "sphinx-book-theme",
   "sphinx-copybutton"
 ]
+dev = [
+  "pytest>=6.0",
+  "pytest-cov",
+  "black",
+  "isort",
+  "flake8",
+  "setuptools-scm",
+  "mypy"
+]
+
+[project.urls]
+Homepage = "https://github.com/plixlabdev/plixlab"
+Documentation = "https://plixlabdev.github.io/plixlab/"
+Repository = "https://github.com/plixlabdev/plixlab"
 
 [tool.setuptools]
 include-package-data = true
@@ -46,4 +73,16 @@ include-package-data = true
 where = ["."]
 
 [tool.setuptools.package-data]
-plixlab = ["web/**/*"]
+plixlab = [
+    "web/index.html",
+    "web/assets/css/plixlab.css",
+    "web/assets/js/plixlab.js",
+    "web/assets/js/models.js", 
+    "web/assets/js/load.js",
+    "web/assets/js/local_only.js",
+    "web/assets/favicon.ico"
+]
+
+
+[tool.setuptools_scm]
+version_file = "plixlab/_version.py"

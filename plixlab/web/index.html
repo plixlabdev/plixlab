@@ -9,90 +9,64 @@
 
     <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
 
+    <!-- BOKEH_SCRIPTS_PLACEHOLDER -->
+<script defer type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
+<script defer type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.6.2.min.js"></script>
+<script defer type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.js"></script>
+<script defer type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.2.min.js"></script>
+<script defer type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-api-3.6.2.min.js"></script>
 
-
-<!--<script defer src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>-->
-
-<script defer type="text/javascript" src="assets/js/bokeh-3.6.2.min.js"></script>
-<script defer type="text/javascript" src="assets/js/bokeh-gl-3.6.2.min.js"></script>
-<script defer type="text/javascript" src="assets/js/bokeh-widgets-3.6.2.min.js"></script>
-<script defer type="text/javascript" src="assets/js/bokeh-tables-3.6.2.min.js"></script>
-<script defer type="text/javascript" src="assets/js/bokeh-api-3.6.2.min.js"></script>
-
-<!--"three/examples/jsm/": "https://unpkg.com/three@v0.158.0/examples/jsm/"-->
-
-
+<!-- THREE_JS_IMPORTMAP_PLACEHOLDER -->
 <script type="importmap">
     {
       "imports": {
-        "three": "./assets/js/three.module.js",
-        "three/examples/jsm/loaders/GLTFLoader.js":"./assets/js/GLTFLoader.js",
-        "three/examples/jsm/controls/OrbitControls.js":"./assets/js/OrbitControls.js"
+        "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+        "three/examples/jsm/loaders/GLTFLoader.js":"https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js",
+        "three/examples/jsm/controls/OrbitControls.js":"https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js"
       }
     }
 </script>
 
-<!--"three": "https://unpkg.com/three@v0.158.0/build/three.module.js"
+<!-- CSS_STYLES_PLACEHOLDER -->
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-<script defer type="module" src="assets/js/OrbitControls.js"></script>
-
-<script defer type="text/javascript" src="assets/js/GLTFLoader.js"></script>
--->
-
-
-<link href="assets/css/bootstrap.min.css" rel="stylesheet">
-<link href="assets/css/all.min.css" rel="stylesheet">
-<script defer src="assets/js/plotly-3.0.1.min.js" charset="utf-8"></script>
-
- <script defer src="assets/js/3Dmol-min.js"></script>
+<!-- PLOTTING_LIBRARIES_PLACEHOLDER -->
+<script defer src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+<script defer src="https://3Dmol.org/build/3Dmol-min.js"></script>
 
 
+<!-- UTILITY_LIBRARIES_PLACEHOLDER -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/dark.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
 
-<link rel="stylesheet" href="assets/css/dark.min.css">
-<script defer src="assets/js/marked.min.js"></script>
-<script defer src="assets/js/highlight.min.js"></script>
-<script src="assets/js/clipboard.min.js"></script>
-
-
-
-
-<script type="text/javascript" async
-    defer src="assets/js/tex-mml-chtml.js">
-</script>
-
-<script  src="assets/js/fast-json-patch.min.js"> </script>
-
-<script src="assets/js/msgpackr.js"></script>
-  
-
-
-<!--
-<script src="./assets/js/rfc6902.min.js"></script>
-
-<script type="module" src="assets/js/jsonpatch.min.js"></script>-->
-
-    
-  <script>
-    MathJax = {
+<!-- MATHJAX_PLACEHOLDER -->
+<script>
+    window.MathJax = {
         loader: {
-            load: ['input/tex', 'output/chtml', 'ui/menu', '[tex]/ams']
+            load: ['input/tex', 'output/chtml', 'ui/menu', '[tex]/ams', '[tex]/color']
         },
         tex: {
-            packages: {'[+]': ['ams']},
+            packages: {'[+]': ['ams', 'color']},
             inlineMath: [['$', '$'], ['\\(', '\\)']],
             displayMath: [['$$', '$$']],
             processEscapes: true
+        },
+        startup: {
+            ready: () => {
+                MathJax.startup.defaultReady();
+                console.log('MathJax loaded successfully');
+            }
         }
     };
 </script>
+<script type="text/javascript" async defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.1.2/es5/tex-mml-chtml.js"></script>
 
-
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({ TeX: { extensions: ["color.js"] }});
-</script>
-
-
-
+<!-- JSON_PATCH_PLACEHOLDER -->
+<script src="https://cdn.jsdelivr.net/npm/fast-json-patch@3.1.1/dist/fast-json-patch.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/msgpack-lite/dist/msgpack.min.js"></script>
 
   <link rel="stylesheet" href="assets/css/plixlab.css">
   <script type='module' src="assets/js/load.js"></script>

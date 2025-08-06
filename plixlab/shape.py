@@ -1,104 +1,162 @@
+"""
+PlixLab Shape Generation Module
+
+This module provides functionality for generating various geometric shapes
+as PNG images using Cairo graphics library. Shapes can be customized with
+color, orientation, and size parameters for use in PlixLab presentations.
+"""
+
 import cairo
-import base64
 from io import BytesIO
 import numpy as np
- 
- 
-def hex_to_rgb(hex_color):
+from typing import Any
+
+
+def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     """
-    Convert a hexadecimal color string to an RGB tuple.
+    Convert hex color to RGB tuple.
 
-    :param hex_color: Hexadecimal color string (e.g., "#FFFFFF")
-    :return: RGB tuple
+    Args:
+        hex_color: Hex color string (e.g., '#FF0000' or 'FF0000')
+
+    Returns:
+        RGB color tuple (e.g., (255, 0, 0))
+
+    Example:
+        >>> hex_to_rgb('#FF0000')
+        (255, 0, 0)
     """
-    hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    hex_color = hex_color.lstrip("#")
+    rgb_tuple = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    # Ensure we return exactly 3 integers
+    return (rgb_tuple[0], rgb_tuple[1], rgb_tuple[2])
 
-def arrow(context, s, a, b, c, d):
 
-    a *= s
-    b *= s
-    c *= s
-    d *= s
+def arrow(
+    context: cairo.Context, scale: float, a: float, b: float, c: float, d: float
+) -> None:
+    """
+    Draw an arrow shape on the Cairo context.
 
-    context.move_to( 0,   c/2    )
-    context.line_to( 0,   c/2 + b)
-    context.line_to( d,   0      )
-    context.line_to( 0,  -c/2 - b)
-    context.line_to( 0,  -c/2    )
-    context.line_to(-a,  -c/2    )
-    context.line_to(-a,   c/2    )
-    context.line_to( 0,   c/2    )   
+    Args:
+        context (cairo.Context): Cairo graphics context to draw on
+        scale (float): Scaling factor for the shape
+        a (float): Length of the arrow body
+        b (float): Height of the arrow head
+        c (float): Width of the arrow body
+        d (float): Width of the arrow head
+    """
+    # Scale all parameters
+    a *= scale
+    b *= scale
+    c *= scale
+    d *= scale
+
+    # Draw arrow shape
+    context.move_to(0, c / 2)
+    context.line_to(0, c / 2 + b)
+    context.line_to(d, 0)
+    context.line_to(0, -c / 2 - b)
+    context.line_to(0, -c / 2)
+    context.line_to(-a, -c / 2)
+    context.line_to(-a, c / 2)
+    context.line_to(0, c / 2)
     context.close_path()
     context.stroke()
 
 
-def square(context,s,a,b):
+def square(context: cairo.Context, scale: float, a: float, b: float) -> None:
+    """
+    Draw a rectangular shape on the Cairo context.
 
-    a *= s
-    b *= s
+    Args:
+        context (cairo.Context): Cairo graphics context to draw on
+        scale (float): Scaling factor for the shape
+        a (float): Width of the rectangle
+        b (float): Height of the rectangle (as a fraction of width)
+    """
+    # Scale all parameters
+    a *= scale
+    b *= scale
 
-    context.move_to( -a/2,    a/2 - b    )
-    context.line_to(  a/2,    a/2 - b   )
-    context.line_to(  a/2,   a/2    )
-    context.line_to( -a/2,   a/2    )
-    context.line_to( -a/2,    a/2 - b    )
+    # Draw rectangular shape
+    context.move_to(-a / 2, a / 2 - b)
+    context.line_to(a / 2, a / 2 - b)
+    context.line_to(a / 2, a / 2)
+    context.line_to(-a / 2, a / 2)
+    context.line_to(-a / 2, a / 2 - b)
     context.close_path()
     context.stroke()
 
 
+def run(shape_id: str, **kwargs: Any) -> bytes:
+    """
+    Generate a geometric shape as a PNG image.
 
-def run(shapeID,**argv) :
- 
+    Creates vector graphics shapes using Cairo and returns them as PNG bytes
+    suitable for embedding in web presentations.
+
+    Args:
+        shape_id (str): Identifier for the shape type ('arrow' or 'square')
+        **kwargs: Shape customization parameters:
+
+            * color (Union[str, Tuple[float, float, float]]): Shape color as hex string
+              (e.g., "#FF0000") or RGB tuple (0-1 range). Defaults to white (1,1,1)
+            * orientation (float): Rotation angle in degrees. Defaults to 0
+            * aspect_ratio (float): For 'square' shapes, height/width ratio.
+                                   Defaults to 0.5
+
+    Returns:
+        bytes: PNG image data as bytes
+
+    Raises:
+        ValueError: If the shape_id is not recognized
+
+    Examples:
+        >>> png_data = run('arrow', color='#FF0000', orientation=45)
+        >>> png_data = run('square', color=(0.5, 0.8, 1.0), aspect_ratio=0.8)
+    """
     scale = 300
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, scale, scale)     
-
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, scale, scale)
     context = cairo.Context(surface)
 
-    context.translate(scale/2, scale/2)
+    # Center the coordinate system
+    context.translate(scale / 2, scale / 2)
+    context.set_line_width(0.01 * scale)
 
-    context.set_line_width(0.01*scale)
-
-    color = argv.setdefault('color',(1,1,1))
-    if color[0] == '#':
-        """Convert to RGB"""
-        color = np.array(hex_to_rgb(color))/255
+    # Handle color parameter
+    color = kwargs.get("color", (1, 1, 1))
+    if isinstance(color, str) and color.startswith("#"):
+        # Convert hex color to RGB (0-1 range)
+        color = np.array(hex_to_rgb(color)) / 255
 
     context.set_source_rgb(*color)
 
-    # Save the current context state
+    # Save the current context state before rotation
     context.save()
 
-    # Rotate the context by the given orientation
-    orientation = argv.setdefault('orientation',0)
-    orientation *=np.pi/180
-    context.rotate(-orientation)
+    # Apply rotation
+    orientation = kwargs.get("orientation", 0)
+    orientation_rad = orientation * np.pi / 180
+    context.rotate(-orientation_rad)
 
+    # Generate the requested shape
+    if shape_id == "arrow":
+        arrow(context, scale, 0.5, 0.15, 0.25, 0.2)
+    elif shape_id == "square":
+        aspect_ratio = kwargs.get("aspect_ratio", 0.5)
+        square(context, scale, 1, aspect_ratio)
+    else:
+        raise ValueError(f"No shape recognized: {shape_id}")
 
-    # Call the function
-    if shapeID == 'arrow':
+    # Restore context state
+    context.restore()
 
-     arrow(context,scale,0.5,0.15,0.25,0.2)
-
-
-    elif shapeID == 'square': 
-     aspect_ratio = argv.setdefault('aspect_ratio',0.5)
-     
-     square(context,scale,1,aspect_ratio)
-
-    else: 
-       raise f'No shape recognized {shapeID}' 
-    
-    
-
+    # Convert surface to PNG bytes
     buf = BytesIO()
     surface.write_to_png(buf)
     buf.seek(0)
-    url = buf.getvalue()
+    png_data = buf.getvalue()
     buf.close()
 
-    return url
-
-
-
- 
+    return png_data

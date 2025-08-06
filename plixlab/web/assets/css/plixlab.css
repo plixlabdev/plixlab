@@ -13,37 +13,21 @@ body {
 }
 
 /* To hide scrollbars in Chrome, Safari, and newer versions of Opera */
-body::-webkit-scrollbar {
-    display: none;
-}
-
-
-
-
-
-
-#slide-container::-webkit-scrollbar {
+body::-webkit-scrollbar,
+#slide-container::-webkit-scrollbar,
+#outer-container::-webkit-scrollbar {
     display: none;
 }
 
 #slide-container {
     /* Hide scrollbar for Firefox */
     scrollbar-width: none;
-
     /* Hide scrollbar for IE and older versions of Edge */
     -ms-overflow-style: none;
 }
 
-
-
-
 .embedded-slide {
     pointer-events: none;
-}
-
-body::-webkit-scrollbar, 
-#outer-container::-webkit-scrollbar {
-    display: none;
 }
 
 
