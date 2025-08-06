@@ -1,4 +1,4 @@
-# PlixLab 🧬📊
+# PlixLab 
 
 [![PyPI version](https://badge.fury.io/py/plixlab.svg)](https://badge.fury.io/py/plixlab)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://plixlabdev.github.io/plixlab/)
