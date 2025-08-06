@@ -27,7 +27,6 @@
 
 ⚡ Enables live editing with instant preview updates
 
-⚡ Hot Reload: Live editing with instant preview updates
 ## 📚 Documentation
 
 - **[Documentation](https://plixlabdev.github.io/plixlab/)** - Complete guide, API reference, and examples
