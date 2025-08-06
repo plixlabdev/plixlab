@@ -1,11 +1,13 @@
 Hot reload
 ===========
 
-When you show a presentation, any change to the document is immediately applied to the live presentation, as long as the local server is still running. To disable this option, you can use ``hot_reload``
-
+When you show a presentation, any change to the document is automatically applied to the live presentation while the local server is running. Hot reload is always enabled to provide a seamless development experience.
 
 .. code-block:: python
 
    from plixlab import Slide
 
-   Slide.text('Example Hot Reload').show(hot_reload=False)
+   # Hot reload is automatically enabled
+   Slide.text('Example Hot Reload').show()
+
+The hot reload system uses Server-Sent Events (SSE) to notify the browser when changes occur, then opens a WebSocket connection to receive updated presentation data. This ensures responsive updates without inefficient polling.

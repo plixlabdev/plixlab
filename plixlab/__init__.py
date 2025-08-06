@@ -1,4 +1,10 @@
-from .plixlab  import Slide,Presentation
-from .plixlab import Bibliography
+from .presentation import Presentation
+from .slide import Slide
+from . import Bibliography
 
-__version__ = "0.1.0"
+try:
+    from ._version import version as __version__
+except ImportError:
+    # Fallback for development installations
+    __version__ = "0.1.0+dev"
+

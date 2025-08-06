@@ -1,4 +1,4 @@
-# Include only PlixLab's own web assets, not third-party libraries
+# Include only PlixLab's own web assets, using CDN for third-party libraries
 include plixlab/web/index.html
 include plixlab/web/assets/favicon.ico
 include plixlab/web/assets/js/plixlab.js

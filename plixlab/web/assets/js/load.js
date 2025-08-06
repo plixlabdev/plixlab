@@ -1,66 +1,53 @@
 import { render_slides } from './plixlab.js';
 
 document.addEventListener('DOMContentLoaded', function () {
-
   const PLIXLAB_PORT = window.PLIXLAB_PORT || 8889;
+  const HOT_RELOAD = window.PLIXLAB_HOT_RELOAD ?? true;
 
-  const eventSource = new EventSource(`http://localhost:${PLIXLAB_PORT}/events`);
-  
   function getUrlParameter(name) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(name);
   }
 
   function setupSSE() {
-
-    eventSource.onopen = () => {
-      // SSE connection established
-    };
+    const eventSource = new EventSource(`http://localhost:${PLIXLAB_PORT}/events`);
 
     eventSource.onmessage = (event) => {
       if (event.data === "ready") {
-       
         connectWebSocket();
       }
-    };
-
-    // Handle errors if needed
-    eventSource.onerror = (error) => {
-    
     };
   }
 
   function connectWebSocket() {
-    //const ws = new WebSocket("ws://localhost:8889/data");
     const ws = new WebSocket(`ws://localhost:${PLIXLAB_PORT}/data`);
     ws.binaryType = "arraybuffer";
 
-    ws.onopen = () => {
-      // WebSocket connection opened
-    };
-
     ws.onmessage = (event) => {
-      const binaryData = event.data;
-      const unpackedData = msgpackr.unpack(new Uint8Array(binaryData));
+      const unpackedData = msgpack.decode(new Uint8Array(event.data));
       render_slides(unpackedData);
     };
-
-    ws.onerror = (error) => {
-      //console.error("WebSocket error:", error);
-    };
-
-    ws.onclose = () => {
-      //console.warn("WebSocket connection closed.");
-    };
   }
+function fetchStatic() {
+  fetch(`http://localhost:${PLIXLAB_PORT}/static_data`)
+    .then((res) => res.arrayBuffer())
+    .then((buf) => {
+      const unpackedData = msgpack.decode(new Uint8Array(buf));
+      render_slides(unpackedData);
 
-  // Check for suppress_SSE parameter in the URL
+      // Gracefully shut down the backend
+      fetch(`http://localhost:${PLIXLAB_PORT}/shutdown`, {
+        method: "POST"
+      });
+    });
+}
+
   const suppressSSE = getUrlParameter('suppress_SSE') === 'true';
 
-  if (!suppressSSE) {
-    // Start listening for readiness via SSE
+  if (HOT_RELOAD && !suppressSSE) {
     setupSSE();
   } else {
-    console.log("SSE suppressed due to suppress_SSE=true in the URL.");
+    console.log("Hot reload is off — loading static data");
+    fetchStatic();
   }
 });

@@ -73,7 +73,7 @@ function update_markdown(element, field, value) {
         value['tabindex']="-1"
         apply_style(element, value);
 
-        if (value.alignItems === 'center' & value.justifyContent === 'center') {
+        if (value.alignItems === 'center' && value.justifyContent === 'center') {
             // Center-align text for all paragraphs inside the container
             let paragraphs = element.querySelectorAll('p');
             paragraphs.forEach(p => {
@@ -144,7 +144,6 @@ function render_slide(slide_id, slide) {
     element.dataset.animation = JSON.stringify(slide.animation);
     
 
-  
 
     document.getElementById('slide-container').appendChild(element);
 
@@ -180,8 +179,24 @@ export async function render_slides(slides) {
 
 
     await initializeCharts();
-    if (window.MathJax) {
-                MathJax.typesetPromise();
+    
+    // Handle MathJax typesetting after content is loaded
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        try {
+            await MathJax.typesetPromise();
+        } catch (error) {
+            console.warn('MathJax typeset failed:', error);
+        }
+    } else if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+        // Wait for MathJax to be ready if it's still loading
+        try {
+            await window.MathJax.startup.promise;
+            if (window.MathJax.typesetPromise) {
+                await MathJax.typesetPromise();
+            }
+        } catch (error) {
+            console.warn('MathJax initialization failed:', error);
+        }
     }
  
 }
