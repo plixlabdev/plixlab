@@ -17,9 +17,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Education",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Visualization",
@@ -48,8 +45,11 @@ dynamic = ["version"]
 [project.optional-dependencies]
 docs = [
   "sphinx>=7",
-  "sphinx-book-theme",
-  "sphinx-copybutton"
+  "sphinx-book-theme==1.0.1",
+  "sphinx-copybutton==0.5.0",
+  "sphinxcontrib-video==0.4.1",
+  "sphinx-autodoc-typehints==1.22",
+  "setuptools-scm==8.3.1"
 ]
 dev = [
   "pytest>=6.0",
@@ -57,7 +57,6 @@ dev = [
   "black",
   "isort",
   "flake8",
-  "setuptools-scm",
   "mypy"
 ]
 
@@ -73,16 +72,7 @@ include-package-data = true
 where = ["."]
 
 [tool.setuptools.package-data]
-plixlab = [
-    "web/index.html",
-    "web/assets/css/plixlab.css",
-    "web/assets/js/plixlab.js",
-    "web/assets/js/models.js", 
-    "web/assets/js/load.js",
-    "web/assets/js/local_only.js",
-    "web/assets/favicon.ico"
-]
-
+plixlab = ["web/**/*"]
 
 [tool.setuptools_scm]
 version_file = "plixlab/_version.py"
