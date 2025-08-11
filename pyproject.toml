@@ -36,7 +36,7 @@ dependencies = [
   "jsonpatch",
   "dict_hash",
   "pandas",
-  "bokeh"
+  "bokeh==3.6.2"
 ]
 dynamic = ["version"]
 
