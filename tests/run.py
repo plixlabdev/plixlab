@@ -78,7 +78,7 @@ def test_logo(pytestconfig):
    Test logo functionality.
    """
 
-   slide = Slide().text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.5,w=0.2)
+   slide = Slide().text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.2,w=0.2)
 
    generate_or_validate(slide,'logo',pytestconfig)
 
