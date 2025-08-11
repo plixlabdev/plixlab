@@ -10,20 +10,27 @@ function apply_style(element, style) {
     }
 }
 
+const modal = document.getElementById("embed-modal");
+const overlay = document.getElementById("embed-overlay");
+const closeBtn = document.getElementById("embed-close");
+const checkbox = document.getElementById("carousel-toggle");
+const linkInput = document.getElementById("embed-link");
+const embedTextarea = document.getElementById("embed-code");
+
 document.getElementById("embed").addEventListener("click", () => {
-  const modal = document.getElementById("embed-modal");
-  const checkbox = document.getElementById("carousel-toggle");
-  const linkInput = document.getElementById("embed-link");
-  const embedTextarea = document.getElementById("embed-code");
+  updateEmbed();
+  modal.style.display = "block";
+});
 
-  const baseLink = window.location.href.split('?')[0];
+overlay.addEventListener("click", () => modal.style.display = "none");
+closeBtn.addEventListener("click", () => modal.style.display = "none");
 
-  function updateEmbed() {
-    const link = checkbox.checked ? `${baseLink}?carousel=true` : baseLink;
+function updateEmbed() {
+  const baseLink = window.location.href.split("?")[0];
+  const link = checkbox.checked ? `${baseLink}?carousel=true` : baseLink;
 
-    linkInput.value = link;
-
-    embedTextarea.value = `
+  linkInput.value = link;
+  embedTextarea.value = `
 <div style="position: relative; width: 100%; max-width: 800px; height: 450px; margin: auto;">
   <iframe
     src="${link}"
@@ -32,19 +39,23 @@ document.getElementById("embed").addEventListener("click", () => {
     allowfullscreen
   ></iframe>
 </div>`.trim();
-  }
+}
 
-  checkbox.onchange = updateEmbed;
-  updateEmbed(); // initialize
-  modal.style.display = "block"; // show modal
+checkbox.addEventListener("change", updateEmbed);
+
+// Copy to clipboard with Font Awesome feedback
+document.querySelectorAll("[data-copy]").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const selector = btn.getAttribute("data-copy");
+    const el = document.querySelector(selector);
+    await navigator.clipboard.writeText(el.value);
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    setTimeout(() => {
+      btn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+    }, 1000);
+  });
 });
 
-function copyToClipboard(id) {
-  const el = document.getElementById(id);
-  el.select();
-  el.setSelectionRange(0, 99999);
-  document.execCommand("copy");
-}
 
 
 
@@ -620,7 +631,7 @@ let carouselInterval;
 
 if (isCarousel) {
     
-    const interval = 5000; // ms between slides
+    const interval = 3000; // ms between slides
 
     carouselInterval = setInterval(() => {
         incrementSlide();  // you handle wraparound inside this

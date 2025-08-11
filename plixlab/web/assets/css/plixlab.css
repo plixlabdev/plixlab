@@ -299,3 +299,83 @@ body::-webkit-scrollbar,
 }
 
 
+/* Dark background overlay */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* Modal content */
+.modal-content {
+  position: relative;
+  z-index: 1;
+  background: #1e1e1e;
+  color: #f0f0f0;
+  width: 90%;
+  max-width: 600px;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.copy-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.copy-row input,
+.copy-row textarea {
+  flex: 1;
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.checkbox-label {
+  display: block;
+  margin: 8px 0 16px;
+}
+
+/* Buttons */
+.icon-btn {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: #555;
+}
+
+.close-btn {
+  background: #444;
+  color: #fff;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #666;
+}
+
+.modal-actions {
+  text-align: right;
+}

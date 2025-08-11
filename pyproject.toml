@@ -47,6 +47,7 @@ docs = [
   "sphinx-copybutton",
   "sphinxcontrib-video",
   "setuptools-scm",
+  "roman",
   "sphinx-autodoc-typehints"
 ]
 

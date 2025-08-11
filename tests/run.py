@@ -238,10 +238,40 @@ def test_model(pytestconfig):
    generate_or_validate(slide,'model',pytestconfig)                 
 
 
+def test_demo(pytestconfig):
+   """
+   Test demo.
+   """
+
+   text  = 'Blue Flower Animated" (https://skfb.ly/oDIqT) by morphy.vision is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).'
+
+   s0 = Slide().model3D(f'{assets_prefix}/model.glb',y=0.4).text(text,y=0.9,fontsize=0.02,w=0.3).text('Interact with it!',y=0.1,color='orange',fontsize=0.06)
+
+   s1 = Slide().molecule('9B31',y=0.6).text('Rotate it!',y=0.1,color='orange',fontsize=0.06)
+
+
+   df = px.data.iris()
+
+   fig = px.scatter(df, x="sepal_width", \
+                   y="sepal_length", \
+                   color="species")
+
+
+   s2 = Slide().plotly(fig,y=0.6).text('Zoom in!',y=0.1,color='orange',fontsize=0.06)
+
+
+   s3 = Slide().python(y=0.6).text('Type code!',y=0.1,color='orange',fontsize=0.06)
+
+   presentation = Presentation([s0,s1,s2,s3])
+
+   generate_or_validate(presentation,'demo',pytestconfig)
+
+
 def test_multislide(pytestconfig):
    """
    Test presentation functionality.
    """
+
 
    s1 = Slide().text('Welcome to Plix!')
 
