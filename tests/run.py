@@ -7,7 +7,6 @@ from plixlab import Slide, Presentation
 from plixlab.utils import normalize_dict
 import plotly.express as px
 from bokeh.plotting import figure, show
-import dash_bio as dashbio
 import pandas as pd
 from typing import Dict, Any
 
@@ -259,23 +258,6 @@ def test_multislide(pytestconfig):
    generate_or_validate(presentation,'multislide',pytestconfig)
 
 
-def test_volcano(pytestconfig):
-   """
-   Test volcano functionality.
-   """
-
-   df = pd.read_csv('https://git.io/volcano_data1.csv')
-
-   fig=dashbio.VolcanoPlot(dataframe=df)
-
-   slide = Slide().plotly(fig)
-
-   generate_or_validate(slide,'volcano',pytestconfig)
-
-
-
-
-
 if __name__ == '__main__':
 
     # Simulate pytestconfig for testing manually
@@ -300,7 +282,6 @@ if __name__ == '__main__':
    #  test_bokeh(pytestconfig)
    #  test_molecule(pytestconfig)
    #  test_multislide(pytestconfig)
-   #  test_volcano(pytestconfig)
    #  test_animation(pytestconfig)
    #  test_welcome(pytestconfig)
    #  test_logo(pytestconfig)

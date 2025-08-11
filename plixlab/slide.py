@@ -193,6 +193,7 @@ class Slide:
         """
  
         style =  {'color':    color,
+                  'whiteSpace': 'nowrap',
                   'fontSize': fontsize}
      
         
