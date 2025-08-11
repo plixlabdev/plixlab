@@ -183,7 +183,7 @@ class Slide:
         :param text: Text content (supports markdown formatting)
         :param x: Horizontal position (0-1, left to right). Defaults to 0.5 (center).
         :param y: Vertical position (0-1, bottom to top). Defaults to 0.5 (center).
-        :param w: Width (fraction or 'auto'). Defaults to 'auto'.
+        :param w: Width (fraction of slide). Defaults to None, which makes it auto.
         :param fontsize: Font size as fraction of screen. Defaults to 0.05.
         :param halign: Horizontal alignment ('left', 'center', 'right'). Defaults to 'center'.
         :param valign: Vertical alignment ('top', 'center', 'bottom'). Defaults to 'center'.
@@ -195,13 +195,15 @@ class Slide:
         style =  {'color':    color,
                   'fontSize': fontsize}
      
+        
         style.update(get_style(x,y,w,'auto',halign,valign))
 
         component = {
-            "type":     "Markdown",
-            "text":     text,
+            "type"    : "Markdown",
+            'display' : "flex",
+            "text"    : text,
             "fontsize": fontsize,
-            "style":    style
+            "style"   : style
         }
 
         self._content.append(component)
@@ -286,7 +288,7 @@ class Slide:
     def shape(self, 
               shapeID: str,
               orientation: float = 0,
-              color: Union[str, List[float]] = "white",
+              color: Union[str, List[float]] = "#FFFFFF",
               aspect_ratio: float = 1,
               x: float = 0.5,
               y: float = 0.5,
@@ -297,7 +299,7 @@ class Slide:
 
         :param shapeID: Identifier for the shape type to generate ('arrow' or 'square').
         :param orientation: Rotation angle in degrees. Defaults to 0.
-        :param color: Shape color as hex string (e.g., "#FF0000") or RGB tuple (0-1 range). Defaults to white.
+        :param color: Shape color as hex string (e.g., "#FF0000") or RGB tuple (0-1 range). Defaults to #FFFFFF (white).
         :param aspect_ratio: For 'square' shapes, height/width ratio. Defaults to 0.5.
         :param x: Horizontal position of the center of the shape (0-1, left to right). Defaults to 0.5 (center).
         :param y: Vertical position of the center of the shape (0-1, bottom to top). Defaults to 0.5 (center).

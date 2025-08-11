@@ -78,7 +78,7 @@ def test_logo(pytestconfig):
    Test logo functionality.
    """
 
-   slide = Slide().text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.1,w=0.2)
+   slide = Slide().text('Welcome to Plix!').img(f'{assets_prefix}/logo.png',y=0.5,w=0.2)
 
    generate_or_validate(slide,'logo',pytestconfig)
 
@@ -89,7 +89,7 @@ def test_markdown(pytestconfig):
 
     slide = Slide().text(
         '<u> This </u> **text** is *really important*.', 
-        x=0.2, y=0.6, fontsize=0.1, color='orange'
+        x=0.5, y=0.6, fontsize=0.1, color='orange'
     )
     generate_or_validate(slide,'markdown',pytestconfig)
 
@@ -150,7 +150,7 @@ def test_shape(pytestconfig):
 
 
    slide = Slide().shape('arrow',x=0.2,y=0.45,w=0.2,orientation=45,color=[1,0.015,0]).\
-              shape('square',x=0.6,y=0.5,w=0.2,aspect_ratio=0.25)
+                  shape('square',x=0.6,y=0.5,w=0.2,aspect_ratio=0.25)
 
    generate_or_validate(slide,'shape',pytestconfig)
 

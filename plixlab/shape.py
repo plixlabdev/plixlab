@@ -119,6 +119,8 @@ def run(shape_id: str,color, orientation, aspect_ratio) -> bytes:
         # Convert hex color to RGB (0-1 range)
         color = np.array(hex_to_rgb(color)) / 255
 
+   
+    print(color)
     context.set_source_rgb(*color)
 
     # Save the current context state before rotation

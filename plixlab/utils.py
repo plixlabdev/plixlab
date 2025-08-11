@@ -79,58 +79,63 @@ def process_plotly(fig: Any) -> Any:
     return fig
 
 
+def get_style(x: float, y: float, w: Union[float, str], h: Union[float, str],
+              halign: str, valign: str) -> Dict[str, Any]:
+    """Generate CSS style for a component based on its position and size."""
 
-def get_style(x: float, y: float, w: float, h: Union[float,str], 
-                 halign: str, valign: str) -> Dict[str, str]:
-        """ Generate CSS style for a component based on its position and size.
+    # Translate factors (percent) for aligning the element's anchor at (x,y)
+    if halign == "center":
+        tx = -50
+    elif halign == "left":
+        tx = 0
+    elif halign == "right":
+        tx = -100
+    else:
+        raise ValueError(f"Invalid horizontal alignment: {halign}")
 
-        Args:
-            x (float): Horizontal position (0-1, left to right).
-            y (float): Vertical position (0-1, bottom to top).
-            w (float): Width (0-1, relative to slide).
-            h (Union[float,str]): Height (0-1, relative to slide or 'auto').
-            halign (str): Horizontal alignment ('left', 'center', 'right').
-            valign (str): Vertical alignment ('top', 'center', 'bottom').
+    if valign == "center":
+        ty = -50
+    elif valign == "top":
+        ty = 0
+    elif valign == "bottom":
+        ty = -100
+    else:
+        raise ValueError(f"Invalid vertical alignment: {valign}")
 
-        Returns:
-            Dict[str, str]: CSS style properties.
-        """
-        
-        style = {}
+    style: Dict[str, Any] = {
+        'position':  'absolute',
+        'left':      f'{x*100}%',
+        'top':       f'{(1 - y)*100}%',   # use top for intuitive translateY
+        'transform': f'translate({tx}%, {ty}%)',
+        'display':   'flex'
+    }
 
-        if halign == "center":
-            tx = -0.5
-        elif halign == "left": 
-            tx = 0   
-        elif halign == "right":
-            tx = -1
-        else:
-            raise ValueError(f"Invalid horizontal alignment: {halign}")    
+  
+    # Flex alignment (content inside the box)
+    if halign == "center":
+        style.update({'justifyContent': 'center', 'textAlign': 'center'})
+    elif halign == "left":
+        style.update({'justifyContent': 'flex-start', 'textAlign': 'left'})
+    else:  # right
+        style.update({'justifyContent': 'flex-end', 'textAlign': 'right'})
 
-        if valign == "center":
-            ty = 0.5
-        elif valign == "top":
-            ty = 1    
-        elif valign == "bottom":
-            ty = 0
-        else:
-            raise ValueError(f"Invalid vertical alignment: {valign}")
-        
-           
-        style = { 'position': 'absolute',
-                  'left':     f'{x*100}%', 
-                  'bottom':   f'{y*100}%', 
-                  'transform': f'translate({tx*100}%,{ty*100}%)',                  
-        }
+    if valign == "center":
+        style.update({'alignItems': 'center'})
+    elif valign == "top":
+        style.update({'alignItems': 'flex-start'})
+    else:  # bottom
+        style.update({'alignItems': 'flex-end'})
 
-        
-        style['width'] = f'{w*100}%' if w is not None else 'auto'
+    # Width/height
+    if w == 'auto' or w is None:
+        style['width'] = 'auto'
+    else:
+        style['width'] = f'{float(w)*100}%'
 
-        if not h == 'auto':
-            style['height'] = f'{h*100}%'
-        else:
-            style['height'] = 'auto'    
+    if h == 'auto' or h is None:
+        style['height'] = 'auto'
+    else:
+        style['height'] = f'{float(h)*100}%'
 
-
-        return style
+    return style
 

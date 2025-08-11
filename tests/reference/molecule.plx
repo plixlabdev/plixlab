@@ -1,1 +1,1 @@
-§slide_0ƒ¨children©slide_0_0„¤type¨molecule¥style…¨position¨absolute¤left¤0.0%¦bottom¤0.0%¥width¤100%¦height¤100%©structure¤9B31¯backgroundColor§#303030¥style¯backgroundColor§#303030©animation‘¡0Â
+§slide_0ƒ¨children©slide_0_0„¤type¨molecule¥styleŠ¨position¨absolute¤left¥50.0%£top¥50.0%©transformµtranslate(-50%, -50%)§display¤flex®justifyContent¦center©textAlign¦centerªalignItems¦center¥width¥80.0%¦height¥80.0%©structure¤9B31¯backgroundColor§#303030¥style¯backgroundColor§#303030©animation‘¡0Â
