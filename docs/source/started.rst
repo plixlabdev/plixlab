@@ -63,6 +63,6 @@ A minimal single-slide presentation can be created with two lines of code
   Presentation([s1,s2]).show()
 
 
-.. import_example:: presentation
+.. import_example:: multislide
 
 | For grid mode, click the top left button.

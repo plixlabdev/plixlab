@@ -2,11 +2,10 @@
 PlixLab Utilities Module
 """
 
-import sys
-import string
-import random
-import os
-from typing import Any, Dict
+
+from typing import Any, Dict,Union,List
+from bokeh.plotting import figure as bokeh_figure
+
 
 
 def normalize_dict(data: Any) -> Any:
@@ -30,7 +29,7 @@ def normalize_dict(data: Any) -> Any:
         return data
 
 
-def process_bokeh(fig: Any) -> None:
+def process_bokeh(fig: bokeh_figure) -> None:
     """
     Apply PlixLab styling to a Bokeh figure for consistent presentation appearance.
 
@@ -80,123 +79,58 @@ def process_plotly(fig: Any) -> Any:
     return fig
 
 
-def convert(value: float) -> str:
-    """
-    Convert a decimal value to a CSS percentage string.
 
-    Args:
-        value (float): Decimal value between 0 and 1
+def get_style(x: float, y: float, w: float, h: Union[float,str], 
+                 halign: str, valign: str) -> Dict[str, str]:
+        """ Generate CSS style for a component based on its position and size.
 
-    Returns:
-        str: CSS percentage string (e.g., "50%")
-    """
-    return str(value * 100) + "%"
+        Args:
+            x (float): Horizontal position (0-1, left to right).
+            y (float): Vertical position (0-1, bottom to top).
+            w (float): Width (0-1, relative to slide).
+            h (Union[float,str]): Height (0-1, relative to slide or 'auto').
+            halign (str): Horizontal alignment ('left', 'center', 'right').
+            valign (str): Vertical alignment ('top', 'center', 'bottom').
+
+        Returns:
+            Dict[str, str]: CSS style properties.
+        """
+        
+        style = {}
+
+        if halign == "center":
+            tx = -0.5
+        elif halign == "left": 
+            tx = 0   
+        elif halign == "right":
+            tx = -1
+        else:
+            raise ValueError(f"Invalid horizontal alignment: {halign}")    
+
+        if valign == "center":
+            ty = 0.5
+        elif valign == "top":
+            ty = 1    
+        elif valign == "bottom":
+            ty = 0
+        else:
+            raise ValueError(f"Invalid vertical alignment: {valign}")
+        
+           
+        style = { 'position': 'absolute',
+                  'left':     f'{x*100}%', 
+                  'bottom':   f'{y*100}%', 
+                  'transform': f'translate({tx*100}%,{ty*100}%)',                  
+        }
+
+        
+        style['width'] = f'{w*100}%' if w is not None else 'auto'
+
+        if not h == 'auto':
+            style['height'] = f'{h*100}%'
+        else:
+            style['height'] = 'auto'    
 
 
-def get_style(**options: Any) -> Dict[str, str]:
-    """
-    Generate CSS style dictionary for slide components based on positioning options.
+        return style
 
-    This function converts high-level positioning parameters into CSS styles
-    that can be applied to slide components. It supports multiple positioning
-    modes and automatic layout inference.
-
-    Args:
-        **options: Styling options including:
-            - mode (str): Positioning mode ('manual', 'full', 'hCentered', 'vCentered')
-            - x (float): Horizontal position (0-1, left to right)
-            - y (float): Vertical position (0-1, bottom to top)
-            - w (float): Width (0-1, fraction of slide width)
-            - h (float): Height (0-1, fraction of slide height)
-            - color (str): Text color
-            - align (str): Text alignment
-
-    Returns:
-        dict: CSS style properties as key-value pairs
-
-    Notes:
-        - If both x and y are provided, mode defaults to 'manual'
-        - If only x is provided, mode defaults to 'vCentered'
-        - If only y is provided, mode defaults to 'hCentered'
-        - Default mode is 'full' if no position is specified
-    """
-    style = {"position": "absolute"}
-
-    # Apply color if specified
-    if "color" in options:
-        style["color"] = options["color"]
-
-    # Infer positioning mode based on provided coordinates
-    if "x" in options and "y" in options:
-        options["mode"] = "manual"
-    elif "x" in options and "y" not in options:
-        options["mode"] = "vCentered"
-    elif "x" not in options and "y" in options:
-        options["mode"] = "hCentered"
-
-    mode = options.setdefault("mode", "full")
-
-    if mode == "manual":
-        # Manual positioning with explicit coordinates
-        style.update(
-            {
-                "left": convert(options.setdefault("x", 0)),
-                "bottom": convert(options.setdefault("y", 0)),
-            }
-        )
-
-        if "w" in options:
-            style["width"] = convert(options["w"])
-        if "h" in options:
-            style["height"] = convert(options["h"])
-
-    elif mode == "full":
-        # Full-screen mode with optional width/height
-        w = options.setdefault("w", 1)
-        h = options.setdefault("h", 1)
-        style.update(
-            {
-                "left": convert((1 - w) / 2),
-                "bottom": convert((1 - h) / 2),
-                "width": convert(w),
-                "height": convert(h),
-            }
-        )
-
-    elif mode == "hCentered":
-        # Horizontally centered at specified y position
-        style.update(
-            {
-                "bottom": convert(options["y"]),
-                "textAlign": "center",
-                "alignItems": "center",
-                "justifyContent": "center",
-            }
-        )
-
-        if "w" in options:
-            style["width"] = convert(options["w"])
-        if "h" in options:
-            style["height"] = convert(options["h"])
-
-    elif mode == "vCentered":
-        # Vertically centered at specified x position
-        style.update(
-            {
-                "display": "flex",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "height": convert(options.setdefault("h", 1)),
-                "left": convert(options.setdefault("x", 0)),
-            }
-        )
-
-        if "w" in options:
-            style["width"] = convert(options["w"])
-
-    # Apply text alignment if specified
-    if "align" in options:
-        style["text-align"] = options["align"]
-        style["transform"] = "translateX(-50%)"
-
-    return style

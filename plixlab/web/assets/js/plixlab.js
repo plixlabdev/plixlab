@@ -363,14 +363,15 @@ function add_component(id, data, outer_element) {
         element.id = id;
         element.className = 'interactable';
     
-
         outer_element.appendChild(element);
     
+        console.log(data.style)
         apply_style(element, data.style);
 
         //$3Dmol.embed(element);
 
-        
+        console.log(data.structure)
+
         var viewer = $3Dmol.createViewer(id, {
            defaultcolors: $3Dmol.rasmolElementColors,
            backgroundColor: data.backgroundColor

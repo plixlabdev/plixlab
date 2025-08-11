@@ -76,8 +76,8 @@ def square(context: cairo.Context, scale: float, a: float, b: float) -> None:
         b (float): Height of the rectangle (as a fraction of width)
     """
     # Scale all parameters
-    a *= scale
-    b *= scale
+    a *= scale*0.7
+    b *= scale*0.7
 
     # Draw rectangular shape
     context.move_to(-a / 2, a / 2 - b)
@@ -89,7 +89,7 @@ def square(context: cairo.Context, scale: float, a: float, b: float) -> None:
     context.stroke()
 
 
-def run(shape_id: str, **kwargs: Any) -> bytes:
+def run(shape_id: str,color, orientation, aspect_ratio) -> bytes:
     """
     Generate a geometric shape as a PNG image.
 
@@ -98,23 +98,13 @@ def run(shape_id: str, **kwargs: Any) -> bytes:
 
     Args:
         shape_id (str): Identifier for the shape type ('arrow' or 'square')
-        **kwargs: Shape customization parameters:
-
-            * color (Union[str, Tuple[float, float, float]]): Shape color as hex string
-              (e.g., "#FF0000") or RGB tuple (0-1 range). Defaults to white (1,1,1)
-            * orientation (float): Rotation angle in degrees. Defaults to 0
-            * aspect_ratio (float): For 'square' shapes, height/width ratio.
-                                   Defaults to 0.5
-
+        color (tuple[float, float, float]): RGB color tuple (0-1 range)
+        orientation (float): Rotation angle in degrees.
+        aspect_ratio (float): For 'square' shapes, height/width ratio.
+          
     Returns:
         bytes: PNG image data as bytes
 
-    Raises:
-        ValueError: If the shape_id is not recognized
-
-    Examples:
-        >>> png_data = run('arrow', color='#FF0000', orientation=45)
-        >>> png_data = run('square', color=(0.5, 0.8, 1.0), aspect_ratio=0.8)
     """
     scale = 300
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, scale, scale)
@@ -125,7 +115,6 @@ def run(shape_id: str, **kwargs: Any) -> bytes:
     context.set_line_width(0.01 * scale)
 
     # Handle color parameter
-    color = kwargs.get("color", (1, 1, 1))
     if isinstance(color, str) and color.startswith("#"):
         # Convert hex color to RGB (0-1 range)
         color = np.array(hex_to_rgb(color)) / 255
@@ -136,7 +125,6 @@ def run(shape_id: str, **kwargs: Any) -> bytes:
     context.save()
 
     # Apply rotation
-    orientation = kwargs.get("orientation", 0)
     orientation_rad = orientation * np.pi / 180
     context.rotate(-orientation_rad)
 
@@ -144,7 +132,6 @@ def run(shape_id: str, **kwargs: Any) -> bytes:
     if shape_id == "arrow":
         arrow(context, scale, 0.5, 0.15, 0.25, 0.2)
     elif shape_id == "square":
-        aspect_ratio = kwargs.get("aspect_ratio", 0.5)
         square(context, scale, 1, aspect_ratio)
     else:
         raise ValueError(f"No shape recognized: {shape_id}")

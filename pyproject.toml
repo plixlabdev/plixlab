@@ -32,12 +32,11 @@ dependencies = [
   "msgpack",
   "watchdog",
   "tornado",
+  "nest_asyncio",
   "jsonpatch",
   "dict_hash",
-  "dash_bio",
   "pandas",
-  "bokeh==3.6.2",
-  "numpy<2.0"
+  "bokeh"
 ]
 dynamic = ["version"]
 

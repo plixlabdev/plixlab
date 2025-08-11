@@ -150,7 +150,7 @@ def render_article(bib_data: Dict[str, Any]) -> str:
         return f"Error formatting article citation: {e}"
 
 
-def format(entry_key: str, bibfile: Optional[str] = None, **kwargs: Any) -> str:
+def format(entry_key: str, bibfile: str) -> str:
     """
     Format a bibliographic entry from a BibTeX file.
 
@@ -159,15 +159,10 @@ def format(entry_key: str, bibfile: Optional[str] = None, **kwargs: Any) -> str:
 
     Args:
         entry_key (str): The BibTeX key for the desired entry
-        bibfile (str, optional): Path to BibTeX file. Defaults to ~/.plix/biblio.bib
-        **kwargs: Additional formatting options (reserved for future use)
-
+        bibfile (str): Path to BibTeX file. Defaults to biblio.bib
+       
     Returns:
         str: Formatted citation string with markdown formatting
-
-    Raises:
-        FileNotFoundError: If the specified BibTeX file doesn't exist
-        ValueError: If the entry key is not found or entry type is unsupported
 
     Examples:
         >>> format("smith2023")
@@ -175,7 +170,7 @@ def format(entry_key: str, bibfile: Optional[str] = None, **kwargs: Any) -> str:
     """
     # Default to user-wide bibliography file
     if not bibfile:
-        bibfile = os.path.expanduser("~/.plix/biblio.bib")
+        bibfile = os.path.expanduser("~/biblio.bib")
 
     if not os.path.exists(bibfile):
         return f"Error: Bibliography file not found at {bibfile}"

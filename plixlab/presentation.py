@@ -19,14 +19,6 @@ class Presentation:
 
     A Presentation manages multiple slides, handles animations between slides,
     and provides methods for displaying and saving the complete presentation.
-
-    Args:
-        slides (list): List of Slide objects to include in the presentation
-        title (str): Title of the presentation. Defaults to 'default'.
-
-    Attributes:
-        title (str): The presentation title
-        slides (dict): Dictionary containing all slide data with animations
     """
 
     def __init__(self, slides: List[Any] = [], title: str = "default") -> None:
@@ -37,6 +29,12 @@ class Presentation:
             data.update(slide._get(f"slide_{s}"))
 
         self.slides = data
+        """
+        Initialize a Presentation object.
+
+        :param slides: List of Slide objects to include in the presentation
+        :param title: Title of the presentation. Defaults to 'default'.
+        """
 
    
 
@@ -52,6 +50,14 @@ class Presentation:
         """
         nest_asyncio.apply()
         run(self.slides, hot_reload=hot_reload, carousel=carousel)
+        """
+        Display the presentation in a web browser.
+
+        Launches a local server.
+
+        :param hot_reload: Enable autoreload for development (default False)
+        :param carousel: Enable carousel mode for slides (default False)
+        """
 
     def save_standalone(self, directory: str = "output") -> None:
         """
@@ -61,6 +67,15 @@ class Presentation:
 
         Args:
             directory (str): Output directory name. Defaults to 'output'.
+
+        Note:
+            - PlixLab core assets (JS/CSS) are always saved locally
+            - Third-party libraries (Plotly, Bokeh, etc.) use CDN links
+        """
+        """
+        Creates a self-contained presentation directory with PlixLab.
+
+        :param directory: Output directory name. Defaults to 'output'.
 
         Note:
             - PlixLab core assets (JS/CSS) are always saved locally
@@ -97,6 +112,13 @@ class Presentation:
         Args:
             filename (str): Output filename without extension. Defaults to 'data'.
         """    
+        """
+        Save presentation data to a .plx file.
+
+        Saves the presentation data in a binary format that can be loaded later.
+
+        :param filename: Output filename without extension. Defaults to 'data'.
+        """
 
         binary_data = self.get_binary()
 
@@ -111,6 +133,11 @@ class Presentation:
         Returns:
             dict: Complete presentation data including all slides and animations
         """
+        """
+        Get the presentation data dictionary.
+
+        :return: Complete presentation data including all slides and animations
+        """
 
         return self.slides
 
@@ -121,6 +148,11 @@ class Presentation:
         Returns:
             str: The title of the presentation
         """
+        """
+        Get the presentation title.
+
+        :return: The title of the presentation
+        """
 
         return self.title
 
@@ -130,6 +162,11 @@ class Presentation:
 
         Returns:
             bytes: Binarized presentation data
+        """
+        """
+        Get presentation data in binary format.
+
+        :return: Binarized presentation data
         """
 
         normalized_data = normalize_dict(self.slides)

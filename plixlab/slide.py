@@ -8,11 +8,14 @@ import io
 from typing import Any, Dict, List, Union, TYPE_CHECKING
 import numpy as np
 import plotly.io as pio
+from plotly.graph_objs import Figure as plotly_figure
 from .utils import get_style, process_plotly, process_bokeh
 from .shape import run as shape
 from . import Bibliography
 from bokeh.embed import json_item
 from .presentation import Presentation
+from bokeh.plotting import figure as bokeh_figure
+from matplotlib.figure import Figure as matplotlib_figure
 
 
 class Slide:
@@ -22,13 +25,6 @@ class Slide:
     A Slide can contain multiple components like text, images, plots, videos,
     3D models, and interactive elements. Each component can have custom animations.
 
-    Args:
-        background (str): Background color in hex format. Defaults to '#303030'.
-
-    Attributes:
-        content (list): List of components added to the slide
-        style (dict): Slide styling including background color
-        animation (list): Animation definitions for slide components
     """
 
 
@@ -128,18 +124,21 @@ class Slide:
 
         return slide_events
 
-    def cite(self, key: Union[str, List[str]], **argv: Any) -> 'Slide':
+    def cite(self, 
+             key:       Union[str, List[str]],
+             bibfile:   str = 'biblio.bib', 
+             fontsize:  float = 0.03, 
+             color:     str = "white",
+             animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
-        Add citation(s) to the slide.
+        Add citation(s) to the slide. Multiple citations are stacked vertically.
 
-        Args:
-            key (str or list): Citation key(s) to format and display
-            **argv: Styling options including:
-                - fontsize (float): Font size for citations. Defaults to 0.03.
-                - animation (list/int): Animation sequence for this component
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param key: Citation key(s) to format and display
+        :param bibfile: Path to the bibliography file. Defaults to 'biblio.bib'.
+        :param fontsize: Font size for citations. Defaults to 0.03.
+        :param color: Font color for citations. Defaults to 'white'.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click (e.g., [1, 0, 1] shows the component on the first and third clicks). An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
 
         if not isinstance(key, list):
@@ -148,107 +147,125 @@ class Slide:
             keys = key
 
         for i, key in enumerate(keys):
-            text = Bibliography.format(key, **argv)
+            text = Bibliography.format(key,bibfile)
 
             print(f"{i * 4 + 1}%")
-
-            style: Dict[str, str] = {}
-            style.setdefault("color", "#DCDCDC")
-            style.update(
-                {"position": "absolute", "left": "1%", "bottom": f"{i * 4 + 1}%"}
-            )
-
+          
+            style = {"color":color,"position": "absolute", "left": "1%", "bottom": f"{i * 4 + 1}%"}
+            
             tmp = {
-                "type": "Markdown",
-                "text": text,
-                "fontsize": argv.setdefault("fontsize", 0.03),
-                "style": style,
+                "type":     "Markdown",
+                "text":     text,
+                "fontsize": fontsize,
+                "style":    style,
             }
 
             self._content.append(tmp)
-            self._add_animation(**argv)
+            self._animation.append(animation)
 
         return self
 
-    def text(self, text: str, **argv: Any) -> 'Slide':
+    def text(self, 
+             text:      str, 
+             x:         float = 0.5,
+             y:         float = 0.5,
+             w:         Union[float,str] = 'auto',
+             fontsize:  float= 0.05,
+             halign:    str = "center",
+             valign:    str = "center",
+             animation: Union[List[bool], int] = [1],
+             color:     str = "white") -> 'Slide':
         """
         Add text content to the slide.
 
         Adds markdown-formatted text with customizable styling and positioning.
 
-        Args:
-            text: Text content (supports markdown formatting)
-            **argv: Styling options including:
-                - mode (str): Positioning mode ('center', 'left', 'right', etc.)
-                - fontsize (float): Font size as fraction of screen. Defaults to 0.05.
-                - animation (list/int): Animation sequence for this component
-                - Additional CSS styling options
-
-        Returns:
-            Returns self for method chaining.
+        :param text: Text content (supports markdown formatting)
+        :param x: Horizontal position (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (fraction or 'auto'). Defaults to 'auto'.
+        :param fontsize: Font size as fraction of screen. Defaults to 0.05.
+        :param halign: Horizontal alignment ('left', 'center', 'right'). Defaults to 'center'.
+        :param valign: Vertical alignment ('top', 'center', 'bottom'). Defaults to 'center'.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :param color: Text color. Defaults to 'white'.
+        :return: The slide object (self), allowing method chaining.
         """
+ 
+        style =  {'color':    color,
+                  'fontSize': fontsize}
+     
+        style.update(get_style(x,y,w,'auto',halign,valign))
 
-        argv.setdefault("mode", "center")
-        style = get_style(**argv)
-        style.setdefault("color", "#DCDCDC")
-
-        tmp = {
-            "type": "Markdown",
-            "text": text,
-            "fontsize": argv.setdefault("fontsize", 0.05),
-            "style": style,
+        component = {
+            "type":     "Markdown",
+            "text":     text,
+            "fontsize": fontsize,
+            "style":    style
         }
 
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def model3D(self, filename: str, **argv: Any) -> 'Slide':
+    def model3D(self, filename: str, 
+                 x: float = 0.5,
+                 y: float = 0.5, 
+                 w: float = 0.8, 
+                 h: float = 0.8, 
+                 animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a 3D model to the slide.
 
-        Args:
-            filename (str): Path to the 3D model file
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional positioning and appearance options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param filename: Path to the 3D model file
+        :param x: Horizontal position of the center of the model (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the model (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param h: Height (0-1, relative to slide). Defaults to 0.8.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
-        style = get_style(**argv)
 
+       
         with open(filename, "rb") as f:
             url = f.read()
 
-        tmp = {
-            "type": "model3D",
+        style = get_style(x, y, w, h, "center", "center")    
+
+        component = {
+            "type":      "model3D",
             "className": "interactable componentA",
-            "src": url,
-            "style": style,
+            "src":        url,
+            "style":      style,
         }
 
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def img(self, url: str, **argv: Any) -> 'Slide':
+    def img(self, url: str, x: 
+            float = 0.5, 
+            y: float = 0.5,
+            w: float = 0.8,
+            h: Union[float,str] = 'auto', 
+            animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add an image to the slide.
 
         Supports both local file paths and URLs. Local files are read and embedded.
 
-        Args:
-            url (str): Path to local image file or URL to remote image
-            **argv: Styling options including:
-                - frame (bool): Whether to add a border frame. Defaults to False.
-                - frame_color (str): Color of the frame border. Defaults to '#DCDCDC'.
-                - animation (list/int): Animation sequence for this component
-                - Additional CSS styling options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param url: Path to local image file or URL to remote image
+        :param x: Horizontal position of the center of the image (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the image (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param h: Height (0-1, relative to slide). Defaults to 'auto', which keeps proportions based on width.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
+        
+        Note:
+            If the URL starts with "http", it is treated as a remote image. Otherwise, it is read as a local file.
         """
+            
 
         if url[:4] != "http":
             with open(url, "rb") as f:
@@ -256,211 +273,272 @@ class Slide:
         else:
             url_content = url
 
-        style = get_style(**argv)
-        if argv.setdefault("frame", False):
-            style["border"] = "2px solid " + argv.setdefault("frame_color", "#DCDCDC")
+        style = get_style(x, y, w, h, "center", "center")
+ 
+        component = {"type": "Img",
+                     "src":   url_content,
+                     "style": style}
 
-        tmp = {"type": "Img", "src": url_content, "style": style}
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def shape(self, shapeID: str, **argv: Any) -> 'Slide':
+    def shape(self, 
+              shapeID: str,
+              orientation: float = 0,
+              color: Union[str, List[float]] = "white",
+              aspect_ratio: float = 1,
+              x: float = 0.5,
+              y: float = 0.5,
+              w: float = 0.2,
+              animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a generated shape to the slide.
 
-        Args:
-            shapeID (str): Identifier for the shape type to generate
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional shape parameters and positioning options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param shapeID: Identifier for the shape type to generate ('arrow' or 'square').
+        :param orientation: Rotation angle in degrees. Defaults to 0.
+        :param color: Shape color as hex string (e.g., "#FF0000") or RGB tuple (0-1 range). Defaults to white.
+        :param aspect_ratio: For 'square' shapes, height/width ratio. Defaults to 0.5.
+        :param x: Horizontal position of the center of the shape (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the shape (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width of the shape as a fraction of slide width. Defaults to 0.2.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
-        style = get_style(**argv)
-        image = shape(shapeID, **argv)
-        tmp = {"type": "Img", "src": image, "style": style}
-        self._content.append(tmp)
-        self._add_animation(**argv)
-        return self
+        style = get_style(x, y, w, 'auto', "center", "center")
 
-    def youtube(self, videoID: str, **argv: Any) -> 'Slide':
+        image = shape(shapeID,color=color, 
+                      orientation=orientation,
+                      aspect_ratio=aspect_ratio)
+
+        component = {"type":  "Img",
+                     "src":   image,
+                     "style": style}
+
+        self._content.append(component)
+        self._animation.append(animation)
+        return self
+    
+
+
+    def youtube(self, videoID: str, 
+                x: float = 0.5,
+                y: float = 0.5,
+                w: float = 0.4,
+                animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a YouTube video to the slide.
 
-        Args:
-            videoID (str): YouTube video ID (the part after 'v=' in YouTube URLs)
-            **argv: Styling options including:
-                - mode (str): Display mode. Defaults to 'full'.
-                - animation (list/int): Animation sequence for this component
-                - Additional CSS styling options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param videoID: YouTube video ID (the part after 'v=' in YouTube URLs)
+        :param x: Horizontal position of the center of the video (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the video (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.4.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
-
-        argv.setdefault("mode", "full")
-        style = get_style(**argv)
+        h = w/0.5625  # Default aspect ratio for YouTube videos (16:9)
+       
+        style = get_style(x, y, w, h, "center", "center")
 
         url = f"https://www.youtube.com/embed/{videoID}?controls=0&rel=0"
 
-        tmp = {
-            "type": "Iframe",
-            "className": "interactable",
-            "src": url,
-            "style": style.copy(),
+        component = {
+                      "type"    : "Iframe",
+                     "className": "interactable",
+                           "src": url,
+                         "style": style,
         }
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def matplotlib(self, fig: Any, **argv: Any) -> 'Slide':
+    def matplotlib(self,
+                   fig: matplotlib_figure, 
+                   x: float = 0.5,
+                   y: float = 0.5,
+                   w: float = 0.8,
+                   h: Union[float, str] = 'auto',
+                   animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a matplotlib figure to the slide.
 
-        Args:
-            fig: Matplotlib figure object
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional positioning and appearance options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param fig: Matplotlib figure object
+        :param x: Horizontal position of the center of the figure (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the figure (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param h: Height (0-1, relative to slide or 'auto'). Defaults to 'auto', which keeps proportions based on width.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
-        style = get_style(**argv)
+
+        style = get_style(x, y, w, h, "center", "center")
+                   
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", transparent=True)
         buf.seek(0)
         url = buf.getvalue()
         buf.close()
-        tmp = {"type": "Img", "src": url, "style": style}
 
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        component= {"type": "Img",
+                    "src":   url, 
+                    "style": style}
 
+
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def bokeh(self, graph: Any, **argv: Any) -> 'Slide':
+
+    def bokeh(self, graph: bokeh_figure, 
+                    x: float = 0.5,
+                    y: float = 0.5,
+                    w: float = 0.8,
+                    animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a Bokeh plot to the slide.
 
-        Args:
-            graph: Bokeh plot object
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional positioning and appearance options
-
-        Returns:
-            Slide: Returns self for method chaining.
+        :param graph: Bokeh plot object
+        :param x: Horizontal position of the center of the plot (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the plot (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
         process_bokeh(graph)
-        style = get_style(**argv)
-        item = json_item(graph)
+        
+        
+        style = get_style(x,y,w,w, halign="center", valign="center")
+    
+        item  = json_item(graph)
 
-        tmp = {"type": "Bokeh", "graph": item, "style": style}
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        component = {"type": "Bokeh", 
+                     "graph": item, 
+                     "style": style}
+
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def plotly(self, fig: Any, **argv: Any) -> 'Slide':
+    def plotly(self, fig: plotly_figure, 
+                x: float = 0.5,
+                y: float = 0.5,
+                w: float = 0.8,
+                animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a Plotly graph to the slide.
 
-        Args:
-            fig: Plotly figure object or path to JSON file (string)
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional positioning and appearance options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param fig: Plotly figure object or path to JSON file (string)
+        :param x: Horizontal position of the center of the plot (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the plot (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
+       
+        
         if isinstance(fig, str):
             fig = pio.read_json(fig + ".json")
 
-        style = get_style(**argv)
+        style = get_style(x,y,w,w,'center','center')
         fig = process_plotly(fig)
         fig_json = fig.to_json()
 
-        component = {"type": "Plotly", "figure": fig_json, "style": style}
+        component = { "type":   "Plotly",
+                     "figure":  fig_json,
+                      "style":  style}
+
+
         self._content.append(component)
-        self._add_animation(**argv)
+        self._animation.append(animation)
         return self
 
-    def molecule(self, structure: Any, **argv: Any) -> 'Slide':
+    def molecule(self, structure: str,
+                    x: float = 0.5,
+                    y: float = 0.5,
+                    w: float = 0.8,
+                    animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a molecular structure visualization to the slide.
 
-        Args:
-            structure: Molecular structure data
-            **argv: Styling options including:
-                - mode (str): Display mode. Defaults to 'full'.
-                - animation (list/int): Animation sequence for this component
-                - Additional CSS styling options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param structure: Molecular structure from the PDB database
+        :param x: Horizontal position of the center of the structure (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the center of the structure (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
-        argv.setdefault("mode", "full")
-        style = get_style(**argv)
+        
+        style = get_style(x, y, w, w, "center", "center")
 
-        tmp = {
-            "type": "molecule",
-            "style": style,
-            "structure": structure,
+        component = {
+            "type":           "molecule",
+            "style":           style,
+            "structure":       structure,
             "backgroundColor": self._style["backgroundColor"],
         }
 
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def python(self, **argv: Any) -> 'Slide':
+    def python(self,x: float = 0.5,
+                y: float = 0.5,
+                w: float = 0.8,
+                h: float = 0.8, 
+                animation: Union[List[bool], int] = [1
+              ]) -> 'Slide':
         """
         Add an interactive Python REPL to the slide.
 
-        Uses JupyterLite to provide a Python interpreter in the browser.
-
-        Args:
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional positioning and appearance options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param x: Horizontal position of the REPL (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the REPL (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param h: Height (0-1, relative to slide). Defaults to 0.8.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
 
-        style = get_style(**argv)
+        style = get_style(x, y, w, h, "center", "center")
         url = (
             "https://jupyterlite.readthedocs.io/en/stable/_static/repl/"
             "index.html?kernel=python&theme=JupyterLab Dark&toolbar=1"
         )
 
-        tmp = {"type": "Iframe", "src": url, "style": style}
+        component = {"type": "Iframe", 
+                     "src":  url, 
+                     "style": style}
 
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
-    def embed(self, url: str, **argv: Any) -> 'Slide':
+    def embed(self, url: str,
+              x: float = 0.5,
+              y: float = 0.5,
+              w: float = 0.8,
+              h: float = 0.8,
+              animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Embed external content via iframe.
 
-        Args:
-            url (str): URL of the content to embed
-            **argv: Styling options including:
-                - animation (list/int): Animation sequence for this component
-                - Additional positioning and appearance options
-
-        Returns:
-            Slide: Returns self for method chaining
+        :param url: URL of the content to embed
+        :param x: Horizontal position of the iframe (0-1, left to right). Defaults to 0.5 (center).
+        :param y: Vertical position of the iframe (0-1, bottom to top). Defaults to 0.5 (center).
+        :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param h: Height (0-1, relative to slide). Defaults to 0.8.
+        :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
+        :return: The slide object (self), allowing method chaining.
         """
 
-        style = get_style(**argv)
-        tmp = {"type": "Iframe", "src": url, "style": style}
-        self._content.append(tmp)
-        self._add_animation(**argv)
+        style = get_style(x, y, w, h, "center", "center")
+
+        component = {"type": "Iframe", 
+                      "src": url,
+                     "style": style}
+
+
+        self._content.append(component)
+        self._animation.append(animation)
         return self
 
     def show(self, **kwargs: Any) -> None:

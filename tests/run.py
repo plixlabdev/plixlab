@@ -66,7 +66,7 @@ def test_welcome(pytestconfig):
 
 def test_animation(pytestconfig):
    """
-   Test multislide.
+   Test animation.
    """
 
    p = Slide().text('Before',animation=[1,0]).text('After',animation=[0,1])
@@ -110,7 +110,7 @@ def test_image(pytestconfig):
     Test image functionality.
     """
     
-    slide = Slide().img(f'{assets_prefix}/image.png',x=0.2,y=0.3,w=0.65)
+    slide = Slide().img(f'{assets_prefix}/image.png',x=0.5,y=0.5,w=0.65)
 
     generate_or_validate(slide,'image',pytestconfig)
 
@@ -271,6 +271,7 @@ def test_volcano(pytestconfig):
    slide = Slide().plotly(fig)
 
    generate_or_validate(slide,'volcano',pytestconfig)
+
 
 
 

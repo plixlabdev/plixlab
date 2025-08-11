@@ -5,7 +5,7 @@ Interactive plots from `Bokeh <bokeh_web>`_ can be embedded with ``bokeh``
 
 .. code-block:: python
 
- from plix import Slide
+ from plixlab import Slide
  from bokeh.plotting import figure, show
 
  x = [1, 2, 3, 4, 5]

@@ -21,7 +21,6 @@ Quick Links
    started
    animations
    hot_reload
-   styling
    reference
 
 
@@ -37,7 +36,6 @@ Quick Links
    plotly
    bokeh
    matplotlib
-   volcano
    molecule
    python
    shape

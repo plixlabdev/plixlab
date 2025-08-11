@@ -5,7 +5,7 @@ Interactive plots from `Plotly <plotly_web>`_ can be embedded with ``plotly``
 
 .. code-block:: python
 
-  from plix import Slide
+  from plixlab import Slide
   import plotly.express as px
 
   df = px.data.iris()
