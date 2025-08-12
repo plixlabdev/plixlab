@@ -67,8 +67,9 @@ def test_animation(pytestconfig):
    """
    Test animation.
    """
-
-   p = Slide().text('Before',animation=[1,0]).text('After',animation=[0,1])
+   p = Slide().text('Text #1',y=0.7).\
+     text('Text #2',y=0.5,animation= 1).\
+     text('Text #3',y=0.3,animation= 2)
 
    generate_or_validate(p,'animation',pytestconfig)
 
@@ -247,7 +248,6 @@ def test_demo(pytestconfig):
 
    s0 = Slide().model3D(f'{assets_prefix}/model.glb',y=0.4).text(text,y=0.9,fontsize=0.02,w=0.3).text('Interact with it!',y=0.1,color='orange',fontsize=0.06)
 
-   s1 = Slide().molecule('9B31',y=0.6).text('Rotate it!',y=0.1,color='orange',fontsize=0.06)
 
 
    df = px.data.iris()
@@ -257,10 +257,11 @@ def test_demo(pytestconfig):
                    color="species")
 
 
-   s2 = Slide().plotly(fig,y=0.6).text('Zoom in!',y=0.1,color='orange',fontsize=0.06)
+   s1 = Slide().plotly(fig,y=0.6).text('Zoom in!',y=0.1,color='orange',fontsize=0.06)
 
+   s2 = Slide().molecule('9B31',y=0.6).text('Rotate it!',y=0.1,color='orange',fontsize=0.06)
 
-   s3 = Slide().python(y=0.6).text('Type code!',y=0.1,color='orange',fontsize=0.06)
+   s3 = Slide().python(y=0.57,x=0.45).text('Type code!',y=0.1,color='orange',fontsize=0.06)
 
    presentation = Presentation([s0,s1,s2,s3])
 

@@ -1,7 +1,7 @@
 Shapes
 ========
 
-It is possible to embed simple shapes. Currently, only arrows and squares are supported
+It is possible to embed simple shapes. Currently, only arrows and squares are supported.
 
 .. code-block:: python
 

@@ -12,6 +12,6 @@ Citations can be imported with the tag ``cite``
 
 .. import_example:: citation
 
-| Multiple citations, which can be added using a list of keys, will be stacked vertically. If ``bibfile`` is not specified, the file ``~/.plix/biblio.bib`` will be used.
+| Multiple citations, which can be added using a list of keys, will be stacked vertically. 
 
 

@@ -10,6 +10,7 @@ function apply_style(element, style) {
     }
 }
 
+//Embed function
 const modal = document.getElementById("embed-modal");
 const overlay = document.getElementById("embed-overlay");
 const closeBtn = document.getElementById("embed-close");
@@ -26,8 +27,15 @@ overlay.addEventListener("click", () => modal.style.display = "none");
 closeBtn.addEventListener("click", () => modal.style.display = "none");
 
 function updateEmbed() {
-  const baseLink = window.location.href.split("?")[0];
-  const link = checkbox.checked ? `${baseLink}?carousel=true` : baseLink;
+  const url = new URL(window.location.href);
+
+  if (checkbox.checked) {
+    url.searchParams.set("carousel", "true");
+  } else {
+    url.searchParams.delete("carousel");
+  }
+
+  const link = url.toString();
 
   linkInput.value = link;
   embedTextarea.value = `
@@ -40,7 +48,6 @@ function updateEmbed() {
   ></iframe>
 </div>`.trim();
 }
-
 checkbox.addEventListener("change", updateEmbed);
 
 // Copy to clipboard with Font Awesome feedback
@@ -55,8 +62,6 @@ document.querySelectorAll("[data-copy]").forEach(btn => {
     }, 1000);
   });
 });
-
-
 
 
 
@@ -85,7 +90,6 @@ function update_markdown(element, field, value) {
         apply_style(element, value);
 
         if (value.alignItems === 'center' && value.justifyContent === 'center') {
-            // Center-align text for all paragraphs inside the container
             let paragraphs = element.querySelectorAll('p');
             paragraphs.forEach(p => {
                 p.style.textAlign = 'center';
@@ -165,8 +169,6 @@ function render_slide(slide_id, slide) {
 
 
 
-// Call this function during initialization
-
 
 export async function render_slides(slides) {
 
@@ -178,11 +180,6 @@ export async function render_slides(slides) {
     for (const slide in slides) {
         render_slide(slide, slides[slide]);    
     }
-
-    //Object.values(slides).forEach((slide, index) => {
-    //    render_slide('slide_'+index, slide); 
-    //});
-
 
     //Initialize datastore
     window.dataStore = {'active_slide': 0, 'index': 0, 'mode': 'presentation'};
@@ -212,17 +209,6 @@ export async function render_slides(slides) {
  
 }
 
-
-
-// function update_component(component_ID, field, value) {
-//     const element = document.getElementById(component_ID);
-//     const className = element.className;
-
-//     //Markdown
-//     if (className.includes('markdownComponent')) {
-//         update_markdown(element, field, value);
-//     }
-// }
 
 function add_component(id, data, outer_element) {
     if (data.type === 'Markdown') {
@@ -323,11 +309,6 @@ function add_component(id, data, outer_element) {
         Plotly.Plots.resize(element); // Ensure proper resizing
                 
             
-    
-        // Initialize the Plotly chart
-    
-    
-        // Optional: Handle thumbnails or other features
 
         const thumbnail = document.createElement('img');
         apply_style(thumbnail, data.style);

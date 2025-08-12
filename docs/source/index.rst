@@ -1,8 +1,8 @@
 
-Welcome to plix's documentation!
-================================
+Welcome to PlixLab's documentation!
+===================================
 
-Plix is a data-centric presentation tool that allows for dynamic slide exploration. Key features include in-slide data analysis and computing, website embedding and interaction with molecular structures. 
+PlixLab is a data-centric presentation tool that allows for dynamic slide exploration. Key features include in-slide data analysis and computing, website embedding and interaction with molecular structures. 
 
 .. import_example:: demo
    :carousel:
