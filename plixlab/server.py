@@ -17,7 +17,6 @@ import os
 import socket
 import webbrowser
 import msgpack
-import threading
 from typing import Any, List
 
 import tornado.ioloop

@@ -1,13 +1,12 @@
 Hot reload
 ===========
 
-When you show a presentation, any change to the document is automatically applied to the live presentation while the local server is running. Hot reload is always enabled to provide a seamless development experience.
+``PlixLab`` features ``hot_reload``, where you can see live changes as you edit the source files of your presentations. To enable this feature, use the option ``hot_reload=True``, e.g.
 
 .. code-block:: python
 
    from plixlab import Slide
 
    # Hot reload is automatically enabled
-   Slide.text('Example Hot Reload').show()
+   Slide.text('Example Hot Reload').show(hot_reload=True)
 
-The hot reload system uses Server-Sent Events (SSE) to notify the browser when changes occur, then opens a WebSocket connection to receive updated presentation data. This ensures responsive updates without inefficient polling.

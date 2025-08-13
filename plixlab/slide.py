@@ -544,32 +544,40 @@ class Slide:
         self._animation.append(animation)
         return self
 
-    def show(self, **kwargs: Any) -> None:
+    def show(self, hot_reload: bool = False, carousel: bool = False,) -> None:
         """
         Show the slide as a single-slide presentation.
 
-        Args:
-            **kwargs: Additional arguments passed to the presentation show method
+        :param hot_reload: Whether to enable hot reloading of the presentation.
+        :param carousel: Whether to enable carousel mode for the presentation.
 
-        Returns:
-            None: Opens presentation in web browser
         """
         from .presentation import Presentation
 
-        Presentation([self]).show(**kwargs)
+        Presentation([self]).show(hot_reload=hot_reload, carousel=carousel)
+
+
+
+    def get_html(self, filename: str = None) -> str:
+        """
+
+        Get a self-contained HTML code (minus external libraries) for the single-slide presentation.
+
+        :param filename: Output filename without extension. If not provided, no file will be saved.
+
+        """
+
+        return Presentation([self]).get_html(filename=filename)
 
     def save_standalone(self, directory: str = "output") -> None:
         """
-      
         Creates a self-contained presentation directory with PlixLab.
-     
 
-        Args:
-            directory (str): Output directory name. Defaults to 'output'.
+        :param directory: Output directory name. Defaults to 'output'.
 
         Note:
             - PlixLab core assets (JS/CSS) are saved locally
-            - Third-party libraries (Plotly, Bokeh, etc.) use CDN links
+            - Third-party libraries use CDN links
         """
 
         Presentation([self]).save_standalone(directory=directory)
@@ -580,11 +588,10 @@ class Slide:
         """
         Save presentation data to a .plx file.
 
-        Saves the presentation data in a binary format that can be loaded later.
+        Saves the presentation data in a binary format.
 
-        Args:
-            filename (str): Output filename without extension. Defaults to 'data'.
-        """    
+        :param filename: Output filename without extension. Defaults to 'data'.
+        """
 
         Presentation([self]).save_binary(filename=filename)
 
@@ -592,7 +599,7 @@ class Slide:
 
     def get_data(self) -> dict:
         """
-        Get the slide data (as a dict) as a presentation.
+        Get the one-slide presentation data as a dict.
 
         Returns:
             dict: Slide data formatted as a single-slide presentation
@@ -604,8 +611,10 @@ class Slide:
         """
         Get the binary data as a single-slide presentation.
 
+        :param title: Title of the presentation. Defaults to 'default'.
+
         Returns:
-            bytes: Binarized single-presentation data
+            bytes: Binarized single-presentation data.
         """
         return Presentation([self],title).get_binary()
      

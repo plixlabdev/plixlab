@@ -1,7 +1,7 @@
 import { render_slides } from './plixlab.js';
 
 document.addEventListener('DOMContentLoaded', async function () {
-  const container = document.getElementById('slide-container');
+
 
   function getPlxPathFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -17,11 +17,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const buffer = await response.arrayBuffer();
     const unpackedData = msgpack.decode(new Uint8Array(buffer));
 
-    if (container) {
-      render_slides(unpackedData, container);
-    } else {
-      console.error('Slide container not found in index.html.');
-    }
+    render_slides(unpackedData);
+  
   } catch (err) {
     console.error(`Failed to load ${plxPath}:`, err);
   }

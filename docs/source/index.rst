@@ -24,6 +24,7 @@ Quick Links
    started
    animations
    hot_reload
+   notebook
    reference
 
 
