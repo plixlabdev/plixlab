@@ -554,7 +554,7 @@ class Slide:
         :param carousel: Whether to enable carousel mode for the presentation.
 
         """
-        from .presentation import Presentation
+        
 
         Presentation([self]).show(hot_reload=hot_reload, carousel=carousel)
 

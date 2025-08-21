@@ -126,8 +126,8 @@ class Presentation:
         Returns:
             dict: Complete presentation data including all slides and animations
         """
+        return {'title':self.title,'sides':self.slides}
 
-        return self.slides
 
     def get_html(self, filename: str = None) -> str:
         """
@@ -223,8 +223,8 @@ window.addEventListener('load', function() {{
             bytes: Binarized presentation data
         """
        
-
-        normalized_data = normalize_dict(self.slides)
+        
+        normalized_data = normalize_dict(self.get_data())   
         return msgpack.packb(normalized_data)
        
     
