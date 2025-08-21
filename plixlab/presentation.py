@@ -223,8 +223,10 @@ window.addEventListener('load', function() {{
             bytes: Binarized presentation data
         """
        
-        
-        normalized_data = normalize_dict(self.get_data())   
+
+        normalized_data = normalize_dict(self.get_data())
+        print(normalized_data)
+        #print(normalized_data)
         return msgpack.packb(normalized_data)
        
     
