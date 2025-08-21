@@ -7,7 +7,7 @@ Images are added with ``img``
 
   from plixlab import Slide
  
-  Slide().img('assets/image.png',x=0.2,y=0.3,w=0.65).show()
+  Slide().img('assets/image.png',x=0.5,y=0.5,w=0.65).show()
 
 .. import_example:: image
 

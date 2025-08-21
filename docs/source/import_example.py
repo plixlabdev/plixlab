@@ -37,7 +37,7 @@ class ImportExample(Directive):
         html_content = f'''
 <div style="width: 100%; display: block;">
 <div class="embed-container">
-  <iframe id="{iframe_id}" src="_static/examples/index.html?file=references/{filename}.plx&carousel={is_carousel}" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
+  <iframe id="{iframe_id}" src="_static/examples/index.html?embed=True&file=references/{filename}.plx&carousel={is_carousel}" frameborder="0" allowfullscreen style="border:2px solid gray;"></iframe>
 </div>
 </div>
 <div style="height: 1em;"></div> 

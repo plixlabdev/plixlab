@@ -2,142 +2,111 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-function fitCameraToObject(camera, box, controls) {
+function fitCameraToObject(camera, box, controls, padding = 6) {
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
 
     const maxSize = Math.max(size.x, size.y, size.z);
-    const fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * camera.fov / 360));
+    const fitHeightDistance = maxSize / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
     const fitWidthDistance = fitHeightDistance / camera.aspect;
-    const distance = Math.max(fitHeightDistance, fitWidthDistance) * 7;
 
+    const distance = Math.max(fitHeightDistance, fitWidthDistance) * padding;
+
+    // Position camera
     camera.position.copy(center);
-    camera.position.z += distance; 
-
+    camera.position.z += distance;
 
     camera.near = distance / 100;
     camera.far = distance * 100;
     camera.updateProjectionMatrix();
-    
+
+    // Update controls
     controls.target.copy(center);
-
     controls.update();
-
 }
 
 function extractAndDivide(str) {
-    var numericPart = parseFloat(str.replace('%', '')); 
-    return numericPart / 100; 
+    return parseFloat(str.replace('%', '')) / 100;
 }
 
+export function import3DModel(modelDataURL, width, onLoadCallback) {
+    const w = extractAndDivide(width);
 
-let activeModels = []; 
-
-function toggleAnimations(shouldAnimate) {
-    activeModels.forEach(modelObj => {
-        if (modelObj.mixer) {
-            // You can also add individual control here if needed
-            modelObj.mixer.timeScale = shouldAnimate ? 1 : 0; // 0 stops, 1 plays
-        }
-    });
-}
-
-
-function import3DModel(modelDataURL,width){
-
-   
-    const w = extractAndDivide(width)
-    console.log('Three.js version:', THREE.REVISION);
-     //Scene
-    //const scene = new Scene();
+    // Scene + clock
     const scene = new THREE.Scene();
     const clock = new THREE.Clock();
 
-    // Increase the intensity of the ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-    scene.add(ambientLight);
-    
-    // Increase the intensity of the directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2); 
-    directionalLight.position.set(1, 2, 4);
-    scene.add(directionalLight);
-    
-    // Optionally, add another light source if you want more illumination in your scene
-    const pointLight = new THREE.PointLight(0xffffff, 1.5, 100); 
-    pointLight.position.set(-2, 3, -5); 
-    scene.add(pointLight);
-    
-     //Camera
-     const camera = new THREE.PerspectiveCamera(50, 16/9*w, 0.1, 1000);
-     camera.position.z = 5;
-    
-     //Renderer
-     const renderer = new THREE.WebGLRenderer({ alpha: true });
-     renderer.setClearColor(0x000000, 0);  // 
-     renderer.setSize(window.innerWidth, window.innerHeight);
-    
-    
-     const controls = new OrbitControls(camera, renderer.domElement);
-    
-     const arrayBuffer = modelDataURL.data ? new Uint8Array(modelDataURL.data) : new Uint8Array(modelDataURL);
+    // Lights
+    const lights = [
+        new THREE.AmbientLight(0xffffff, 1),
+        new THREE.DirectionalLight(0xffffff, 2),
+        new THREE.PointLight(0xffffff, 1.5, 100),
+    ];
+    lights[1].position.set(1, 2, 4);
+    lights[2].position.set(-2, 3, -5);
+    scene.add(...lights);
 
+    // Camera
+    const camera = new THREE.PerspectiveCamera(50, 16 / 9 * w, 0.1, 1000);
+    camera.position.z = 5;
 
-     const blob        = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
-     const blobURL     = URL.createObjectURL(blob);
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        preserveDrawingBuffer: true,
+    });
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-     
-     const loader = new GLTFLoader();
-     let mixer;
-    
-     
-     loader.load(blobURL, function(obj) {
-     scene.add( obj.scene );
-   
+    // Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    renderer.domElement.threeControls = controls;
 
-      // Animation handling
-      if (obj.animations && obj.animations.length > 0) {
-        mixer = new THREE.AnimationMixer(obj.scene);
-        obj.animations.forEach((clip) => {
-            mixer.clipAction(clip).play();
-        });
-      }
+    // Model loader
+    const arrayBuffer = modelDataURL.data
+        ? new Uint8Array(modelDataURL.data)
+        : new Uint8Array(modelDataURL);
 
-     //Calculate bounding box and center   
-     var box = new THREE.Box3().setFromObject( obj.scene );
-     const center = box.getCenter(new THREE.Vector3());
-    
-     //Adjust camera target
-     controls.target.copy(center);
-     camera.lookAt(center);
+    const blobURL = URL.createObjectURL(new Blob([arrayBuffer], { type: 'model/gltf-binary' }));
+    const loader = new GLTFLoader();
 
-     fitCameraToObject(camera, box, controls);
-    
-      // Add the model and its mixer to the activeModels array
-      activeModels.push({ model: obj.scene, mixer: mixer });
-      
-     })
-    
-    
-     function animate() {
-        requestAnimationFrame(animate);
+    let mixer;
+    loader.load(blobURL, (obj) => {
+        scene.add(obj.scene);
 
-          // Update the mixer on each frame
-          if (mixer) {
-            const delta = clock.getDelta(); // Assuming you've defined a THREE.Clock
-            mixer.update(delta);
+        // Setup animations if present
+        if (obj.animations?.length) {
+            mixer = new THREE.AnimationMixer(obj.scene);
+            obj.animations.forEach((clip) => mixer.clipAction(clip).play());
         }
 
+        // Fit camera to model
+        const box = new THREE.Box3().setFromObject(obj.scene);
+        fitCameraToObject(camera, box, controls);
+
+        if (onLoadCallback) onLoadCallback();
+    });
+
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (mixer) mixer.update(clock.getDelta());
         controls.update();
         renderer.render(scene, camera);
-     }
-    
-     animate();
-    
-
-    return renderer.domElement
-    
     }
-    
+    animate();
+
+    // Store refs for thumbnails
+    const canvas = renderer.domElement;
+    canvas.threeRenderer = renderer;
+    canvas.threeScene = scene;
+    canvas.threeCamera = camera;
+    canvas.threeControls = controls;
+
+    return canvas;
+}
+
 
 
 function apply_style(element, style) {
@@ -155,6 +124,7 @@ const modal = document.getElementById("embed-modal");
 const overlay = document.getElementById("embed-overlay");
 const closeBtn = document.getElementById("embed-close");
 const checkbox = document.getElementById("carousel-toggle");
+const embedCheckbox = document.getElementById("embed-toggle");
 const linkInput = document.getElementById("embed-link");
 const embedTextarea = document.getElementById("embed-code");
 
@@ -170,9 +140,15 @@ function updateEmbed() {
   const url = new URL(window.location.href);
 
   if (checkbox.checked) {
-    url.searchParams.set("carousel", "true");
+    url.searchParams.set("carousel", "True");
   } else {
     url.searchParams.delete("carousel");
+  }
+
+  if (embedCheckbox.checked) {
+    url.searchParams.set("embed", "True");
+  } else {
+    url.searchParams.delete("embed");
   }
 
   const link = url.toString();
@@ -189,6 +165,7 @@ function updateEmbed() {
 </div>`.trim();
 }
 checkbox.addEventListener("change", updateEmbed);
+embedCheckbox.addEventListener("change", updateEmbed);
 
 // Copy to clipboard with Font Awesome feedback
 document.querySelectorAll("[data-copy]").forEach(btn => {
@@ -269,28 +246,6 @@ function update_markdown(element, field, value) {
 }
 
 
-function change_plotly_static(slide, staticc) {
-    const slideElement = document.getElementById(slide);
-    const plotlyElements = slideElement.querySelectorAll('.PLOTLY');
-
-    plotlyElements.forEach(element => {
-        if (element.data && element.layout && element.stored_style) {
-          //  apply_style(element, element.stored_style);
-            element.layout.autosize = true;
-            Plotly.react(element.id, element.data, element.layout, {
-                staticPlot: staticc,
-                responsive: true,
-                scrollZoom: true
-            });
-        } else {
-            console.warn(`Plotly data or layout is missing for element with id: ${element.id}`);
-        }
-    });
-}
-
-// Array to store initialization promises
-let initializationPromises = [];
-
 function render_slide(slide_id, slide) {
     let element = document.createElement('div');
     element.className = 'slide';
@@ -316,17 +271,19 @@ export async function render_slides(slides) {
     const slides_to_remove = document.querySelectorAll('.slide');
     slides_to_remove.forEach(slide => slide.remove());
 
-
+    // Create all slides
     for (const slide in slides) {
-        render_slide(slide, slides[slide]);    
+        render_slide(slide, slides[slide]);
     }
 
     //Initialize datastore
     window.dataStore = {'active_slide': 0, 'index': 0, 'mode': 'presentation'};
 
-
-
-    await initializeCharts();
+    // Set initial slide visibility - show first slide, hide others
+    const allSlides = document.querySelectorAll(".slide");
+    allSlides.forEach((slide, index) => {
+        slide.style.visibility = index === 0 ? 'visible' : 'hidden';
+    });
     
     // Handle MathJax typesetting after content is loaded
     if (window.MathJax && window.MathJax.typesetPromise) {
@@ -346,6 +303,9 @@ export async function render_slides(slides) {
             console.warn('MathJax initialization failed:', error);
         }
     }
+
+    // Now populate sidebar after ALL slides are fully rendered
+    populateSidebar();
  
 }
 
@@ -355,7 +315,7 @@ window.render_slides = render_slides;
 function add_component(id, data, outer_element) {
     if (data.type === 'Markdown') {
         const element = document.createElement('div');
-        element.className = 'markdownComponent interactable componentA';
+        element.className = 'markdownComponent COMPONENT_MARKDOWN';
         element.id = id;
         outer_element.appendChild(element);
         update_markdown(element, 'text', data.text);
@@ -366,7 +326,7 @@ function add_component(id, data, outer_element) {
     if (data.type === 'Img') {
         // Create the element (assuming it's an img tag)
         const element = document.createElement('img');
-        element.className = 'interactable componentA';
+        element.className = 'COMPONENT_IMG';
         element.id = id;
         outer_element.appendChild(element);
 
@@ -390,11 +350,43 @@ function add_component(id, data, outer_element) {
 
     if (data.type === 'model3D') {
         function add_model(src) {
-            const element = import3DModel(src, data.style.width);
+            // Create a Promise that resolves when the 3D model is loaded
+            let resolveModelLoaded;
+            const modelLoadedPromise = new Promise((resolve) => {
+                resolveModelLoaded = resolve;
+            });
+
+            const element = import3DModel(src, data.style.width, () => {
+                // This callback is called when the model is fully loaded
+                resolveModelLoaded();
+            });
+            
             element.id = id;
             outer_element.appendChild(element);
-            element.className = 'interactable componentA';
+            element.className = 'COMPONENT_MODEL3D';
             apply_style(element, data.style);
+
+            // Store the Promise on the element
+            element.modelLoadedPromise = modelLoadedPromise;
+
+       element.generateThumbnail = async function() {
+    await element.modelLoadedPromise;
+    
+    // Ensure we have the Three.js references
+    if (element.threeRenderer && element.threeScene && element.threeCamera) {
+        // Force a render to ensure current state
+        element.threeRenderer.render(element.threeScene, element.threeCamera);
+        
+        return new Promise((resolve) => {
+            requestAnimationFrame(() => {
+                resolve(element.toDataURL('image/png'));
+            });
+        });
+    }
+    
+    return null;
+};
+
         }
 
         if (typeof data.src === 'string' && data.src.startsWith("https")) {
@@ -410,10 +402,9 @@ function add_component(id, data, outer_element) {
     if (data.type === 'Iframe') {
         const element = document.createElement('iframe');
         element.setAttribute('frameborder', '1');
-        //console.log(data)
         element.src = data.src;
         element.id = id;
-        element.className = 'interactable componentA';
+        element.className = 'COMPONENT_IFRAME';
         apply_style(element, data.style);
         outer_element.appendChild(element);
     }
@@ -429,65 +420,99 @@ function add_component(id, data, outer_element) {
         element.id = id;
     
         apply_style(element, data.style);
-        element.stored_style = data.style;
-        element.className = 'PartA interactable PLOTLY';
+      
+        element.className = 'COMPONENT_PLOTLY'; 
         outer_element.appendChild(element);
     
         const figure = JSON.parse(data.figure);
 
-        // Resize observer for Plotly charts
-        const observer = new ResizeObserver(() => {Plotly.Plots.resize(element);})
+        // Create a Promise that resolves when the plot is rendered
+        element.plotlyLoadedPromise = new Promise((resolve) => {
+            element.resolvePlotlyLoaded = resolve;
+        });
 
-        element.observer = observer;
-
-        const style = element.stored_style;
-        if (style) {
-          element.style.width = style.width || '100%';
-          element.style.height = style.height || '100%';
-          element.style.minWidth = '300px'; 
-          element.style.minHeight = '200px';
-        }
-        Plotly.react(element, figure.data, figure.layout, config);
-        Plotly.Plots.resize(element); // Ensure proper resizing
+        // Render the plot and resolve Promise when complete
+        Plotly.react(element, figure.data, figure.layout, config).then(() => {
+            // Resolve the Promise when Plotly is fully rendered
+            element.resolvePlotlyLoaded();
+        });
+      
+        // Store thumbnail generation function for sidebar use
+        element.generateThumbnail = async function() {
+            try {
+                // Wait for Plotly to be fully rendered using Promise
+                await element.plotlyLoadedPromise;
                 
-            
-
-        const thumbnail = document.createElement('img');
-        apply_style(thumbnail, data.style);
-        outer_element.appendChild(thumbnail);
-        thumbnail.className = 'PartB interactable';
-        thumbnail.id = id + 'THUMB';
-        thumbnail.style.visibility = 'hidden';
-    
-        async function generateThumbnail(data, element, thumbnail) {
-        try {
-                const gd = await Plotly.react(element, figure.data, figure.layout, config);
-                const url = await Plotly.toImage(gd);
-                thumbnail.src = url;
+                const url = await Plotly.toImage(element, {format: 'png'});
+                return url;
             } catch (error) {
-                console.error("Error while processing the graph:", error);
+                console.error("Error generating Plotly thumbnail:", error);
+                return null;
             }
-        }
-    
-        const initializationPromise = generateThumbnail(data, element, thumbnail);
-        initializationPromises.push(initializationPromise);
+        };
     }
 
     if (data.type === 'Bokeh') {
         const element = document.createElement('div');
         element.id = id;
         outer_element.appendChild(element);
-        element.className = 'interactable componentA';
+        element.className = 'COMPONENT_BOKEH';
         apply_style(element, data.style);
 
-        async function loadBokehFromJson() {
-            try {
-                Bokeh.embed.embed_item(data.graph, element);
-            } catch (error) {
-                console.error("Error loading Bokeh plot:", error);
-            }
+        try {
+            Bokeh.embed.embed_item(data.graph, element);
+        } catch (error) {
+            console.error("Error embedding Bokeh plot:", error);
         }
-        loadBokehFromJson();
+
+        // Add thumbnail generation using Bokeh's native export
+        element.generateThumbnail = async function() {
+            try {
+                // Wait for Bokeh to populate the index
+                const waitForBokehIndex = () => {
+                    return new Promise((resolve) => {
+                        const checkIndex = () => {
+                            const plotViews = Object.values(Bokeh.index);
+                            if (plotViews.length > 0) {
+                                resolve(plotViews);
+                            }
+                        };
+                        
+                        checkIndex();
+                        
+                        const observer = new MutationObserver(() => {
+                            checkIndex();
+                            if (Object.values(Bokeh.index).length > 0) {
+                                observer.disconnect();
+                            }
+                        });
+                        
+                        observer.observe(element, { childList: true, subtree: true });
+                    });
+                };
+                
+                const plotViews = await waitForBokehIndex();
+                if (plotViews.length === 0) return null;
+                
+                const targetPlotView = plotViews.find(view => 
+                    view.el && element.contains(view.el)
+                ) || plotViews[0];
+                
+                if (!targetPlotView) return null;
+                
+                const blob = await targetPlotView.export().to_blob();
+                
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                
+            } catch (error) {
+                return null;
+            }
+        };
+
     }
 
     if (data.type === 'molecule') {
@@ -495,63 +520,182 @@ function add_component(id, data, outer_element) {
         const element = document.createElement("div");
        
         element.id = id;
-        element.className = 'interactable';
+        element.className = 'COMPONENT_MOLECULE';
     
         outer_element.appendChild(element);
     
-        console.log(data.style)
         apply_style(element, data.style);
-
-        //$3Dmol.embed(element);
-
-        console.log(data.structure)
-
+      
         var viewer = $3Dmol.createViewer(id, {
            defaultcolors: $3Dmol.rasmolElementColors,
            backgroundColor: data.backgroundColor
         });
 
+        // Create a Promise that resolves when the molecule is loaded
+        element.moleculeLoadedPromise = new Promise((resolve) => {
+            element.resolveMoleculeLoaded = resolve;
+        });
+
+        // Store thumbnail generation function immediately (before download completes)
+        element.generateThumbnail = async function() {
+            try {
+                // Wait for molecule to be fully loaded using Promise
+                await element.moleculeLoadedPromise;
+                
+                // Get canvas and generate thumbnail using toDataURL
+                const canvas = viewer.getCanvas ? viewer.getCanvas() : element.querySelector('canvas');
+                if (canvas) {
+                    return canvas.toDataURL('image/png');
+                }
+                
+                return null;
+            } catch (error) {
+                console.error("Error generating molecule thumbnail:", error);
+                return null;
+            }
+        };
 
         $3Dmol.download("pdb:" + data.structure, viewer,{}, function () {
             viewer.setBackgroundColor(data.backgroundColor);
-                  viewer.setViewStyle({style:"outline"});
-                  viewer.setStyle({},{cartoon:{ color: 'spectrum'}});
-                  viewer.render();
+            viewer.setViewStyle({style:"outline"});
+            viewer.setStyle({},{cartoon:{ color: 'spectrum'}});
+            viewer.render();
+            
+            // Resolve the Promise when molecule is fully loaded
+            element.resolveMoleculeLoaded();
         });
- 
-
     }
 }
 
-async function initializeCharts() {
-
-    if (initializationPromises.length > 0) {
-        await Promise.all(initializationPromises);
-    }
 
 
-    // Update visibility
-    const slides = document.querySelectorAll(".slide");
-
-
-
-    for (let i = 0; i < slides.length; i++) {
-        if (i==0) {
-            change_plotly_static(slides[i].id, false);
-            slides[i].style.visibility = 'visible';
-        } else {
-            change_plotly_static(slides[i].id, true);
-            slides[i].style.visibility = 'hidden';
+function populateSidebar() {
+    const sidebarSlides = document.getElementById('sidebar-slides');
+    const slides = document.querySelectorAll("#slide-container .slide");
+    
+    // Clear existing sidebar content
+    sidebarSlides.innerHTML = '';
+    
+    slides.forEach((slide, index) => {
+        const sidebarSlide = document.createElement('div');
+        sidebarSlide.className = 'sidebar-slide';
+        if (index === window.dataStore.active_slide) {
+            sidebarSlide.classList.add('active');
         }
+        
+        // Create a simple copy of the slide for thumbnail
+        const slideClone = slide.cloneNode(true);
+        
+        // Remove the 'slide' class to prevent it from being affected by navigation
+        slideClone.classList.remove('slide');
+        slideClone.classList.add('sidebar-thumbnail');
+        
+        // Give it a unique ID to prevent conflicts
+        slideClone.id = slide.id + '-thumbnail';
+        
+        // Make thumbnail always visible and scaled down
+        slideClone.style.visibility = 'visible !important';
+        slideClone.style.position = 'relative';
+        slideClone.style.transform = 'scale(0.2)';
+        slideClone.style.transformOrigin = 'top left';
+        slideClone.style.width = '500%';
+        slideClone.style.height = '500%';
+        slideClone.style.pointerEvents = 'none';
+        slideClone.style.border = 'none';
+        slideClone.style.overflow = 'hidden';
+        slideClone.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5) !important';
+        slideClone.style.borderRadius = '6px !important';
+        slideClone.style.backgroundColor = 'rgba(50, 50, 50, 0.8)'; // Dark background to see content
+        
+        // Update IDs to avoid conflicts with main slides and handle thumbnails
+        const thumbnailComponents = slideClone.querySelectorAll('*');
+        thumbnailComponents.forEach(async component => {
+            if (component.id) {
+                // Check if the original element has a generateThumbnail method first
+                const originalElement = slide.querySelector(`#${component.id}`);
+                
+                if (originalElement && originalElement.generateThumbnail) {
+                    // Create thumbnail image to replace any component with generateThumbnail method
+                    const thumbnailImg = document.createElement('img');
+                    thumbnailImg.style.width = '100%';
+                    thumbnailImg.style.height = '100%';
+                    thumbnailImg.style.objectFit = 'contain';
+                    thumbnailImg.style.objectPosition = 'center';
+                    
+                    // Generate thumbnail immediately
+                    originalElement.generateThumbnail().then(url => {
+                        if (url) {
+                            thumbnailImg.src = url;
+                        }
+                    }).catch(error => {
+                        console.error("Failed to generate thumbnail:", error);
+                    });
+                    
+                    // Replace the component with the thumbnail image
+                    component.parentNode.replaceChild(thumbnailImg, component);
+                }
+                
+                // Only change ID after thumbnail processing is done
+                component.id = component.id + '-thumbnail';
+            }
+        });
+        
+        sidebarSlide.appendChild(slideClone);
+        
+        // Add click handler for navigation
+        sidebarSlide.onclick = () => {
+            navigateToSlideFromSidebar(index);
+        };
+        
+        sidebarSlides.appendChild(sidebarSlide);
+    });
+    
+    // Force content height to ensure scrolling works
+    const totalHeight = slides.length * 130; // 120px per slide + gap
+    if (totalHeight > window.innerHeight - 30) {
+        sidebarSlides.style.height = totalHeight + 'px';
     }
-
-
 }
 
+// Function to navigate from sidebar thumbnail to presentation mode
+function navigateToSlideFromSidebar(slideIndex) {
+    // Update active slide
+    window.dataStore.active_slide = slideIndex;
+    window.dataStore.index = 0;
+    
+    // Hide all slides except the selected one in the main container
+    const slides = document.querySelectorAll("#slide-container .slide");
+    slides.forEach((slide, index) => {
+        if (index !== slideIndex) {
+            slide.style.visibility = 'hidden';
+        } else {
+            slide.style.visibility = 'visible';
+        }
+    });
+    
 
+    // Update sidebar active state (only border, don't change visibility)
+    const sidebarSlides = document.querySelectorAll('.sidebar-slide');
+    sidebarSlides.forEach((sidebarSlide, index) => {
+        if (index === slideIndex) {
+            sidebarSlide.classList.add('active');
+        } else {
+            sidebarSlide.classList.remove('active');
+        }
+    });
+}
 
-
-
+// Function called by increment/decrementSlide
+function updateSidebarSelection(slideIndex) {
+    const sidebarSlides = document.querySelectorAll('.sidebar-slide');
+    sidebarSlides.forEach((sidebarSlide, index) => {
+        if (index === slideIndex) {
+            sidebarSlide.classList.add('active');
+        } else {
+            sidebarSlide.classList.remove('active');
+        }
+    });
+}
 
 
 window.addEventListener('load', async function () {
@@ -583,12 +727,12 @@ window.addEventListener('load', async function () {
         const swipeTarget = document.getElementById('slide-container');
     
         swipeTarget.addEventListener("touchstart", (e) => {
-            if (e.target.closest('.PLOTLY')) return;
+            if (e.target.closest('.COMPONENT_PLOTLY')) return;
             touchStartX = e.changedTouches[0].screenX;
         }, { passive: false });  // not passive
     
         swipeTarget.addEventListener("touchend", (e) => {
-            if (e.target.closest('.PLOTLY')) return;
+            if (e.target.closest('.COMPONENT_PLOTLY')) return;
             touchEndX = e.changedTouches[0].screenX;
             handleGesture();
         }, { passive: false });  // not passive
@@ -599,10 +743,8 @@ window.addEventListener('load', async function () {
 
     //Keys
     document.addEventListener('keydown', function (event) {
-      
         if (window.dataStore.mode == 'presentation') {
             if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-                
                 incrementSlide();
             } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
                 decrementSlide();
@@ -617,38 +759,12 @@ window.addEventListener('load', async function () {
             }
         }
 
-
-
-        if (window.dataStore.mode == 'grid') {
-        const slides = document.querySelectorAll(".slide");
-        const columns = 4; // assuming 4-column grid
-        const totalSlides = slides.length;
-        const current = window.dataStore.active_slide;
-        let next = current;
-
-        if (event.key === 'ArrowRight') {
-            next = (current + 1 < totalSlides) ? current + 1 : current;
-        } else if (event.key === 'ArrowLeft') {
-            next = (current - 1 >= 0) ? current - 1 : current;
-        } else if (event.key === 'ArrowDown') {
-            next = (current + columns < totalSlides) ? current + columns : current;
-        } else if (event.key === 'ArrowUp') {
-            next = (current - columns >= 0) ? current - columns : current;
+        if (event.key === 'Escape') {
+            // Exit fullscreen mode if active
+            if (document.fullscreenElement && window.dataStore.mode === 'full') {
+                document.exitFullscreen();
+            }
         }
-
-        if (next !== current) {
-            // Update active slide and borders
-            window.dataStore.active_slide = next;
-            slides.forEach((slide, index) => {
-                slide.style.border = (index === next) ? '4px solid #007BFF' : 'none';
-            });
-
-            // Optional: scroll into view
-            slides[next].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-        }
-     }
-
-
     });
 
 
@@ -692,12 +808,11 @@ window.addEventListener('load', async function () {
 
         window.dataStore.active_slide = prev_index;
         window.dataStore.index = 0;
-        change_plotly_static(currentSlide.id, true);
-        change_plotly_static(prevSlide.id, false);  
         const NSlideEvents = JSON.parse(document.querySelectorAll(".slide")[window.dataStore.active_slide].dataset.animation).length;
         window.dataStore.index = NSlideEvents - 1;
 
-
+        // Update sidebar
+        updateSidebarSelection(prev_index);
     }
     
 
@@ -708,7 +823,6 @@ window.addEventListener('load', async function () {
         const currentSlide = slides[window.dataStore.active_slide];
         const newSlide_index = (window.dataStore.active_slide + 1) % totalSlides;
         const newSlide = slides[newSlide_index];
-
        
         currentSlide.style.visibility = 'hidden';
         newSlide.style.visibility = 'visible';
@@ -716,10 +830,8 @@ window.addEventListener('load', async function () {
         window.dataStore.active_slide = newSlide_index
         window.dataStore.index = 0;
 
-        change_plotly_static(currentSlide.id, true);
-        change_plotly_static(newSlide.id, false);
-
-       
+        // Update sidebar
+        updateSidebarSelection(newSlide_index);
     }
 
 
@@ -727,7 +839,21 @@ window.addEventListener('load', async function () {
 
 const urlParams = new URLSearchParams(window.location.search);
 const isCarousel = urlParams.get('carousel') === 'True';
+const isEmbed = urlParams.get('embed') === 'True';
 
+// Handle embed mode
+if (isEmbed) {
+    // Hide only the sidebar, keep the control buttons
+    const sidebar = document.getElementById('slide-sidebar');
+    
+    if (sidebar) sidebar.style.display = 'none';
+    
+    // Make slide container fill entire viewport while maintaining 16:9 ratio
+    const slideContainer = document.getElementById('slide-container');
+    if (slideContainer) {
+        slideContainer.classList.add('embed-mode');
+    }
+}
 
 let carouselInterval;
 
@@ -773,182 +899,51 @@ if (isCarousel) {
         }
     }
 
-    function updatePlotly() {
-        const containers = document.querySelectorAll('.PLOTLY');
-
-        containers.forEach(container => {
-            if (window.dataStore.mode === 'grid') {
-                container.hidden = true;
-            } else {
-                container.hidden = false;
-            }
-        });
-    }
-
-    document.body.addEventListener('click', e => {
-        if (e.target.classList.contains('slide')) {
-            if (window.dataStore.mode === 'grid') {
-
-                const clickedSlideIndex = e.target.id;
-
-                const slides_ids = Array.from(document.querySelectorAll(".slide"), slide => slide.id);
-
-                const old_active_slide = window.dataStore.active_slide;
-
-                window.dataStore.active_slide = slides_ids.indexOf(clickedSlideIndex);
-
-                switchMode();
-
-                change_plotly_static(slides_ids[old_active_slide], true); //old
-                change_plotly_static(clickedSlideIndex, false); //new
-            }
-        }
-    });
-
-
-    function updateInteractivity(){
-
-            // Manage interactable elements
-            const interactables = document.querySelectorAll('.interactable');
-            interactables.forEach(el => {
-            el.style.pointerEvents = (window.dataStore.mode === 'grid') ? 'none' : 'auto';
-            });
-
-            updatePlotly();
-              // Manage PartA and PartB components
-            const componentsA = document.querySelectorAll('.PartA');
-            componentsA.forEach(component => {
-            component.style.visibility = (window.dataStore.mode === 'grid') ? 'hidden' : 'inherit';
-             });
-
-            const componentsB = document.querySelectorAll('.PartB');
-            componentsB.forEach(component => {
-            component.style.visibility = (window.dataStore.mode === 'grid') ? 'inherit' : 'hidden';
-            });
-            //Adjust model animation
-            toggleAnimations(window.dataStore.mode !== 'grid');
-    }
-
-    function switchMode() {
-        //change mode
-        window.dataStore.mode = (window.dataStore.mode === 'grid') ? 'presentation' : 'grid';
-        document.getElementById('slide-container').className = window.dataStore.mode;
-
-        // Hide/Show slides
-        const slides = document.querySelectorAll(".slide");
-
-        slides.forEach((slide, index) => {
-            if (window.dataStore.mode === 'presentation' && index !== window.dataStore.active_slide) {
-                slide.style.visibility = 'hidden';
-            } else {
-                slide.style.visibility = 'visible';
-            }
-        });
-
-        slides.forEach((slide, index) => {
-            if (window.dataStore.mode !== 'grid') {
-                slide.style.border = 'none'; 
-            }
-
-             if (window.dataStore.mode == 'grid' && index == window.dataStore.active_slide) {
-                slide.style.border = '4px solid #007BFF';
-                 
-            }
-        });
-
-       
-
-        function setGridRowsBasedOnN(N) {
-            const numberOfRows = Math.ceil(N / 4);
-            const gridElement = document.querySelector('.grid');
-            gridElement.style.gridTemplateRows = `repeat(${numberOfRows}, 25%)`;
-        }
-
-        if (window.dataStore.mode === 'grid') {
-            const N = document.querySelectorAll(".slide").length;
-            setGridRowsBasedOnN(N);
-        }
-
-
-
-
-        // Adjust switch button styling
-        const switchBtn = document.getElementById('switch-view-btn');
-        switchBtn.className = (window.dataStore.mode === 'grid') ? 'button-base button-light' : 'button-base';
-
-       
-         updateInteractivity();
-        
-
-    }
-
-    document.getElementById('switch-view-btn').addEventListener('click', function () {
-        switchMode();
-    });
 
     function fullScreen() {
+        const slideContainer = document.getElementById('slide-container');
+        const slides = document.querySelectorAll(".slide");
 
+        // Set mode to full
+        window.dataStore.mode = 'full';
 
-        // Hide/Show slides
-        const slides = document.querySelectorAll(".slide"); 
-        var outerContainer = document.getElementById('slide-container');
+        // Add fullscreen mode styling immediately
+        slideContainer.classList.add('fullscreen-mode');
+        
+        // Show only the active slide
+        slides.forEach((slide, index) => {
+            if (index === window.dataStore.active_slide) {
+                slide.style.visibility = 'visible';
+            } else {
+                slide.style.visibility = 'hidden';
+            }
+            slide.style.border = 'none';
+        });
 
-        function adjustFontSize() {
+        // Reset event index and update visibility
+        window.dataStore.index = 0;
+        updateEventVisibility();
 
-            
-             window.dataStore.mode = 'full';
-
-            //In case we are coming from grid
-            outerContainer.classList.remove('grid'); 
-            document.getElementById('switch-view-btn').className = 'button-base';
-
-            updateInteractivity()
-
-            slides.forEach((slide, index) => {
-                               slide.style.border = 'none'; 
+        // Try to request browser fullscreen (optional)
+        if (slideContainer.requestFullscreen) {
+            slideContainer.requestFullscreen().catch(error => {
+                console.log('Browser fullscreen not available or denied:', error);
             });
+        }
 
-            slides.forEach((slide, index) => {
-                    if (index === window.dataStore.active_slide){
-                        slide.style.visibility = 'visible';
-                    }
-                    else {
-                        slide.style.visibility = 'hidden';
-                    }
-            });
-            //---------------------
-
-            outerContainer.classList.add('fullscreen-mode');
-           
-            window.dataStore.index = 0;
-
-           // resizeFullscreenSlide();  
-            updateEventVisibility();
-
-          }
-
-        outerContainer.requestFullscreen().then(adjustFontSize);
-
-        document.onfullscreenchange = function () {
+        // Handle fullscreen exit
+        document.addEventListener('fullscreenchange', function() {
             if (!document.fullscreenElement) {
-                outerContainer.classList.remove('fullscreen-mode');
+                slideContainer.classList.remove('fullscreen-mode');
                 window.dataStore.mode = 'presentation';
 
-                // Show the active slide
-                const slides = document.querySelectorAll(".slide");
+                // Show the active slide in normal presentation mode
                 slides.forEach((slide, index) => {
-                    slide.style.visibility = (index == window.dataStore.active_slide) ? 'visible' : 'hidden';
-                    slide.style.border = 'none'; 
-
-                });
-
-                // Show all components in presentation mode
-                const components = document.querySelectorAll(".componentA");
-                components.forEach((component, index) => {
-                    component.style.visibility = 'inherit';
+                    slide.style.visibility = (index === window.dataStore.active_slide) ? 'visible' : 'hidden';
+                    slide.style.border = 'none';
                 });
             }
-        }
+        });
     }
 
     // Uncomment if you have a full-screen button
@@ -956,6 +951,3 @@ if (isCarousel) {
         fullScreen();
      });
 });
-
-
-

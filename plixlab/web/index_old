@@ -7,13 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>PlixLab</title>
 
-    <link rel="icon" href="/plixlab/assets/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
 
-<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-3.7.3.min.js"></script>
-<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.7.3.min.js"></script>
-<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.7.3.min.js"></script>
-<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.7.3.min.js"></script>
-<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-api-3.7.3.min.js"></script>
+<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
+<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.6.2.min.js"></script>
+<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.js"></script>
+<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.2.min.js"></script>
+<script defer src="https://cdn.bokeh.org/bokeh/release/bokeh-api-3.6.2.min.js"></script>
 
 <!-- THREE_JS_IMPORTMAP_PLACEHOLDER -->
 <script type="importmap">
@@ -31,7 +31,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <!-- PLOTTING_LIBRARIES_PLACEHOLDER -->
-<script defer src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
+<script defer src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 <script defer src="https://3Dmol.org/build/3Dmol-min.js"></script>
 
 
@@ -76,18 +76,27 @@
 
 <body>
     <div class="control-div">
-        <button class="button-base" id="embed" title="Share">
-            <i class="fas fa-link"></i>
-        </button>
-        
-        <button class="button-base" id="full-screen" title="Fullscreen">
-            <i class="fas fa-expand"></i>
-        </button>
-    </div>
+        <div class="row justify-content-center">
 
-    <!-- Permanent Sidebar -->
-    <div id="slide-sidebar" class="sidebar">
-        <div id="sidebar-slides"></div>
+            <div class="col-auto btn-col">
+                <button class="button-base" id="embed">
+                    <i class="fas fa-code"></i>
+                </button>
+            </div>
+            
+            <div class="col-auto btn-col">
+                <button class="button-base" id="full-screen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+             
+            <div class="col-auto btn-col">
+                <button class="button-base" id="switch-view-btn">
+                    <i class="fa-solid fa-border-all"></i>
+                </button>
+            </div>
+        
+        </div>
     </div>
 
     <div id="customModal" class="modal">
@@ -110,10 +119,6 @@
 
     <label class="checkbox-label">
       <input type="checkbox" id="carousel-toggle" /> Enable carousel mode
-    </label>
-
-    <label class="checkbox-label">
-      <input type="checkbox" id="embed-toggle" /> Enable embed mode (fullscreen)
     </label>
 
     <p><strong>Link:</strong></p>

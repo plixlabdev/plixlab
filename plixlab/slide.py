@@ -237,7 +237,6 @@ class Slide:
 
         component = {
             "type":      "model3D",
-            "className": "interactable componentA",
             "src":        url,
             "style":      style,
         }
@@ -347,7 +346,6 @@ class Slide:
 
         component = {
                       "type"    : "Iframe",
-                     "className": "interactable",
                            "src": url,
                          "style": style,
         }
@@ -408,6 +406,8 @@ class Slide:
         :return: The slide object (self), allowing method chaining.
         """
         process_bokeh(graph)
+
+        #Create thumbnail
         
         
         style = get_style(x,y,w,w, halign="center", valign="center")

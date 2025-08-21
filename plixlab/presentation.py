@@ -40,7 +40,13 @@ class Presentation:
         :param title: Title of the presentation. Defaults to 'default'.
         """
 
-   
+    def get_title(self) -> str:
+        """
+        Get the title of the presentation.
+
+        :return: Title of the presentation
+        """
+        return self.title
 
     def show(self, hot_reload:bool=False,carousel:bool=False) -> None:
         """
@@ -121,7 +127,7 @@ class Presentation:
 
         return self.slides
 
-    def get_html(self, filename: None) -> str:
+    def get_html(self, filename: str = None) -> str:
         """
 
         Get a self-contained HTML code (minus external libraries).

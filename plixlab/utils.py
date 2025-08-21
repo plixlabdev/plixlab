@@ -8,6 +8,7 @@ from bokeh.plotting import figure as bokeh_figure
 
 
 
+
 def normalize_dict(data: Any) -> Any:
     """
     Recursively normalize a dictionary, list, or tuple for serialization.
@@ -51,6 +52,8 @@ def process_bokeh(fig: bokeh_figure) -> None:
     fig.background_fill_color = None
     fig.border_fill_color = None
     fig.sizing_mode = "stretch_both"
+
+  
 
 
 def process_plotly(fig: Any) -> Any:
