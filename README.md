@@ -1,4 +1,4 @@
-# PlixLab 
+# <img src="plixlab/web/assets/favicon.ico" alt="PlixLab Logo" width="32" height="32" style="vertical-align: middle;"> PlixLab 
 
 [![PyPI version](https://badge.fury.io/py/plixlab.svg)](https://badge.fury.io/py/plixlab)
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://plixlabdev.github.io/plixlab/)

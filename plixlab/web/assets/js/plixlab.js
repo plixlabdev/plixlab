@@ -272,7 +272,7 @@ function render_slide(slide_id, slide) {
 
 
 
-export async function render_slides(slides) {
+export async function render_slides(presentation) {
 
 
     //Delete current slides
@@ -297,9 +297,16 @@ export async function render_slides(slides) {
         slide.remove();
     });
 
+    // Set browser tab title
+    if (presentation.title) {
+        document.title = `${presentation.title} - PlixLab`;
+    } else {
+        document.title = 'PlixLab';
+    }
+
     // Create all slides
-    for (const slide in slides) {
-        render_slide(slide, slides[slide]);
+    for (const slide in presentation.slides) {
+        render_slide(slide, presentation.slides[slide]);
     }
 
     //Initialize datastore

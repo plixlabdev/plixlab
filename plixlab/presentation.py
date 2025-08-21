@@ -58,7 +58,9 @@ class Presentation:
         :param carousel: Enable carousel mode for slides (default False)
         """
         nest_asyncio.apply()
-        run(self.slides, hot_reload=hot_reload, carousel=carousel)
+
+        data = {'title':self.title, 'slides': self.slides}
+        run(data, hot_reload=hot_reload, carousel=carousel)
         """
         Display the presentation in a web browser.
 
@@ -142,7 +144,6 @@ class Presentation:
         src = os.path.join(base_path, "index.html")
 
         
-
         def is_local(path):
            return not path.startswith(("http://", "https://", "//"))
 
