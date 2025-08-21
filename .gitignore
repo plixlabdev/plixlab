@@ -86,6 +86,7 @@ docs/_build/
 plixlab/_version.py
 # Ignore stray PLX files accidentally dropped into the source static dir
 docs/source/_static/examples/
+docs/source/_static/favicon.ico
 
 # PyBuilder
 .pybuilder/

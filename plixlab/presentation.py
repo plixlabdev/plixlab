@@ -126,7 +126,7 @@ class Presentation:
         Returns:
             dict: Complete presentation data including all slides and animations
         """
-        return {'title':self.title,'sides':self.slides}
+        return {'title':self.title,'slides':self.slides}
 
 
     def get_html(self, filename: str = None) -> str:

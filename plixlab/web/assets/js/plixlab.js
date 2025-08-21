@@ -66,8 +66,25 @@ export function import3DModel(modelDataURL, width, onLoadCallback) {
     // Set pixel ratio for high DPI displays
     renderer.setPixelRatio(window.devicePixelRatio);
     
+    // Set a default size that will be updated when added to DOM
+    renderer.setSize(800, 450); // Default 16:9 aspect ratio at decent resolution
+    
     const controls = new OrbitControls(camera, renderer.domElement);
     renderer.domElement.threeControls = controls;
+    
+    // Function to resize renderer based on actual canvas dimensions
+    renderer.domElement.updateRendererSize = function() {
+        const canvas = renderer.domElement;
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width || canvas.clientWidth || canvas.offsetWidth;
+        const height = rect.height || canvas.clientHeight || canvas.offsetHeight;
+        
+        if (width > 0 && height > 0) {
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        }
+    };
 
     // Model loader
     const arrayBuffer = modelDataURL.data
@@ -304,6 +321,8 @@ export async function render_slides(presentation) {
         document.title = 'PlixLab';
     }
 
+   
+
     // Create all slides
     for (const slide in presentation.slides) {
         render_slide(slide, presentation.slides[slide]);
@@ -398,6 +417,27 @@ function add_component(id, data, outer_element) {
             outer_element.appendChild(element);
             element.className = 'COMPONENT_MODEL3D';
             apply_style(element, data.style);
+            
+            // Update renderer size to match the styled canvas dimensions
+            if (element.updateRendererSize) {
+                // Use requestAnimationFrame to ensure styles are applied
+                requestAnimationFrame(() => {
+                    element.updateRendererSize();
+                });
+                
+                // Add ResizeObserver to handle dynamic resizing
+                const resizeObserver = new ResizeObserver(() => {
+                    element.updateRendererSize();
+                });
+                
+                // Disconnect existing observer if it exists
+                if (element.threeResizeObserver) {
+                    element.threeResizeObserver.disconnect();
+                }
+                
+                resizeObserver.observe(element);
+                element.threeResizeObserver = resizeObserver;
+            }
             
         
            
