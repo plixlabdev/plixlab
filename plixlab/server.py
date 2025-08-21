@@ -52,6 +52,7 @@ def make_app(data_provider: Any, hot_reload: bool) -> tornado.web.Application:
         (r"/data", ReloadWebSocketHandler, {"data_provider": data_provider}),
         (r"/events", ReadySSEHandler),
         (r"/shutdown", ShutdownHandler),
+        (r"/favicon.ico", tornado.web.StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), "web/assets")}),
         (r"/static_data", StaticDataHandler, {"data_provider": data_provider}),
     ])
 

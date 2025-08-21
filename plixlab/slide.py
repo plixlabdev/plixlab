@@ -426,6 +426,7 @@ class Slide:
                 x: float = 0.5,
                 y: float = 0.5,
                 w: float = 0.8,
+                h: float = 0.8,
                 animation: Union[List[bool], int] = [1]) -> 'Slide':
         """
         Add a Plotly graph to the slide.
@@ -434,6 +435,7 @@ class Slide:
         :param x: Horizontal position of the center of the plot (0-1, left to right). Defaults to 0.5 (center).
         :param y: Vertical position of the center of the plot (0-1, bottom to top). Defaults to 0.5 (center).
         :param w: Width (0-1, relative to slide). Defaults to 0.8.
+        :param h: Height (0-1, relative to slide). Defaults to 0.8.
         :param animation: Animation sequence for this component. A list of 1s and 0s specifies visibility at each click. An integer specifies the number of clicks to wait before showing the component.
         :return: The slide object (self), allowing method chaining.
         """
@@ -442,7 +444,7 @@ class Slide:
         if isinstance(fig, str):
             fig = pio.read_json(fig + ".json")
 
-        style = get_style(x,y,w,w,'center','center')
+        style = get_style(x,y,w,h,'center','center')
         fig = process_plotly(fig)
         fig_json = fig.to_json()
 

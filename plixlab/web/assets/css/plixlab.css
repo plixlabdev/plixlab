@@ -216,32 +216,45 @@ body::-webkit-scrollbar,
 }
 
 .button-base {
-    background-color: rgba(42, 42, 42, 0.8);
-    border: 1px solid #555;
-    color: white;
-    font-size: 16px;
-    width: 40px;
-    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
-    outline: none;
-    box-shadow: none;
-    border-radius: 6px;
+    padding: 12px;
+    font-size: 16px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    width: 44px;
+    height: 44px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .button-base:hover {
-    background-color: rgba(68, 68, 68, 0.9);
-    border-color: #777;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.button-base:focus, .button-base:active {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
-    background-color: rgba(68, 68, 68, 0.9);
+.button-base:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Active/pressed state for toggle buttons */
+.button-base.active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.button-base.active:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Removed unused button-arrow and button-light classes */
@@ -452,14 +465,40 @@ body::-webkit-scrollbar,
     box-shadow: none; /* Remove shadows for clean embed look */
 }
 
+/* Hide sidebar instantly when embed=True is in URL - no JavaScript delay */
+body[data-embed="true"] .sidebar {
+    display: none !important;
+}
+
+body[data-embed="true"] #slide-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-left: 0;
+    width: calc(100vw - 120px);
+    height: 100vh;
+    max-width: calc(100vh * 16 / 9);
+    max-height: calc((100vw - 120px) * 9 / 16);
+    border-radius: 0;
+    box-shadow: none;
+}
+
 /* Sidebar thumbnails should always be visible */
 .sidebar-thumbnail {
     visibility: visible !important;
     display: block !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 6px;
+    position: relative;
+    width: 500%;
+    height: 500%;
+    transform: scale(0.2);
+    transform-origin: top left;
+    pointer-events: none;
+    border: none;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-thumbnail:hover {

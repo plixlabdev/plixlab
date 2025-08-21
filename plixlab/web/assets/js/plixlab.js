@@ -16,12 +16,18 @@ function fitCameraToObject(camera, box, controls, padding = 6) {
     camera.position.copy(center);
     camera.position.z += distance;
 
-    camera.near = distance / 100;
-    camera.far = distance * 100;
+    // Set much more generous clipping planes to prevent cutting
+    camera.near = Math.max(0.01, maxSize / 1000);
+    camera.far = Math.max(1000, distance * 1000);
     camera.updateProjectionMatrix();
 
-    // Update controls
+    // Update controls with better zoom limits
     controls.target.copy(center);
+    controls.minDistance = maxSize * 0.1;  // Allow zooming very close
+    controls.maxDistance = distance * 50;   // Allow zooming very far
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.enableRotate = true;
     controls.update();
 }
 
@@ -50,15 +56,16 @@ export function import3DModel(modelDataURL, width, onLoadCallback) {
     const camera = new THREE.PerspectiveCamera(50, 16 / 9 * w, 0.1, 1000);
     camera.position.z = 5;
 
-    // Renderer
+    // Renderer with high resolution
     const renderer = new THREE.WebGLRenderer({
         alpha: true,
         preserveDrawingBuffer: true,
+        antialias: true
     });
-    renderer.setClearColor(0x000000, 0);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // Controls
+    
+    // Set pixel ratio for high DPI displays
+    renderer.setPixelRatio(window.devicePixelRatio);
+    
     const controls = new OrbitControls(camera, renderer.domElement);
     renderer.domElement.threeControls = controls;
 
@@ -267,9 +274,28 @@ function render_slide(slide_id, slide) {
 
 export async function render_slides(slides) {
 
+
     //Delete current slides
     const slides_to_remove = document.querySelectorAll('.slide');
-    slides_to_remove.forEach(slide => slide.remove());
+    slides_to_remove.forEach(slide => {
+        // Cleanup ResizeObservers for Plotly components
+        const plotlyElements = slide.querySelectorAll('.COMPONENT_PLOTLY');
+        plotlyElements.forEach(element => {
+            if (element.plotlyResizeObserver) {
+                element.plotlyResizeObserver.disconnect();
+            }
+        });
+        
+        // Cleanup ResizeObservers for text components
+        const textElements = slide.querySelectorAll('[style*="font-size"]');
+        textElements.forEach(element => {
+            if (element.ResizeObserver) {
+                element.ResizeObserver.disconnect();
+            }
+        });
+        
+        slide.remove();
+    });
 
     // Create all slides
     for (const slide in slides) {
@@ -365,6 +391,9 @@ function add_component(id, data, outer_element) {
             outer_element.appendChild(element);
             element.className = 'COMPONENT_MODEL3D';
             apply_style(element, data.style);
+            
+        
+           
 
             // Store the Promise on the element
             element.modelLoadedPromise = modelLoadedPromise;
@@ -379,13 +408,15 @@ function add_component(id, data, outer_element) {
         
         return new Promise((resolve) => {
             requestAnimationFrame(() => {
-                resolve(element.toDataURL('image/png'));
+                // Get the canvas element (renderer.domElement) and call toDataURL on it
+                const canvas = element.threeRenderer.domElement;
+                resolve(canvas.toDataURL('image/png'));
             });
         });
     }
     
     return null;
-};
+  };
 
         }
 
@@ -435,16 +466,27 @@ function add_component(id, data, outer_element) {
         Plotly.react(element, figure.data, figure.layout, config).then(() => {
             // Resolve the Promise when Plotly is fully rendered
             element.resolvePlotlyLoaded();
+            
+            // Add ResizeObserver to handle container size changes
+            const resizeObserver = new ResizeObserver(() => {
+                // Trigger Plotly resize when container dimensions change
+                Plotly.Plots.resize(element);
+            });
+            
+            // Disconnect existing observer if it exists
+            if (element.plotlyResizeObserver) {
+                element.plotlyResizeObserver.disconnect();
+            }
+            
+            resizeObserver.observe(element);
+            element.plotlyResizeObserver = resizeObserver;
         });
       
         // Store thumbnail generation function for sidebar use
         element.generateThumbnail = async function() {
             try {
-                // Wait for Plotly to be fully rendered using Promise
                 await element.plotlyLoadedPromise;
-                
-                const url = await Plotly.toImage(element, {format: 'png'});
-                return url;
+                return await Plotly.toImage(element, { format: 'png' });
             } catch (error) {
                 console.error("Error generating Plotly thumbnail:", error);
                 return null;
@@ -569,89 +611,69 @@ function add_component(id, data, outer_element) {
 
 
 
-function populateSidebar() {
+async function populateSidebar() {
     const sidebarSlides = document.getElementById('sidebar-slides');
     const slides = document.querySelectorAll("#slide-container .slide");
-    
-    // Clear existing sidebar content
     sidebarSlides.innerHTML = '';
-    
-    slides.forEach((slide, index) => {
+
+    for (const [index, slide] of Array.from(slides).entries()) {
         const sidebarSlide = document.createElement('div');
         sidebarSlide.className = 'sidebar-slide';
         if (index === window.dataStore.active_slide) {
             sidebarSlide.classList.add('active');
         }
+
+        // Create a thumbnail container that matches the slide background and size
+        const thumbnailContainer = document.createElement('div');
+        thumbnailContainer.className = 'sidebar-thumbnail';
+        thumbnailContainer.id = slide.id + '-thumbnail';
+        // Only set the dynamic background color that varies per slide
+        thumbnailContainer.style.backgroundColor = slide.style.backgroundColor || 'rgba(50, 50, 50, 0.8)';
+
+        // Place each component exactly as in the main slide
         
-        // Create a simple copy of the slide for thumbnail
-        const slideClone = slide.cloneNode(true);
-        
-        // Remove the 'slide' class to prevent it from being affected by navigation
-        slideClone.classList.remove('slide');
-        slideClone.classList.add('sidebar-thumbnail');
-        
-        // Give it a unique ID to prevent conflicts
-        slideClone.id = slide.id + '-thumbnail';
-        
-        // Make thumbnail always visible and scaled down
-        slideClone.style.visibility = 'visible !important';
-        slideClone.style.position = 'relative';
-        slideClone.style.transform = 'scale(0.2)';
-        slideClone.style.transformOrigin = 'top left';
-        slideClone.style.width = '500%';
-        slideClone.style.height = '500%';
-        slideClone.style.pointerEvents = 'none';
-        slideClone.style.border = 'none';
-        slideClone.style.overflow = 'hidden';
-        slideClone.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5) !important';
-        slideClone.style.borderRadius = '6px !important';
-        slideClone.style.backgroundColor = 'rgba(50, 50, 50, 0.8)'; // Dark background to see content
-        
-        // Update IDs to avoid conflicts with main slides and handle thumbnails
-        const thumbnailComponents = slideClone.querySelectorAll('*');
-        thumbnailComponents.forEach(async component => {
-            if (component.id) {
-                // Check if the original element has a generateThumbnail method first
-                const originalElement = slide.querySelector(`#${component.id}`);
-                
-                if (originalElement && originalElement.generateThumbnail) {
-                    // Create thumbnail image to replace any component with generateThumbnail method
-                    const thumbnailImg = document.createElement('img');
-                    thumbnailImg.style.width = '100%';
-                    thumbnailImg.style.height = '100%';
-                    thumbnailImg.style.objectFit = 'contain';
-                    thumbnailImg.style.objectPosition = 'center';
-                    
-                    // Generate thumbnail immediately
-                    originalElement.generateThumbnail().then(url => {
-                        if (url) {
-                            thumbnailImg.src = url;
-                        }
-                    }).catch(error => {
-                        console.error("Failed to generate thumbnail:", error);
-                    });
-                    
-                    // Replace the component with the thumbnail image
-                    component.parentNode.replaceChild(thumbnailImg, component);
+        const components = slide.children;
+        for (const component of components) {
+            let thumbElement;
+            // If the component has a generateThumbnail method, use it
+            if (component.generateThumbnail) {
+                thumbElement = document.createElement('img');
+                try {
+                    const url = await component.generateThumbnail();
+                    //console.log(`Generated thumbnail for ${component.id}:`, url);
+                    if (url) {
+                        thumbElement.src = url;
+                        // Copy the original inline styles and classes to preserve positioning
+                        thumbElement.style.cssText = component.style.cssText;
+                      
+                        //thumbElement.className = component.className;
+                    }
+                } catch (error) {
+                    console.error('Failed to generate thumbnail:', error);
                 }
-                
-                // Only change ID after thumbnail processing is done
-                component.id = component.id + '-thumbnail';
+            } else {
+                // Otherwise, create a lightweight copy (for markdown, images, etc.)
+                thumbElement = component.cloneNode(true);
             }
-        });
-        
-        sidebarSlide.appendChild(slideClone);
-        
-        // Add click handler for navigation
+            
+           
+            // Replace IDs to avoid conflicts
+            thumbElement.id = component.id + '-thumbnail';
+            
+          
+            
+            thumbnailContainer.appendChild(thumbElement);
+        }
+
+        sidebarSlide.appendChild(thumbnailContainer);
         sidebarSlide.onclick = () => {
             navigateToSlideFromSidebar(index);
         };
-        
         sidebarSlides.appendChild(sidebarSlide);
-    });
-    
+    }
+
     // Force content height to ensure scrolling works
-    const totalHeight = slides.length * 130; // 120px per slide + gap
+    const totalHeight = slides.length * 130;
     if (totalHeight > window.innerHeight - 30) {
         sidebarSlides.style.height = totalHeight + 'px';
     }
@@ -839,20 +861,24 @@ window.addEventListener('load', async function () {
 
 const urlParams = new URLSearchParams(window.location.search);
 const isCarousel = urlParams.get('carousel') === 'True';
-const isEmbed = urlParams.get('embed') === 'True';
+// Activate embed mode if URL parameter is set OR if running inside an iframe
+const isEmbed = urlParams.get('embed') === 'True' || window.self !== window.top;
 
-// Handle embed mode
+// Set embed data attribute immediately for instant CSS application
 if (isEmbed) {
-    // Hide only the sidebar, keep the control buttons
-    const sidebar = document.getElementById('slide-sidebar');
-    
-    if (sidebar) sidebar.style.display = 'none';
-    
-    // Make slide container fill entire viewport while maintaining 16:9 ratio
-    const slideContainer = document.getElementById('slide-container');
-    if (slideContainer) {
-        slideContainer.classList.add('embed-mode');
-    }
+    document.body.setAttribute('data-embed', 'true');
+}
+
+// Handle embed mode with immediate DOM manipulation
+if (isEmbed) {
+    // Hide sidebar immediately
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('slide-sidebar');
+        if (sidebar) sidebar.style.display = 'none';
+        
+        const slideContainer = document.getElementById('slide-container');
+        if (slideContainer) slideContainer.classList.add('embed-mode');
+    });
 }
 
 let carouselInterval;
@@ -887,14 +913,9 @@ if (isCarousel) {
             if (animation[key]) {
                 element.style.visibility = 'hidden';
 
-                if (element.className === 'PLOTLY') {
-                    element.hidden = true;
-                }
             } else {
                 element.style.visibility = 'inherit';
-                if (element.className === 'PLOTLY') {
-                    element.hidden = false;
-                }
+               
             }
         }
     }
@@ -950,4 +971,57 @@ if (isCarousel) {
      document.getElementById('full-screen').addEventListener('click', function() {
         fullScreen();
      });
+
+    // Sidebar toggle functionality
+    let sidebarVisible = !isEmbed; // Start with sidebar hidden if in embed mode
+    
+    function toggleSidebar() {
+        const sidebar = document.getElementById('slide-sidebar');
+        const slideContainer = document.getElementById('slide-container');
+        const toggleButton = document.getElementById('sidebar-toggle');
+        const toggleIcon = toggleButton.querySelector('i');
+        
+        sidebarVisible = !sidebarVisible;
+        
+        if (sidebarVisible) {
+            // Show sidebar - normal mode
+            sidebar.style.display = 'block';
+            slideContainer.classList.remove('embed-mode');
+            document.body.removeAttribute('data-embed');
+            toggleButton.title = 'Hide Sidebar';
+            toggleButton.classList.remove('active');
+        } else {
+            // Hide sidebar - embed mode
+            sidebar.style.display = 'none';
+            slideContainer.classList.add('embed-mode');
+            document.body.setAttribute('data-embed', 'true');
+            toggleButton.title = 'Show Sidebar';
+            toggleButton.classList.add('active');
+        }
+    }
+    
+    // Set initial button state
+    function setInitialSidebarState() {
+        const toggleButton = document.getElementById('sidebar-toggle');
+        const toggleIcon = toggleButton.querySelector('i');
+        
+        if (!sidebarVisible) {
+            // Sidebar hidden (embed mode)
+            toggleButton.title = 'Show Sidebar';
+            toggleButton.classList.add('active');
+        } else {
+            // Sidebar visible (normal mode)
+            toggleButton.title = 'Hide Sidebar';
+            toggleButton.classList.remove('active');
+        }
+    }
+    
+    // Initialize button state when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setInitialSidebarState);
+    } else {
+        setInitialSidebarState();
+    }
+    
+    document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
 });

@@ -2,7 +2,7 @@
 PlixLab Utilities Module
 """
 
-
+import warnings
 from typing import Any, Dict,Union,List
 from bokeh.plotting import figure as bokeh_figure
 
@@ -85,6 +85,20 @@ def process_plotly(fig: Any) -> Any:
 def get_style(x: float, y: float, w: Union[float, str], h: Union[float, str],
               halign: str, valign: str) -> Dict[str, Any]:
     """Generate CSS style for a component based on its position and size."""
+    
+    # Validate coordinate parameters
+    if not (0 <= x <= 1):
+        warnings.warn(f"x coordinate {x} is out of valid range [0, 1]", UserWarning)
+    
+    if not (0 <= y <= 1):
+        warnings.warn(f"y coordinate {y} is out of valid range [0, 1]", UserWarning)
+    
+    # Validate width and height if they are numeric
+    if isinstance(w, (int, float)) and not (0 <= w <= 1):
+        warnings.warn(f"width {w} is out of valid range [0, 1]", UserWarning)
+    
+    if isinstance(h, (int, float)) and not (0 <= h <= 1):
+        warnings.warn(f"height {h} is out of valid range [0, 1]", UserWarning)
 
     # Translate factors (percent) for aligning the element's anchor at (x,y)
     if halign == "center":

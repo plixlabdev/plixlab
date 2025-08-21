@@ -33,7 +33,7 @@ class ImportExample(Directive):
         iframe_id = f"iframeExample_{ImportExample.instance_counter}"
 
 
-        print()
+       
         html_content = f'''
 <div style="width: 100%; display: block;">
 <div class="embed-container">
