@@ -1,6 +1,8 @@
 # <img src="https://raw.githubusercontent.com/plixlabdev/plixlab/main/plixlab/web/assets/favicon.ico" alt="PlixLab Logo" width="32" height="32" style="vertical-align: middle;"> PlixLab 
 
 [![PyPI version](https://badge.fury.io/py/plixlab.svg)](https://badge.fury.io/py/plixlab)
+[![Tests](https://github.com/plixlabdev/plixlab/actions/workflows/test.yml/badge.svg)](https://github.com/plixlabdev/plixlab/actions/workflows/test.yml)
+
 [![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://plixlabdev.github.io/plixlab/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
